@@ -933,23 +933,30 @@ const Header = () => {
   }, [isPatientStayView, isSlideshow, isStandalone, editMode]);
 
   useEffect(() => {
-    const shouldLockScroll = !editMode && (!isStandalone || isSlideshow) && isPatientStayView;
+    const shouldLockScroll =
+      !editMode && (!isStandalone || isSlideshow) && isPatientStayView;
     const className = 'patient-stay-scroll-lock';
     const root = document.documentElement;
+    const wrapperEl = document.querySelector(
+      '[data-test="dashboard-content-wrapper"]',
+    );
 
     if (shouldLockScroll) {
       document.body.classList.add(className);
       root.classList.add(className);
+      wrapperEl?.classList.add(className);
     } else {
       document.body.classList.remove(className);
       root.classList.remove(className);
+      wrapperEl?.classList.remove(className);
     }
 
     return () => {
       document.body.classList.remove(className);
       root.classList.remove(className);
+      wrapperEl?.classList.remove(className);
     };
-  }, [editMode, isStandalone, isPatientStayView]);
+  }, [editMode, isSlideshow, isStandalone, isPatientStayView]);
 
   useEffect(() => {
     if (!isPatientStayView) {
@@ -2259,6 +2266,9 @@ const handleSaveAsImage = async () => {
           }
           .patient-stay-card--run .run-stay-responsive-wrapper {
             max-width: 100% !important;
+            overflow: hidden !important;
+          }
+          [data-test='dashboard-content-wrapper'].patient-stay-scroll-lock {
             overflow: hidden !important;
           }
           html.patient-stay-scroll-lock,
