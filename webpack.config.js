@@ -35,6 +35,7 @@ const parsedArgs = require('yargs').argv;
 const Visualizer = require('webpack-visualizer-plugin2');
 const getProxyConfig = require('./webpack.proxy-config');
 const packageConfig = require('./package');
+const envConfig = require('./src/config/env.config');
 
 // input dir
 const APP_DIR = path.resolve(__dirname, './');
@@ -49,7 +50,7 @@ const MINI_CSS_EXTRACT_PUBLICPATH = './';
 
 const {
   mode = 'development',
-  devserverPort = 5000,
+  devserverPort = envConfig.DEV_SERVER_PORT,
   measure = false,
   nameChunks = false,
 } = parsedArgs;
@@ -569,7 +570,7 @@ if (isDevMode) {
       },
       logging: 'error',
       webSocketURL: {
-        hostname: '192.168.1.102',
+        hostname: envConfig.DEV_SERVER_HOST,
         port: devserverPort,
         protocol: 'ws',
       },
@@ -579,7 +580,7 @@ if (isDevMode) {
     },
     
     headers: {
-      'Content-Security-Policy': "default-src 'self'; connect-src 'self' http://192.168.1.102:5001 https://api.mapbox.com https://     events.mapbox.com;",
+      'Content-Security-Policy': `default-src 'self'; connect-src 'self' ${envConfig.getBackendUrl()} https://api.mapbox.com https://events.mapbox.com;`,
     },
   };
 

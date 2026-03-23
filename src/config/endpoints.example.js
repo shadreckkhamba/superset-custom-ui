@@ -1,13 +1,15 @@
 /**
  * API Endpoints Configuration
  * Central place to manage all IP addresses and API endpoints
+ * 
+ * Copy this file to endpoints.js and update with your actual values
  */
 
 // API Server IPs
 export const API_SERVERS = {
-  PRIMARY: '192.168.10.118',
-  STATUS_PRIMARY: '192.168.10.118', 
-  STATUS_SECONDARY: '192.168.10.118'
+  PRIMARY: 'localhost',
+  STATUS_PRIMARY: 'localhost', 
+  STATUS_SECONDARY: 'localhost'
 };
 
 // API Port

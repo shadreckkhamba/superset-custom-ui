@@ -28,3 +28,7 @@ Thumbs.db
 
 # Test reports
 test-report.html
+
+# Environment configuration (contains sensitive IPs/ports)
+src/config/env.config.js
+src/config/endpoints.js

@@ -195,6 +195,7 @@ export const useHeaderActionsMenu = ({
       isDarkMode,
       setIsDarkMode,
       openSlideshow,
+      isSlideshowMenuOpen,
       closeSlideshow,
     ],
   );
@@ -259,7 +260,10 @@ export const useHeaderActionsMenu = ({
           </Menu.Item>
         )}
         {!editMode && !isEmbedded && (
-          <Menu.Item key={MenuKeys.ToggleFullscreen}>
+          <Menu.Item
+            key={MenuKeys.ToggleFullscreen}
+            disabled={isSlideshowActive}
+          >
             {getUrlParam(URL_PARAMS.standalone)
               ? t('Exit fullscreen')
               : t('Enter fullscreen')}
