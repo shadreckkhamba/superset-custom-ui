@@ -1,8 +1,5 @@
 import { ReactElement, useEffect, useState, useCallback, useRef } from 'react';
-import { styled, t } from '@superset-ui/core';
-import { Play, Pause, ChevronLeft, ChevronRight } from 'lucide-react';
-import { Dropdown } from 'src/components/Dropdown';
-import { Icons } from 'src/components/Icons';
+import { styled } from '@superset-ui/core';
 
 interface DashboardSlideshowProps {
   isOpen: boolean;
@@ -31,91 +28,86 @@ const SlideshowContainer = styled.div<{ isDarkMode: boolean }>`
   transition: opacity 0.3s ease;
 `;
 
-const SlideshowHeader = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
+const OverlayContainer = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
   position: absolute;
-  top: 0;
-  left: 0;
-  right: 0;
-  height: ${SLIDESHOW_HEADER_HEIGHT}px;
-  background: ${({ isDarkMode }) =>
-    isDarkMode
-      ? 'linear-gradient(180deg, rgba(0,0,0,0.8) 0%, rgba(0,0,0,0) 100%)'
-      : 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%)'};
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 24px;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 10000;
   opacity: ${({ isVisible }) => (isVisible ? 1 : 0)};
-  pointer-events: ${({ isVisible }) => (isVisible ? 'auto' : 'none')};
-  transition: opacity 0.3s ease;
-  overflow: hidden;
+  pointer-events: none;
+  transition: opacity 0.4s ease;
 `;
 
-const SlideshowControls = styled.div`
+const OverlayContent = styled.div<{ isDarkMode: boolean }>`
+  background: ${({ isDarkMode }) =>
+    isDarkMode
+      ? 'rgba(30, 30, 30, 0.85)'
+      : 'rgba(255, 255, 255, 0.85)'};
+  backdrop-filter: blur(20px);
+  -webkit-backdrop-filter: blur(20px);
+  border-radius: 16px;
+  padding: 24px 32px;
+  box-shadow: ${({ isDarkMode }) =>
+    isDarkMode
+      ? '0 8px 32px rgba(0, 0, 0, 0.6)'
+      : '0 8px 32px rgba(0, 0, 0, 0.15)'};
+  border: 1px solid ${({ isDarkMode }) =>
+    isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.1)'};
+  min-width: 400px;
+  max-width: 600px;
+`;
+
+const OverlayTitle = styled.div<{ isDarkMode: boolean }>`
+  font-size: 24px;
+  font-weight: 600;
+  color: ${({ isDarkMode }) => (isDarkMode ? '#ffffff' : '#000000')};
+  text-align: center;
+  margin-bottom: 20px;
+  letter-spacing: -0.5px;
+`;
+
+const KeyboardShortcuts = styled.div`
   display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const ShortcutRow = styled.div`
+  display: flex;
+  justify-content: space-between;
   align-items: center;
   gap: 16px;
 `;
 
-const ControlButton = styled.button<{ isDarkMode: boolean }>`
+const ShortcutLabel = styled.span<{ isDarkMode: boolean }>`
+  font-size: 14px;
+  color: ${({ isDarkMode }) =>
+    isDarkMode ? 'rgba(255, 255, 255, 0.7)' : 'rgba(0, 0, 0, 0.6)'};
+`;
+
+const ShortcutKeys = styled.div`
+  display: flex;
+  gap: 6px;
+`;
+
+const KeyBadge = styled.kbd<{ isDarkMode: boolean }>`
   background: ${({ isDarkMode }) =>
-    isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.05)'};
-  border: 1px solid
-    ${({ isDarkMode }) =>
-      isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'};
+    isDarkMode ? 'rgba(255, 255, 255, 0.15)' : 'rgba(0, 0, 0, 0.08)'};
   color: ${({ isDarkMode }) => (isDarkMode ? '#ffffff' : '#000000')};
-  width: 40px;
-  height: 40px;
-  border-radius: 8px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  cursor: pointer;
-  transition: all 0.2s ease;
-
-  &:hover {
-    background: ${({ isDarkMode }) =>
-      isDarkMode ? 'rgba(255,255,255,0.2)' : 'rgba(0,0,0,0.1)'};
-    transform: scale(1.05);
-  }
-
-  &:active {
-    transform: scale(0.95);
-  }
-`;
-
-const SlideIndicator = styled.div<{ isDarkMode: boolean }>`
-  display: flex;
-  gap: 8px;
-  align-items: center;
-`;
-
-const Dot = styled.div<{ active: boolean; isDarkMode: boolean }>`
-  width: ${({ active }) => (active ? '24px' : '8px')};
-  height: 8px;
-  border-radius: 4px;
-  background: ${({ active, isDarkMode }) =>
-    active
-      ? isDarkMode
-        ? '#4fc3f7'
-        : '#1890ff'
-      : isDarkMode
-        ? 'rgba(255,255,255,0.3)'
-        : 'rgba(0,0,0,0.2)'};
-  transition: all 0.3s ease;
-  cursor: pointer;
-
-  &:hover {
-    background: ${({ active, isDarkMode }) =>
-      active
-        ? isDarkMode
-          ? '#4fc3f7'
-          : '#1890ff'
-        : isDarkMode
-          ? 'rgba(255,255,255,0.5)'
-          : 'rgba(0,0,0,0.4)'};
-  }
+  border: 1px solid ${({ isDarkMode }) =>
+    isDarkMode ? 'rgba(255, 255, 255, 0.2)' : 'rgba(0, 0, 0, 0.15)'};
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 500;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+  box-shadow: ${({ isDarkMode }) =>
+    isDarkMode
+      ? '0 1px 2px rgba(0, 0, 0, 0.3)'
+      : '0 1px 2px rgba(0, 0, 0, 0.1)'};
+  min-width: 24px;
+  text-align: center;
 `;
 
 const IframeContainer = styled.div<{ isActive: boolean }>`
@@ -140,7 +132,7 @@ const SLIDES = [
   { key: 'stay', label: 'Patient Stay Times', view: 'stay' },
 ];
 
-const ROTATION_INTERVAL = 20000; // 20  seconds per slide
+const ROTATION_INTERVAL = 20000; // 20 seconds per slide
 
 const TimerBar = styled.div<{
   progress: number;
@@ -163,13 +155,10 @@ export default function DashboardSlideshow({
   onClose,
   dashboardId,
   isDarkMode = false,
-  actionsMenu,
-  isActionsMenuOpen = false,
-  onActionsMenuOpenChange,
 }: DashboardSlideshowProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [controlsVisible, setControlsVisible] = useState(true);
+  const [overlayVisible, setOverlayVisible] = useState(true);
   const [timerProgress, setTimerProgress] = useState(0);
   const [timerSyncKey, setTimerSyncKey] = useState(0);
   const [timerAlignment, setTimerAlignment] = useState<{
@@ -178,11 +167,25 @@ export default function DashboardSlideshow({
   } | null>(null);
   const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
-  const hideControlsTimeoutRef = useRef<NodeJS.Timeout | null>(null);
+  const overlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
   const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   // Build iframe URLs
+  const postCountdownToActiveSlide = useCallback(
+    (remainingSeconds: number, progressRatio: number) => {
+      const activeIframe = iframeRefs.current[currentSlide];
+      activeIframe?.contentWindow?.postMessage(
+        {
+          type: 'superset-dashboard-slideshow-countdown',
+          remainingSeconds,
+          progressRatio,
+        },
+        window.location.origin,
+      );
+    },
+    [currentSlide],
+  );
   const getSlideUrl = useCallback(
     (slideIndex: number) => {
       const slide = SLIDES[slideIndex];
@@ -203,8 +206,8 @@ export default function DashboardSlideshow({
   // Debug: Log URLs when component mounts
   useEffect(() => {
     if (isOpen) {
-      console.log('🎬 Slideshow: Dashboard ID:', dashboardId);
-      console.log('🎬 Slideshow: All slide URLs:');
+      console.log('Slideshow: Dashboard ID:', dashboardId);
+      console.log('Slideshow: All slide URLs:');
       SLIDES.forEach((slide, index) => {
         console.log(`  ${index}: ${slide.label} → ${getSlideUrl(index)}`);
       });
@@ -215,7 +218,7 @@ export default function DashboardSlideshow({
   useEffect(() => {
     if (isOpen) {
       console.log(
-        `🎬 Slideshow: Current slide changed to ${currentSlide} - ${SLIDES[currentSlide].label}`,
+        `Slideshow: Current slide changed to ${currentSlide} - ${SLIDES[currentSlide].label}`,
       );
     }
   }, [currentSlide, isOpen]);
@@ -254,7 +257,8 @@ export default function DashboardSlideshow({
         const topOffset = Math.round(rect.bottom);
         setTimerAlignment(previousAlignment => {
           if (
-            previousAlignment?.slideIndex === slideIndex &&
+            previousAlignment &&
+            previousAlignment.slideIndex === slideIndex &&
             previousAlignment.topOffset === topOffset
           ) {
             return previousAlignment;
@@ -284,16 +288,21 @@ export default function DashboardSlideshow({
       }
       return () => undefined;
     }
-
     // Reset timer
     startTimeRef.current = Date.now();
     setTimerProgress(0);
+    postCountdownToActiveSlide(Math.ceil(ROTATION_INTERVAL / 1000), 1);
 
     // Update progress bar every 100ms
     progressIntervalRef.current = setInterval(() => {
       const elapsed = Date.now() - startTimeRef.current;
+      const remainingMs = Math.max(0, ROTATION_INTERVAL - elapsed);
       const progress = Math.min((elapsed / ROTATION_INTERVAL) * 100, 100);
+      const remainingSeconds = Math.ceil(remainingMs / 1000);
+      const progressRatio = remainingMs / ROTATION_INTERVAL;
+
       setTimerProgress(progress);
+      postCountdownToActiveSlide(remainingSeconds, progressRatio);
     }, 100);
 
     // Advance to next slide
@@ -311,7 +320,7 @@ export default function DashboardSlideshow({
         clearInterval(progressIntervalRef.current);
       }
     };
-  }, [isOpen, isPaused, currentSlide]);
+  }, [isOpen, isPaused, currentSlide, postCountdownToActiveSlide, timerSyncKey]);
 
   useEffect(() => {
     if (!isOpen) {
@@ -364,25 +373,31 @@ export default function DashboardSlideshow({
     };
   }, [currentSlide, isOpen, syncTimerOffset, timerSyncKey]);
 
-  // Auto-hide controls after 3 seconds of no mouse movement
-  const showControls = useCallback(() => {
-    setControlsVisible(true);
+  // Show overlay when slide changes
+  const showOverlay = useCallback(() => {
+    setOverlayVisible(true);
 
-    if (hideControlsTimeoutRef.current) {
-      clearTimeout(hideControlsTimeoutRef.current);
+    if (overlayTimeoutRef.current) {
+      clearTimeout(overlayTimeoutRef.current);
     }
 
-    hideControlsTimeoutRef.current = setTimeout(() => {
-      setControlsVisible(false);
-    }, 3000);
+    overlayTimeoutRef.current = setTimeout(() => {
+      setOverlayVisible(false);
+    }, 2000); // Hide after 2 seconds
   }, []);
+
+  // Show overlay on slide change
+  useEffect(() => {
+    if (isOpen) {
+      showOverlay();
+    }
+  }, [currentSlide, isOpen, showOverlay]);
 
   useEffect(() => {
     if (!isOpen) return () => undefined;
 
-    const handleMouseMove = () => showControls();
     const handleKeyDown = (e: KeyboardEvent) => {
-      showControls();
+      showOverlay();
 
       if (e.key === 'Escape') {
         onClose();
@@ -396,37 +411,34 @@ export default function DashboardSlideshow({
       }
     };
 
-    document.addEventListener('mousemove', handleMouseMove);
     document.addEventListener('keydown', handleKeyDown);
 
-    // Show controls initially
-    showControls();
-
     return () => {
-      document.removeEventListener('mousemove', handleMouseMove);
       document.removeEventListener('keydown', handleKeyDown);
-      if (hideControlsTimeoutRef.current) {
-        clearTimeout(hideControlsTimeoutRef.current);
+      if (overlayTimeoutRef.current) {
+        clearTimeout(overlayTimeoutRef.current);
       }
     };
-  }, [isOpen, onClose, showControls]);
+  }, [isOpen, onClose, showOverlay]);
 
   // Handle iframe load
   const handleIframeLoad = useCallback(
     (slideIndex: number) => {
       const slide = SLIDES[slideIndex];
       console.log(
-        `✅ Slideshow: Slide ${slideIndex} (${slide.label}) iframe loaded successfully`,
+        `Slideshow: Slide ${slideIndex} (${slide.label}) iframe loaded successfully`,
       );
 
       if (slideIndex === currentSlide) {
+        startTimeRef.current = Date.now();
+        setTimerProgress(0);
         setTimerSyncKey(previousKey => previousKey + 1);
         syncTimerOffset(slideIndex);
+        postCountdownToActiveSlide(Math.ceil(ROTATION_INTERVAL / 1000), 1);
       }
     },
-    [currentSlide, syncTimerOffset],
+    [currentSlide, postCountdownToActiveSlide, syncTimerOffset],
   );
-
   // Navigate to specific slide
   const goToSlide = useCallback((index: number) => {
     setCurrentSlide(index);
