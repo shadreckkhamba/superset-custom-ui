@@ -82,12 +82,12 @@ const HeaderControls = styled.div`
 `;
 
 const HeaderButton = styled.button<{ isDarkMode: boolean }>`
-  width: 34px;
-  height: 34px;
+  width: 38px;
+  height: 38px;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  border-radius: 10px;
+  border-radius: 11px;
   border: 1px solid
     ${({ isDarkMode }) =>
       isDarkMode ? 'rgba(203, 213, 225, 0.28)' : 'rgba(148, 163, 184, 0.24)'};
@@ -113,8 +113,8 @@ const HeaderButton = styled.button<{ isDarkMode: boolean }>`
   }
 
   svg {
-    width: 16px;
-    height: 16px;
+    width: 18px;
+    height: 18px;
     stroke-width: 2.2;
   }
 `;
@@ -251,7 +251,7 @@ const SLIDES = [
   { key: 'stay', label: 'Patient Stay Times', view: 'stay' },
 ];
 
-const ROTATION_INTERVAL = 60000; // 20 seconds per slide
+const ROTATION_INTERVAL = 60000; // 60 seconds per slide
 
 const TimerBar = styled.div<{
   progress: number;
@@ -284,10 +284,10 @@ export default function DashboardSlideshow({
     slideIndex: number;
     topOffset: number;
   } | null>(null);
-  const intervalRef = useRef<NodeJS.Timeout | null>(null);
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const overlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
+  const remainingMsRef = useRef<number>(ROTATION_INTERVAL);
   const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
 
   // Build iframe URLs
@@ -396,47 +396,64 @@ export default function DashboardSlideshow({
 
   // Auto-advance slides with progress bar
   useEffect(() => {
-    if (!isOpen || isPaused) {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-        intervalRef.current = null;
+    if (!isOpen) {
+      if (progressIntervalRef.current) {
+        clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
       }
+      remainingMsRef.current = ROTATION_INTERVAL;
+      setTimerProgress(0);
+      return () => undefined;
+    }
+
+    if (isPaused) {
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
         progressIntervalRef.current = null;
       }
       return () => undefined;
     }
-    // Reset timer
-    startTimeRef.current = Date.now();
-    setTimerProgress(0);
-    postCountdownToActiveSlide(Math.ceil(ROTATION_INTERVAL / 1000), 1);
 
-    // Update progress bar every 100ms
-    progressIntervalRef.current = setInterval(() => {
-      const elapsed = Date.now() - startTimeRef.current;
-      const remainingMs = Math.max(0, ROTATION_INTERVAL - elapsed);
-      const progress = Math.min((elapsed / ROTATION_INTERVAL) * 100, 100);
+    const startRemainingMs =
+      remainingMsRef.current > 0
+        ? Math.min(ROTATION_INTERVAL, remainingMsRef.current)
+        : ROTATION_INTERVAL;
+    startTimeRef.current = Date.now();
+
+    const publishCountdown = (remainingMs: number) => {
+      const progress = Math.min(
+        ((ROTATION_INTERVAL - remainingMs) / ROTATION_INTERVAL) * 100,
+        100,
+      );
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       const progressRatio = remainingMs / ROTATION_INTERVAL;
 
       setTimerProgress(progress);
       postCountdownToActiveSlide(remainingSeconds, progressRatio);
+    };
+
+    publishCountdown(startRemainingMs);
+
+    progressIntervalRef.current = setInterval(() => {
+      const elapsed = Date.now() - startTimeRef.current;
+      const remainingMs = Math.max(0, startRemainingMs - elapsed);
+      remainingMsRef.current = remainingMs;
+      publishCountdown(remainingMs);
+
+      if (remainingMs <= 0) {
+        if (progressIntervalRef.current) {
+          clearInterval(progressIntervalRef.current);
+          progressIntervalRef.current = null;
+        }
+        remainingMsRef.current = ROTATION_INTERVAL;
+        setCurrentSlide(prev => (prev + 1) % SLIDES.length);
+      }
     }, 100);
 
-    // Advance to next slide
-    intervalRef.current = setInterval(() => {
-      setCurrentSlide(prev => (prev + 1) % SLIDES.length);
-      startTimeRef.current = Date.now();
-      setTimerProgress(0);
-    }, ROTATION_INTERVAL);
-
     return () => {
-      if (intervalRef.current) {
-        clearInterval(intervalRef.current);
-      }
       if (progressIntervalRef.current) {
         clearInterval(progressIntervalRef.current);
+        progressIntervalRef.current = null;
       }
     };
   }, [isOpen, isPaused, currentSlide, postCountdownToActiveSlide, timerSyncKey]);
@@ -502,7 +519,7 @@ export default function DashboardSlideshow({
 
     overlayTimeoutRef.current = setTimeout(() => {
       setOverlayVisible(false);
-    }, 5000); // Hide after 4.2 seconds
+    }, 5000); // Hide after 5 seconds
   }, []);
 
   // Show overlay on slide change
@@ -559,6 +576,7 @@ export default function DashboardSlideshow({
       );
 
       if (slideIndex === currentSlide) {
+        remainingMsRef.current = ROTATION_INTERVAL;
         startTimeRef.current = Date.now();
         setTimerProgress(0);
         setTimerSyncKey(previousKey => previousKey + 1);
@@ -570,6 +588,7 @@ export default function DashboardSlideshow({
   );
   // Navigate to specific slide
   const goToSlide = useCallback((index: number) => {
+    remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(index);
     startTimeRef.current = Date.now();
     setTimerProgress(0);
@@ -577,12 +596,14 @@ export default function DashboardSlideshow({
 
   // Previous/Next handlers
   const handlePrevious = useCallback(() => {
+    remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(prev => (prev - 1 + SLIDES.length) % SLIDES.length);
     startTimeRef.current = Date.now();
     setTimerProgress(0);
   }, []);
 
   const handleNext = useCallback(() => {
+    remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(prev => (prev + 1) % SLIDES.length);
     startTimeRef.current = Date.now();
     setTimerProgress(0);
