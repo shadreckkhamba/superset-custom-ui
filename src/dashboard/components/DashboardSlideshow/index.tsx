@@ -256,6 +256,8 @@ const SLIDES = [
 ];
 
 const ROTATION_INTERVAL = 60000; // 60 seconds per slide
+const TITLE_PULSE_INTERVAL_MS = 30000;
+const TITLE_PULSE_DURATION_MS = 5000;
 
 const TimerBar = styled.div<{
   progress: number;
@@ -288,6 +290,9 @@ export default function DashboardSlideshow({
     slideIndex: number;
     topOffset: number;
   } | null>(null);
+  const [slideDashboardTitles, setSlideDashboardTitles] = useState<
+    Record<number, string>
+  >({});
   const progressIntervalRef = useRef<NodeJS.Timeout | null>(null);
   const overlayTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   const startTimeRef = useRef<number>(Date.now());
@@ -398,6 +403,36 @@ export default function DashboardSlideshow({
     },
     [currentSlide, getTimerAnchorElement],
   );
+
+  const syncSlideDashboardTitle = useCallback((slideIndex: number) => {
+    const iframe = iframeRefs.current[slideIndex];
+    const doc = iframe?.contentDocument;
+    if (!doc) {
+      return false;
+    }
+
+    const titleEl = doc.querySelector(
+      '[data-test="editable-title"]',
+    ) as HTMLElement | null;
+    const nextTitle = titleEl?.textContent?.trim();
+
+    if (!nextTitle) {
+      return false;
+    }
+
+    setSlideDashboardTitles(previous => {
+      if (previous[slideIndex] === nextTitle) {
+        return previous;
+      }
+
+      return {
+        ...previous,
+        [slideIndex]: nextTitle,
+      };
+    });
+
+    return true;
+  }, []);
 
   // Auto-advance slides with progress bar
   useEffect(() => {
@@ -544,6 +579,100 @@ export default function DashboardSlideshow({
       }
     };
   }, [isOpen]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return () => undefined;
+    }
+
+    const retryDelays = [0, 120, 400, 900, 1800];
+    const timeoutIds = retryDelays.map(delay =>
+      window.setTimeout(() => {
+        syncSlideDashboardTitle(currentSlide);
+      }, delay),
+    );
+
+    return () => {
+      timeoutIds.forEach(id => window.clearTimeout(id));
+    };
+  }, [currentSlide, isOpen, syncSlideDashboardTitle, timerSyncKey]);
+
+  useEffect(() => {
+    if (!isOpen || isPaused) {
+      return () => undefined;
+    }
+
+    const originalTitle = slideDashboardTitles[currentSlide];
+    if (!originalTitle) {
+      return () => undefined;
+    }
+
+    const timeoutIds: number[] = [];
+    const fadeDurationMs = 220;
+
+    const getEditableTitleElements = () => {
+      const iframe = iframeRefs.current[currentSlide];
+      const doc = iframe?.contentDocument;
+      if (!doc) {
+        return { dynamicTitle: null, inputSizer: null };
+      }
+
+      return {
+        dynamicTitle: doc.querySelector(
+          '[data-test="editable-title"]',
+        ) as HTMLElement | null,
+        inputSizer: doc.querySelector('.input-sizer') as HTMLElement | null,
+      };
+    };
+
+    const setEditableTitleText = (text: string, immediate = false) => {
+      const { dynamicTitle, inputSizer } = getEditableTitleElements();
+      if (!dynamicTitle) {
+        return;
+      }
+
+      const applyText = () => {
+        dynamicTitle.textContent = text;
+        if (inputSizer) {
+          inputSizer.textContent = text;
+        }
+      };
+
+      dynamicTitle.style.transition = `opacity ${fadeDurationMs}ms ease`;
+      dynamicTitle.style.willChange = 'opacity';
+
+      if (immediate) {
+        applyText();
+        dynamicTitle.style.opacity = '1';
+        return;
+      }
+
+      dynamicTitle.style.opacity = '0';
+      const swapTimeoutId = window.setTimeout(() => {
+        applyText();
+        dynamicTitle.style.opacity = '1';
+      }, fadeDurationMs);
+      timeoutIds.push(swapTimeoutId);
+    };
+
+    const runPulse = () => {
+      setEditableTitleText(SLIDES[currentSlide].label);
+
+      const hideId = window.setTimeout(() => {
+        setEditableTitleText(originalTitle);
+      }, TITLE_PULSE_DURATION_MS);
+
+      timeoutIds.push(hideId);
+    };
+
+    const intervalId = window.setInterval(runPulse, TITLE_PULSE_INTERVAL_MS);
+
+    return () => {
+      window.clearInterval(intervalId);
+      timeoutIds.forEach(id => window.clearTimeout(id));
+      setEditableTitleText(originalTitle, true);
+    };
+  }, [currentSlide, isOpen, isPaused, slideDashboardTitles]);
 
   const clearOverlayTimer = useCallback(() => {
     if (overlayTimeoutRef.current) {
@@ -704,10 +833,16 @@ export default function DashboardSlideshow({
         startTimeRef.current = Date.now();
         setTimerSyncKey(previousKey => previousKey + 1);
         syncTimerOffset(slideIndex);
+        syncSlideDashboardTitle(slideIndex);
         postCountdownToActiveSlide(Math.ceil(ROTATION_INTERVAL / 1000), 1);
       }
     },
-    [currentSlide, postCountdownToActiveSlide, syncTimerOffset],
+    [
+      currentSlide,
+      postCountdownToActiveSlide,
+      syncSlideDashboardTitle,
+      syncTimerOffset,
+    ],
   );
   // Navigate to specific slide
   const goToSlide = useCallback((index: number) => {

@@ -20,7 +20,7 @@ import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
 
-// Register Chart.js components
+// Register components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // CSS for responsive dashboard view switch
