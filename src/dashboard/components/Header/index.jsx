@@ -190,7 +190,7 @@ const headerContainerStyle = theme => css`
     align-items: center;
     gap: 4px;
     white-space: nowrap;
-    font-size: 12px;
+    font-size: 13px;
     line-height: 1.2;
   }
 
@@ -261,7 +261,7 @@ const headerContainerStyle = theme => css`
     }
 
     .refresh-badge .refresh-text {
-      font-size: 10px;
+      font-size: 11px;
     }
   }
 
@@ -291,7 +291,7 @@ const headerContainerStyle = theme => css`
     }
 
     .refresh-badge .refresh-text {
-      font-size: 9px;
+      font-size: 10px;
     }
   }
 `;
@@ -1711,11 +1711,17 @@ const Header = () => {
       )}
       <div className="refresh-badge">
         <span className="clock-icon">🕒</span>
-        <span className="refresh-text">
+        <span
+          className="refresh-text"
+          style={isDarkMode ? undefined : { fontSize: '14px', lineHeight: 1.2 }}
+        >
           {isSynced ? (
             <>
               Last updated:{' '}
-              <span className="refresh-time">
+              <span
+                className="refresh-time"
+                style={isDarkMode ? undefined : { fontSize: '14px', fontWeight: 600 }}
+              >
                 {lastUpdated.toLocaleString('en-US', formatOptions)}
               </span>
             </>
@@ -1724,7 +1730,10 @@ const Header = () => {
           ) : (
             <>
               Last updated:{' '}
-              <span className="refresh-time">Waiting for latest sync...</span>
+              <span
+                className="refresh-time"
+                style={isDarkMode ? undefined : { fontSize: '14px', fontWeight: 600 }}
+              >Waiting for latest sync...</span>
             </>
           )}
         </span>

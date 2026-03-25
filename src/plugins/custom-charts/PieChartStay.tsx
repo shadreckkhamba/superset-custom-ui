@@ -102,7 +102,6 @@ export default function StayTimePie({
 }: PieChartStayProps): JSX.Element {
   const [percentages, setPercentages] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
-  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const [mostCommonRange, setMostCommonRange] = useState<string | null>(null);
@@ -127,7 +126,6 @@ export default function StayTimePie({
   useEffect(() => {
       if (refreshKey !== undefined) {
         setActualPercent(0);
-        setHasLoadedOnce(false);
         loadData();
       }
   }, [refreshKey]);
@@ -258,7 +256,6 @@ const loadData = async () => {
     
     setTimeout(() => {
       setLoading(false);
-      setHasLoadedOnce(true);
     }, remainingTime);
   }
 };
@@ -1210,7 +1207,7 @@ useEffect(() => {
           {}
       </div>
 
-      {loading && !hasLoadedOnce && (
+      {loading && (
         <div
           style={{
             position: 'absolute',
