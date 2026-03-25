@@ -1,5 +1,6 @@
 import { ReactElement, useEffect, useState, useCallback, useRef } from 'react';
 import { styled } from '@superset-ui/core';
+import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react';
 
 interface DashboardSlideshowProps {
   isOpen: boolean;
@@ -33,21 +34,118 @@ const SlideshowHeader = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
   top: 0;
   left: 0;
   right: 0;
-  height: ${SLIDESHOW_HEADER_HEIGHT}px;
+  min-height: ${SLIDESHOW_HEADER_HEIGHT}px;
+  z-index: 10000;
+  padding: 10px 16px;
+  opacity: ${({ isVisible }) => (isVisible ? 1 : 0)};
+  transform: ${({ isVisible }) =>
+    isVisible ? 'translate3d(0, 0, 0)' : 'translate3d(0, -20px, 0)'};
+  pointer-events: ${({ isVisible }) => (isVisible ? 'auto' : 'none')};
+  transition:
+    opacity 220ms ease,
+    transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
+  backdrop-filter: blur(18px) saturate(145%);
+  -webkit-backdrop-filter: blur(18px) saturate(145%);
   background: ${({ isDarkMode }) =>
     isDarkMode
-      ? 'linear-gradient(180deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)'
-      : 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%)'};
+      ? 'rgba(9, 12, 16, 0.26)'
+      : 'rgba(252, 252, 252, 0.24)'};
+  border-bottom: 1px solid
+    ${({ isDarkMode }) =>
+      isDarkMode ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)'};
+`;
+
+const SlideshowHeaderContent = styled.div`
+  position: relative;
+  width: 100%;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 24px;
-  z-index: 10000;
-  opacity: ${({ isVisible }) => (isVisible ? 1 : 0)};
-  pointer-events: ${({ isVisible }) => (isVisible ? 'auto' : 'none')};
-  transition: opacity 0.3s ease;
+  min-height: 40px;
 `;
 
+const HeaderSide = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 124px;
+`;
+
+const HeaderSideRight = styled(HeaderSide)`
+  justify-content: flex-end;
+`;
+
+const HeaderControls = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const HeaderButton = styled.button<{ isDarkMode: boolean }>`
+  width: 34px;
+  height: 34px;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: 10px;
+  border: 1px solid
+    ${({ isDarkMode }) =>
+      isDarkMode ? 'rgba(203, 213, 225, 0.28)' : 'rgba(148, 163, 184, 0.24)'};
+  background: ${({ isDarkMode }) =>
+    isDarkMode ? 'rgba(148, 163, 184, 0.22)' : 'rgba(148, 163, 184, 0.24)'};
+  color: ${({ isDarkMode }) => (isDarkMode ? '#e2e8f0' : '#374151')};
+  backdrop-filter: blur(10px);
+  -webkit-backdrop-filter: blur(10px);
+  cursor: pointer;
+  transition:
+    transform 160ms ease,
+    background-color 160ms ease,
+    border-color 160ms ease;
+
+  &:hover {
+    transform: translateY(-1px);
+    background: ${({ isDarkMode }) =>
+      isDarkMode ? 'rgba(148, 163, 184, 0.32)' : 'rgba(148, 163, 184, 0.34)'};
+  }
+
+  &:active {
+    transform: translateY(0);
+  }
+
+  svg {
+    width: 16px;
+    height: 16px;
+    stroke-width: 2.2;
+  }
+`;
+
+const HeaderTitle = styled.h1<{ isDarkMode: boolean }>`
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  margin: 0;
+  max-width: min(70vw, 1200px);
+  padding: 0 12px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  pointer-events: none;
+  font-size: clamp(26px, 2.4vw, 48px);
+  line-height: 1.06;
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  color: ${({ isDarkMode }) => (isDarkMode ? '#f8fafc' : '#1f2937')};
+
+  @media (max-width: 1024px) {
+    font-size: clamp(22px, 2.8vw, 34px);
+    max-width: min(62vw, 760px);
+  }
+
+  @media (max-width: 768px) {
+    font-size: clamp(18px, 3.6vw, 24px);
+    max-width: min(56vw, 560px);
+  }
+`;
 
 const OverlayContainer = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
   position: absolute;
@@ -153,7 +251,7 @@ const SLIDES = [
   { key: 'stay', label: 'Patient Stay Times', view: 'stay' },
 ];
 
-const ROTATION_INTERVAL = 20000; // 20 seconds per slide
+const ROTATION_INTERVAL = 60000; // 20 seconds per slide
 
 const TimerBar = styled.div<{
   progress: number;
@@ -404,7 +502,7 @@ export default function DashboardSlideshow({
 
     overlayTimeoutRef.current = setTimeout(() => {
       setOverlayVisible(false);
-    }, 2000); // Hide after 2 seconds
+    }, 5000); // Hide after 4.2 seconds
   }, []);
 
   // Show overlay on slide change
@@ -416,6 +514,10 @@ export default function DashboardSlideshow({
 
   useEffect(() => {
     if (!isOpen) return () => undefined;
+
+    const handlePointerActivity = () => {
+      showOverlay();
+    };
 
     const handleKeyDown = (e: KeyboardEvent) => {
       showOverlay();
@@ -432,9 +534,15 @@ export default function DashboardSlideshow({
       }
     };
 
+    document.addEventListener('mousemove', handlePointerActivity);
+    document.addEventListener('touchstart', handlePointerActivity, {
+      passive: true,
+    });
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
+      document.removeEventListener('mousemove', handlePointerActivity);
+      document.removeEventListener('touchstart', handlePointerActivity);
       document.removeEventListener('keydown', handleKeyDown);
       if (overlayTimeoutRef.current) {
         clearTimeout(overlayTimeoutRef.current);
@@ -485,17 +593,64 @@ export default function DashboardSlideshow({
   return (
     <SlideshowContainer isDarkMode={isDarkMode}>
       <SlideshowHeader isDarkMode={isDarkMode} isVisible={overlayVisible}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-          <span
-            style={{
-              fontSize: '18px',
-              fontWeight: 600,
-              color: isDarkMode ? '#ffffff' : '#000000',
-            }}
-          >
+        <SlideshowHeaderContent>
+          <HeaderSide>
+            <HeaderControls>
+              <HeaderButton
+                type="button"
+                isDarkMode={isDarkMode}
+                onClick={() => {
+                  showOverlay();
+                  handlePrevious();
+                }}
+                aria-label="Previous slide"
+                title="Previous slide"
+              >
+                <ChevronLeft />
+              </HeaderButton>
+              <HeaderButton
+                type="button"
+                isDarkMode={isDarkMode}
+                onClick={() => {
+                  showOverlay();
+                  setIsPaused(prev => !prev);
+                }}
+                aria-label={isPaused ? 'Resume slideshow' : 'Pause slideshow'}
+                title={isPaused ? 'Resume slideshow' : 'Pause slideshow'}
+              >
+                {isPaused ? <Play /> : <Pause />}
+              </HeaderButton>
+              <HeaderButton
+                type="button"
+                isDarkMode={isDarkMode}
+                onClick={() => {
+                  showOverlay();
+                  handleNext();
+                }}
+                aria-label="Next slide"
+                title="Next slide"
+              >
+                <ChevronRight />
+              </HeaderButton>
+            </HeaderControls>
+          </HeaderSide>
+
+          <HeaderTitle isDarkMode={isDarkMode}>
             {SLIDES[currentSlide].label}
-          </span>
-        </div>
+          </HeaderTitle>
+
+          <HeaderSideRight>
+            <HeaderButton
+              type="button"
+              isDarkMode={isDarkMode}
+              onClick={onClose}
+              aria-label="Exit slideshow"
+              title="Exit slideshow"
+            >
+              <X />
+            </HeaderButton>
+          </HeaderSideRight>
+        </SlideshowHeaderContent>
       </SlideshowHeader>
 
       {!isPaused && timerAlignment?.slideIndex === currentSlide && (
