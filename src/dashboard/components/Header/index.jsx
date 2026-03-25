@@ -3930,9 +3930,6 @@ const handleSaveAsImage = async () => {
         onClose={closeSlideshow}
         dashboardId={dashboardInfo.id}
         isDarkMode={isDarkMode}
-        actionsMenu={menu}
-        isActionsMenuOpen={isDropdownVisible}
-        onActionsMenuOpenChange={setIsDropdownVisible}
       />
     </div>
   );

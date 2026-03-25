@@ -1,4 +1,10 @@
-import { ReactElement, useEffect, useState, useCallback, useRef } from 'react';
+import {
+  MouseEvent as ReactMouseEvent,
+  useEffect,
+  useState,
+  useCallback,
+  useRef,
+} from 'react';
 import { styled } from '@superset-ui/core';
 import { ChevronLeft, ChevronRight, Pause, Play, X } from 'lucide-react';
 
@@ -7,14 +13,12 @@ interface DashboardSlideshowProps {
   onClose: () => void;
   dashboardId: number;
   isDarkMode?: boolean;
-  actionsMenu?: ReactElement;
-  isActionsMenuOpen?: boolean;
-  onActionsMenuOpenChange?: (open: boolean) => void;
 }
 
 const SLIDESHOW_HEADER_HEIGHT = 60;
 const TIMER_BAR_HEIGHT = 4;
 const MIN_TIMER_ANCHOR_HEIGHT = 40;
+const SLIDESHOW_INIT_BAR_DURATION = 1600;
 
 const SlideshowContainer = styled.div<{ isDarkMode: boolean }>`
   position: fixed;
@@ -44,15 +48,15 @@ const SlideshowHeader = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
   transition:
     opacity 220ms ease,
     transform 320ms cubic-bezier(0.22, 1, 0.36, 1);
-  backdrop-filter: blur(18px) saturate(145%);
-  -webkit-backdrop-filter: blur(18px) saturate(145%);
+  backdrop-filter: blur(24px) saturate(170%);
+  -webkit-backdrop-filter: blur(24px) saturate(170%);
   background: ${({ isDarkMode }) =>
     isDarkMode
-      ? 'rgba(9, 12, 16, 0.26)'
-      : 'rgba(252, 252, 252, 0.24)'};
+      ? 'rgba(9, 12, 16, 0.16)'
+      : 'rgba(248, 251, 255, 0.12)'};
   border-bottom: 1px solid
     ${({ isDarkMode }) =>
-      isDarkMode ? 'rgba(255, 255, 255, 0.14)' : 'rgba(15, 23, 42, 0.12)'};
+      isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(15, 23, 42, 0.06)'};
 `;
 
 const SlideshowHeaderContent = styled.div`
@@ -256,16 +260,15 @@ const ROTATION_INTERVAL = 60000; // 60 seconds per slide
 const TimerBar = styled.div<{
   progress: number;
   isDarkMode: boolean;
-  topOffset: number;
 }>`
   position: absolute;
-  top: ${({ topOffset }) => topOffset}px;
+  top: ${SLIDESHOW_HEADER_HEIGHT + 1}px;
   left: 0;
   height: ${TIMER_BAR_HEIGHT}px;
   width: ${({ progress }) => progress}%;
   background: ${({ isDarkMode }) => (isDarkMode ? '#64a0d0 ' : '#64a0d0')};
   transition: width 0.1s linear;
-  z-index: 10001;
+  z-index: 9999;
   pointer-events: none;
 `;
 
@@ -277,8 +280,9 @@ export default function DashboardSlideshow({
 }: DashboardSlideshowProps) {
   const [currentSlide, setCurrentSlide] = useState(0);
   const [isPaused, setIsPaused] = useState(false);
-  const [overlayVisible, setOverlayVisible] = useState(true);
-  const [timerProgress, setTimerProgress] = useState(0);
+  const [overlayVisible, setOverlayVisible] = useState(false);
+  const [initProgress, setInitProgress] = useState(0);
+  const [showInitProgressBar, setShowInitProgressBar] = useState(false);
   const [timerSyncKey, setTimerSyncKey] = useState(0);
   const [timerAlignment, setTimerAlignment] = useState<{
     slideIndex: number;
@@ -289,6 +293,7 @@ export default function DashboardSlideshow({
   const startTimeRef = useRef<number>(Date.now());
   const remainingMsRef = useRef<number>(ROTATION_INTERVAL);
   const iframeRefs = useRef<(HTMLIFrameElement | null)[]>([]);
+  const headerRef = useRef<HTMLDivElement | null>(null);
 
   // Build iframe URLs
   const postCountdownToActiveSlide = useCallback(
@@ -402,7 +407,6 @@ export default function DashboardSlideshow({
         progressIntervalRef.current = null;
       }
       remainingMsRef.current = ROTATION_INTERVAL;
-      setTimerProgress(0);
       return () => undefined;
     }
 
@@ -421,14 +425,9 @@ export default function DashboardSlideshow({
     startTimeRef.current = Date.now();
 
     const publishCountdown = (remainingMs: number) => {
-      const progress = Math.min(
-        ((ROTATION_INTERVAL - remainingMs) / ROTATION_INTERVAL) * 100,
-        100,
-      );
       const remainingSeconds = Math.ceil(remainingMs / 1000);
       const progressRatio = remainingMs / ROTATION_INTERVAL;
 
-      setTimerProgress(progress);
       postCountdownToActiveSlide(remainingSeconds, progressRatio);
     };
 
@@ -509,35 +508,169 @@ export default function DashboardSlideshow({
     };
   }, [currentSlide, isOpen, syncTimerOffset, timerSyncKey]);
 
-  // Show overlay when slide changes
-  const showOverlay = useCallback(() => {
-    setOverlayVisible(true);
+  useEffect(() => {
+    if (!isOpen) {
+      setShowInitProgressBar(false);
+      setInitProgress(0);
+      return () => undefined;
+    }
 
+    setShowInitProgressBar(true);
+    setInitProgress(0);
+
+    const startTime = Date.now();
+    let hideTimeoutId = 0;
+
+    const intervalId = window.setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progress = Math.min(
+        (elapsed / SLIDESHOW_INIT_BAR_DURATION) * 100,
+        100,
+      );
+      setInitProgress(progress);
+
+      if (progress >= 100) {
+        window.clearInterval(intervalId);
+        hideTimeoutId = window.setTimeout(() => {
+          setShowInitProgressBar(false);
+        }, 180);
+      }
+    }, 50);
+
+    return () => {
+      window.clearInterval(intervalId);
+      if (hideTimeoutId) {
+        window.clearTimeout(hideTimeoutId);
+      }
+    };
+  }, [isOpen]);
+
+  const clearOverlayTimer = useCallback(() => {
     if (overlayTimeoutRef.current) {
       clearTimeout(overlayTimeoutRef.current);
+      overlayTimeoutRef.current = null;
     }
-
-    overlayTimeoutRef.current = setTimeout(() => {
-      setOverlayVisible(false);
-    }, 5000); // Hide after 5 seconds
   }, []);
 
-  // Show overlay on slide change
-  useEffect(() => {
-    if (isOpen) {
-      showOverlay();
+  const showOverlay = useCallback(() => {
+    clearOverlayTimer();
+    setOverlayVisible(true);
+  }, [clearOverlayTimer]);
+
+  const showOverlayTemporarily = useCallback(() => {
+    showOverlay();
+    overlayTimeoutRef.current = setTimeout(() => {
+      overlayTimeoutRef.current = null;
+      setOverlayVisible(false);
+    }, 4500);
+  }, [showOverlay]);
+
+  const hideOverlay = useCallback(() => {
+    clearOverlayTimer();
+    setOverlayVisible(false);
+  }, [clearOverlayTimer]);
+
+  const isInsideHeader = useCallback((target: EventTarget | null) => {
+    if (!(target instanceof Node)) {
+      return false;
     }
-  }, [currentSlide, isOpen, showOverlay]);
+
+    return Boolean(headerRef.current?.contains(target));
+  }, []);
+
+  const handleHeaderLeave = useCallback(
+    (_event: ReactMouseEvent<HTMLDivElement>) => {
+      hideOverlay();
+    },
+    [hideOverlay],
+  );
+
+  useEffect(() => {
+    if (!isOpen) {
+      return () => undefined;
+    }
+
+    const hoverThreshold = SLIDESHOW_HEADER_HEIGHT + 20;
+    const handleMouseMove = (event: MouseEvent) => {
+      if (event.clientY <= hoverThreshold) {
+        showOverlay();
+      }
+    };
+
+    document.addEventListener('mousemove', handleMouseMove);
+
+    return () => {
+      document.removeEventListener('mousemove', handleMouseMove);
+    };
+  }, [isOpen, showOverlay]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      return () => undefined;
+    }
+
+    const activeIframe = iframeRefs.current[currentSlide];
+    const iframeWindow = activeIframe?.contentWindow;
+    const iframeDocument = activeIframe?.contentDocument ?? iframeWindow?.document;
+
+    if (!iframeWindow || !iframeDocument) {
+      return () => undefined;
+    }
+
+    const hoverThreshold = SLIDESHOW_HEADER_HEIGHT + 20;
+    const handleIframeMouseMove = (event: MouseEvent) => {
+      if (event.clientY <= hoverThreshold) {
+        showOverlay();
+      }
+    };
+
+    iframeWindow.addEventListener('mousemove', handleIframeMouseMove);
+    iframeDocument.addEventListener('mousemove', handleIframeMouseMove);
+
+    return () => {
+      iframeWindow.removeEventListener('mousemove', handleIframeMouseMove);
+      iframeDocument.removeEventListener('mousemove', handleIframeMouseMove);
+    };
+  }, [currentSlide, isOpen, showOverlay, timerSyncKey]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      hideOverlay();
+      return () => undefined;
+    }
+
+    showOverlayTemporarily();
+    return () => {
+      clearOverlayTimer();
+    };
+  }, [clearOverlayTimer, currentSlide, hideOverlay, isOpen, showOverlayTemporarily]);
+
+  useEffect(() => {
+    if (!isOpen) {
+      clearOverlayTimer();
+      return () => undefined;
+    }
+
+    const handlePointerDown = (event: PointerEvent) => {
+      if (isInsideHeader(event.target)) {
+        return;
+      }
+
+      hideOverlay();
+    };
+
+    document.addEventListener('pointerdown', handlePointerDown);
+
+    return () => {
+      document.removeEventListener('pointerdown', handlePointerDown);
+    };
+  }, [clearOverlayTimer, hideOverlay, isInsideHeader, isOpen]);
 
   useEffect(() => {
     if (!isOpen) return () => undefined;
 
-    const handlePointerActivity = () => {
-      showOverlay();
-    };
-
     const handleKeyDown = (e: KeyboardEvent) => {
-      showOverlay();
+      showOverlayTemporarily();
 
       if (e.key === 'Escape') {
         onClose();
@@ -551,21 +684,12 @@ export default function DashboardSlideshow({
       }
     };
 
-    document.addEventListener('mousemove', handlePointerActivity);
-    document.addEventListener('touchstart', handlePointerActivity, {
-      passive: true,
-    });
     document.addEventListener('keydown', handleKeyDown);
 
     return () => {
-      document.removeEventListener('mousemove', handlePointerActivity);
-      document.removeEventListener('touchstart', handlePointerActivity);
       document.removeEventListener('keydown', handleKeyDown);
-      if (overlayTimeoutRef.current) {
-        clearTimeout(overlayTimeoutRef.current);
-      }
     };
-  }, [isOpen, onClose, showOverlay]);
+  }, [isOpen, onClose, showOverlayTemporarily]);
 
   // Handle iframe load
   const handleIframeLoad = useCallback(
@@ -578,7 +702,6 @@ export default function DashboardSlideshow({
       if (slideIndex === currentSlide) {
         remainingMsRef.current = ROTATION_INTERVAL;
         startTimeRef.current = Date.now();
-        setTimerProgress(0);
         setTimerSyncKey(previousKey => previousKey + 1);
         syncTimerOffset(slideIndex);
         postCountdownToActiveSlide(Math.ceil(ROTATION_INTERVAL / 1000), 1);
@@ -591,7 +714,6 @@ export default function DashboardSlideshow({
     remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(index);
     startTimeRef.current = Date.now();
-    setTimerProgress(0);
   }, []);
 
   // Previous/Next handlers
@@ -599,21 +721,25 @@ export default function DashboardSlideshow({
     remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(prev => (prev - 1 + SLIDES.length) % SLIDES.length);
     startTimeRef.current = Date.now();
-    setTimerProgress(0);
   }, []);
 
   const handleNext = useCallback(() => {
     remainingMsRef.current = ROTATION_INTERVAL;
     setCurrentSlide(prev => (prev + 1) % SLIDES.length);
     startTimeRef.current = Date.now();
-    setTimerProgress(0);
   }, []);
 
   if (!isOpen) return null;
 
   return (
     <SlideshowContainer isDarkMode={isDarkMode}>
-      <SlideshowHeader isDarkMode={isDarkMode} isVisible={overlayVisible}>
+      <SlideshowHeader
+        ref={headerRef}
+        isDarkMode={isDarkMode}
+        isVisible={overlayVisible}
+        onMouseEnter={showOverlay}
+        onMouseLeave={handleHeaderLeave}
+      >
         <SlideshowHeaderContent>
           <HeaderSide>
             <HeaderControls>
@@ -674,12 +800,8 @@ export default function DashboardSlideshow({
         </SlideshowHeaderContent>
       </SlideshowHeader>
 
-      {!isPaused && timerAlignment?.slideIndex === currentSlide && (
-        <TimerBar
-          progress={timerProgress}
-          isDarkMode={isDarkMode}
-          topOffset={timerAlignment.topOffset}
-        />
+      {showInitProgressBar && (
+        <TimerBar progress={initProgress} isDarkMode={isDarkMode} />
       )}
 
       {/* Render all iframes but only show the active one */}

@@ -255,10 +255,10 @@ body {
 .dark-theme .refresh-badge {
   margin-left: auto !important;
   background: #2c2b2b !important;
-  border: 3px solid #444749 !important;
+  border: 1px solid #444749 !important;
   padding: 4px 10px !important;
   border-radius: 20px !important;
-  font-size: 24px !important;
+  font-size: 15px !important;
   font-weight: 400 !important;
   color: #ececec !important;
   display: flex !important;
@@ -268,24 +268,24 @@ body {
 }
 
 .dark-theme .clock-icon {
-  font-size: 24px !important;
+  font-size: 20px !important;
   margin-right: 4px !important;
 }
 
 .dark-theme .refresh-time {
   color: #c3c3c4 !important;
-  font-size: 24px !important;
-  font-weight: bold !important;
+  font-size: 13px !important;
+  font-weight: 600 !important;
 }
 
 .dark-theme .refresh-text em {
   color: #aaa !important;
-  font-size: 24px;
+  font-size: 13px !important;
 }
 
 .dark-theme .refresh-label {
   color: #fcfcfc !important;
-  font-size: 24px;
+  font-size: 13px !important;
 }
 
 /* Header ellipsis menu button */
