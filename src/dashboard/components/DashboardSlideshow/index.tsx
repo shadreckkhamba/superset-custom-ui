@@ -28,6 +28,27 @@ const SlideshowContainer = styled.div<{ isDarkMode: boolean }>`
   transition: opacity 0.3s ease;
 `;
 
+const SlideshowHeader = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  height: ${SLIDESHOW_HEADER_HEIGHT}px;
+  background: ${({ isDarkMode }) =>
+    isDarkMode
+      ? 'linear-gradient(180deg, rgba(0,0,0,0.82) 0%, rgba(0,0,0,0) 100%)'
+      : 'linear-gradient(180deg, rgba(255,255,255,0.95) 0%, rgba(255,255,255,0) 100%)'};
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 24px;
+  z-index: 10000;
+  opacity: ${({ isVisible }) => (isVisible ? 1 : 0)};
+  pointer-events: ${({ isVisible }) => (isVisible ? 'auto' : 'none')};
+  transition: opacity 0.3s ease;
+`;
+
+
 const OverlayContainer = styled.div<{ isDarkMode: boolean; isVisible: boolean }>`
   position: absolute;
   top: 50%;
@@ -463,7 +484,7 @@ export default function DashboardSlideshow({
 
   return (
     <SlideshowContainer isDarkMode={isDarkMode}>
-      <SlideshowHeader isDarkMode={isDarkMode} isVisible={controlsVisible}>
+      <SlideshowHeader isDarkMode={isDarkMode} isVisible={overlayVisible}>
         <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
           <span
             style={{
