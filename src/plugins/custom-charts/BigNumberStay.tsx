@@ -1071,19 +1071,24 @@ useEffect(() => {
           const normalizedDayKey = selectedDayKey || stayData?.today?.date || toDateKey(new Date());
           const filteredDistribution = stayDistributionByDay[normalizedDayKey] || [];
 
-          // Fixed grid layout: 6 rows x 50 columns = 300 boxes
-          const rows = 6;
+          // Fixed grid layout: 4 visible rows to keep all buckets on-screen
+          const rows = 4;
           const cols = 50;
           const totalBoxes = rows * cols;
           
-          const maxHours = 10;
-          const intervalMinutes = (maxHours * 60) / totalBoxes; // ~1.2 minutes per box
+          const maxHours = 5;
+          const intervalMinutes = (maxHours * 60) / totalBoxes; // ~1 minute per box
+          const clampedMaxHours = maxHours - Number.EPSILON;
+          const normalizedDistribution = filteredDistribution.map(d => ({
+            ...d,
+            hours: Math.min(d.hours, clampedMaxHours),
+          }));
           
           // Raw (discrete) counts per bucket for tooltip display
           const rawCounts = Array.from({ length: totalBoxes }, (_, i) => {
             const startHours = (i * intervalMinutes) / 60;
             const endHours = ((i + 1) * intervalMinutes) / 60;
-            return filteredDistribution.filter(
+            return normalizedDistribution.filter(
               d => d.hours >= startHours && d.hours < endHours
             ).reduce((sum, d) => sum + d.count, 0);
           });
@@ -1091,7 +1096,7 @@ useEffect(() => {
           // Create smoothed counts by distributing each patient across nearby buckets
           const smoothedCounts = Array.from({ length: totalBoxes }, () => 0);
           const radius = 2; // buckets on each side
-          filteredDistribution.forEach((d) => {
+          normalizedDistribution.forEach((d) => {
             if (d.count <= 0) return;
             const position = (d.hours * 60) / intervalMinutes; // in bucket units
             const center = Math.floor(position);
@@ -1141,33 +1146,67 @@ useEffect(() => {
               intensity: maxCount > 0 ? count / maxCount : 0,
             };
           });
+
+          // Render grid column-major so each column maps to a contiguous time window.
+          // This makes hover ranges visually align with the x-axis time markers.
+          const gridBuckets = Array.from({ length: totalBoxes }, (_, gridIdx) => {
+            const row = Math.floor(gridIdx / cols);
+            const col = gridIdx % cols;
+            const bucket = buckets[col * rows + row];
+            return { row, col, bucket };
+          });
+
+          const markerStepMinutes = 20;
+          const timeMarkers = Array.from(
+            { length: Math.floor((maxHours * 60) / markerStepMinutes) + 1 },
+            (_, idx) => {
+              const minutes = idx * markerStepMinutes;
+              const hoursPart = Math.floor(minutes / 60);
+              const minutesPart = minutes % 60;
+              const label =
+                minutes === 0
+                  ? '0'
+                  : hoursPart === 0
+                  ? `${minutes}m`
+                  : minutesPart === 0
+                  ? `${hoursPart}h`
+                  : `${hoursPart}h${minutesPart}`;
+              return { label, minutes };
+            },
+          );
           
           return (
             <>
               {/* Time indicators */}
               <div className="heatmap-time-indicators" style={{ 
-                display: 'flex', 
-                justifyContent: 'space-between',
+                position: 'relative',
+                width: '100%',
+                height: 'clamp(22px, 2.8vh, 28px)',
                 fontSize: 'clamp(0.82rem, 1.05vw, 0.96rem)',
                 color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
                 fontWeight: 600,
-                paddingLeft: '2px',
-                paddingRight: '2px',
               }}>
-                {[
-                  '10m','20m','30m','40m','50m',
-                  '1h','2h','3h','4h','5h',
-                  '6h','7h','8h','9h','10h',
-                ].map((label) => (
+                {timeMarkers.map((marker) => {
+                  const markerPercent = (marker.minutes / (maxHours * 60)) * 100;
+                  const markerPositionStyle =
+                    marker.minutes <= 0
+                      ? { left: '0%', transform: 'translateX(0)' }
+                      : marker.minutes >= maxHours * 60
+                      ? { left: '100%', transform: 'translateX(-100%)' }
+                      : { left: `${markerPercent}%`, transform: 'translateX(-50%)' };
+
+                  return (
                   <div
-                    key={label}
+                    key={marker.label}
                     style={{
-                      position: 'relative',
+                      position: 'absolute',
+                      top: 0,
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: '2px',
                       minWidth: '14px',
+                      ...markerPositionStyle,
                     }}
                   >
                     <div
@@ -1179,9 +1218,18 @@ useEffect(() => {
                         boxShadow: '0 1px 3px rgba(24, 144, 255, 0.35)',
                       }}
                     />
-                    <span>{label}</span>
+                    <span
+                      style={{
+                        whiteSpace: 'nowrap',
+                        fontSize: 'clamp(0.68rem, 0.86vw, 0.86rem)',
+                        lineHeight: 1,
+                      }}
+                    >
+                      {marker.label}
+                    </span>
                   </div>
-                ))}
+                  );
+                })}
               </div>
               
               {/* Heatmap boxes */}
@@ -1196,7 +1244,7 @@ useEffect(() => {
                 overflow: 'hidden',
                 borderRadius: '6px',
               }}>
-                {buckets.map((bucket, idx) => {
+                {gridBuckets.map(({ bucket }, idx) => {
                   // Color intensity based on count
                   const baseColor = { r: 24, g: 144, b: 255 }; // #1890ff
                   const alpha = bucket.count === 0 
@@ -1216,7 +1264,6 @@ useEffect(() => {
                       key={idx}
                       className="heatmap-box"
                       style={{
-                        aspectRatio: '1',
                         backgroundColor: `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${alpha})`,
                         borderRadius: '2px',
                         border: isDarkMode 
