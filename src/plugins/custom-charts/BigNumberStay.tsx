@@ -297,7 +297,7 @@ const loadData = async (resetToToday = false) => {
     const resp = await fetchStayTimes();
     if (!resp) return;
 
-    console.log('API Response:', resp); // Debug log
+    console.log('API Response:', resp); // Debug logging
 
     setStayData(resp);
 

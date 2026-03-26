@@ -640,6 +640,9 @@ useEffect(() => {
   const legendItemLabelGap = isExpanded ? '8px' : '10px';
   const legendDotSize = isExpanded ? '10px' : '12px';
   const legendLabelFontSize = isExpanded ? '13px' : '20px';
+  const legendWrapperPaddingTop = isExpanded ? '16px' : '50px';
+  const infoButtonTop = isExpanded ? '-2px' : '0px';
+  const infoButtonRight = isExpanded ? '-2px' : '0px';
   
   return (
     <div
@@ -669,13 +672,14 @@ useEffect(() => {
       }}
     >
       <button
+        className="pie-stay-info-button"
         type="button"
         aria-label="What am I seeing?"
         onClick={openInfoModal}
         style={{
           position: 'absolute',
-          top: '0px',
-          right: '2px',
+          top: infoButtonTop,
+          right: infoButtonRight,
           width: '32px',
           height: '32px',
           borderRadius: '999px',
@@ -710,7 +714,7 @@ useEffect(() => {
             flex-wrap: wrap !important;
           }
         }
-        
+
         /* Dark mode menu button fix */
         [data-theme="dark"] .antd5-btn.antd5-btn-default.antd5-btn-color-default.antd5-btn-variant-outlined,
         [data-theme="dark"] .superset-button.superset-button-tertiary,
@@ -1088,9 +1092,11 @@ useEffect(() => {
           style={{ 
           flex: '0 0 auto',
           alignSelf: 'flex-start',
-          paddingTop: isExpanded ? '16px' : '50px',
+          paddingTop: legendWrapperPaddingTop,
         }}>
-        <div style={{ 
+        <div
+          className="pie-stay-legend-card"
+          style={{ 
           display: 'flex', 
           flexDirection: 'column', 
           gap: legendGap,
@@ -1105,7 +1111,9 @@ useEffect(() => {
             : '0 4px 16px rgba(0,0,0,0.08)',
           transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
         }}>
-          <div style={{
+          <div
+            className="pie-stay-legend-title"
+            style={{
             fontSize: legendTitleFontSize,
             fontWeight: 700,
             color: isDarkMode ? '#e0e0e0' : '#333',
@@ -1126,6 +1134,7 @@ useEffect(() => {
 
             return (
               <div
+                className="pie-stay-legend-item"
                 key={idx}
                 onClick={() => {
                   if (isVisible) {
@@ -1178,6 +1187,7 @@ useEffect(() => {
                 {/* Left side - color dot + label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: legendItemLabelGap, flex: 1 }}>
                   <div
+                    className="pie-stay-legend-dot"
                     style={{
                       width: legendDotSize,
                       height: legendDotSize,
@@ -1187,7 +1197,9 @@ useEffect(() => {
                       flexShrink: 0,
                     }}
                   />
-                  <span style={{ 
+                  <span
+                    className="pie-stay-legend-label"
+                    style={{ 
                     fontSize: legendLabelFontSize, 
                     fontWeight: 600, 
                     color: isDarkMode ? '#e0e0e0' : '#333',
