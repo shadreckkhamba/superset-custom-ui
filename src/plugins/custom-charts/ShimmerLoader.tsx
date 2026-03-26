@@ -177,12 +177,11 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
           <div
             className="shimmer"
             style={{
-              width: '100%',
-              height: '100%',
-              maxWidth: 'clamp(220px, 30vw, 360px)',
-              maxHeight: 'clamp(220px, 30vw, 360px)',
+              width: 'clamp(170px, 64%, 340px)',
+              maxWidth: '100%',
+              aspectRatio: '1 / 1',
+              height: 'auto',
               borderRadius: '50%',
-              aspectRatio: '1',
             }}
           />
         </div>

@@ -545,7 +545,10 @@ useEffect(() => {
 
           // Label text - keep readable but avoid clipping on smaller/denser views
           const text = `${value.toFixed(1)}%`;
-          const fontSize = Math.min(Math.max(16, chartRadius * 0.08), 26);
+          const isLargeCanvas = canvasHeight >= 340;
+          const fontSize = isLargeCanvas
+            ? Math.min(Math.max(20, chartRadius * 0.11), 32)
+            : Math.min(Math.max(16, chartRadius * 0.08), 26);
           ctx.font = `bold ${fontSize}px sans-serif`;
           
           ctx.fillStyle = labelColor;
@@ -715,6 +718,39 @@ useEffect(() => {
           }
         }
 
+        /* Expanded pie container:
+           use available middle width for label room while keeping pie diameter stable via fixed height. */
+        .pie-stay-wrapper .pie-stay-chart-container--expanded {
+          flex: 1 1 0 !important;
+          width: 100% !important;
+          max-width: 100% !important;
+          height: 360px !important;
+          min-height: 360px !important;
+          max-height: 360px !important;
+          aspect-ratio: auto !important;
+          align-self: stretch !important;
+          margin: 0 !important;
+          padding: 4px !important;
+        }
+
+        .pie-stay-wrapper .pie-stay-chart-container--expanded canvas {
+          width: 100% !important;
+          height: 100% !important;
+          max-width: 100% !important;
+          max-height: 100% !important;
+          object-fit: contain !important;
+        }
+
+        /* Slightly shorter on smaller/medium screens (already working there). */
+        @media (max-width: 1400px) {
+          .pie-stay-wrapper .pie-stay-chart-container--expanded {
+            height: 300px !important;
+            min-height: 300px !important;
+            max-height: 300px !important;
+            margin: 0 8px !important;
+          }
+        }
+        
         /* Dark mode menu button fix */
         [data-theme="dark"] .antd5-btn.antd5-btn-default.antd5-btn-color-default.antd5-btn-variant-outlined,
         [data-theme="dark"] .superset-button.superset-button-tertiary,
@@ -753,7 +789,7 @@ useEffect(() => {
         width: '100%',
         height: isExpanded ? 'auto' : '100%',
         flex: isExpanded ? '0 0 auto' : '1 1 0',
-        justifyContent: 'space-between',
+        justifyContent: isExpanded ? 'flex-start' : 'space-between',
         flexWrap: isExpanded ? 'wrap' : 'nowrap',
         minHeight: isExpanded ? '0' : '520px',
         maxHeight: isExpanded ? 'none' : '640px',
@@ -1058,7 +1094,7 @@ useEffect(() => {
 
           {/* Center - Pie Chart */}
           <div 
-            className="chart-container pie-stay-chart-container"
+            className={`chart-container pie-stay-chart-container${isExpanded ? ' pie-stay-chart-container--expanded' : ''}`}
             style={{
               flex: isExpanded ? '0 1 auto' : '1 1 0',
               width: isExpanded ? 'clamp(220px, 28vw, 360px)' : '100%',
