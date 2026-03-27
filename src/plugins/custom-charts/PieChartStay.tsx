@@ -93,12 +93,14 @@ interface PieChartStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   isExpanded?: boolean;
+  autoRefresh?: boolean;
 }
 export default function StayTimePie({
   refreshKey,
   resetKey,
   isDarkMode = false,
   isExpanded = false,
+  autoRefresh = true,
 }: PieChartStayProps): JSX.Element {
   const [percentages, setPercentages] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
@@ -268,13 +270,17 @@ useEffect(() => {
   setActualPercent(null);
   setAnimatedPercent(0);
   loadData();
-  
+
+  if (!autoRefresh) {
+    return undefined;
+  }
+
   const intervalId = setInterval(() => {
     loadData();
   }, 60000);
 
   return () => clearInterval(intervalId);
-}, [selectedPeriod]);
+}, [autoRefresh, selectedPeriod]);
 
 // If the focused slice disappears in a new dataset, fall back to all slices
 useEffect(() => {

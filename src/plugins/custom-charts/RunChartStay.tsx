@@ -194,6 +194,7 @@ interface RunChartStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   compact?: boolean;
+  autoRefresh?: boolean;
 }
 
 const createNoDataPlugin = (isDarkMode: boolean) => ({
@@ -221,6 +222,7 @@ export default function RunChartStay({
   resetKey,
   isDarkMode = false,
   compact = false,
+  autoRefresh = true,
 }: RunChartStayProps): JSX.Element {
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -388,15 +390,15 @@ export default function RunChartStay({
   }, [resetKey, handleReload]);
 
   // Initial fetch + interval - only auto-refresh when viewing current week
-  useEffect(() => {
-    fetchData();
-    // Only auto-refresh if viewing current week (weekOffset === 0)
-    if (weekOffset === 0) {
-      const id = setInterval(fetchData, 60000);
-      return () => clearInterval(id);
-    }
-    return undefined;
-  }, [fetchData, weekOffset]);
+useEffect(() => {
+  fetchData();
+  // Only auto-refresh if viewing current week (weekOffset === 0)
+  if (autoRefresh && weekOffset === 0) {
+    const id = setInterval(fetchData, 60000);
+    return () => clearInterval(id);
+  }
+  return undefined;
+}, [autoRefresh, fetchData, weekOffset]);
 
   // Force chart to fully re-measure modal container after mount/render transitions.
   useEffect(() => {

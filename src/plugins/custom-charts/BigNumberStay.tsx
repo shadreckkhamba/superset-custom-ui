@@ -138,6 +138,7 @@ interface BigNumberStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   isExpanded?: boolean;
+  autoRefresh?: boolean;
 }
 type TrendDay = { day: string; avg_hours: number };
 // Synchronous fetch
@@ -158,6 +159,7 @@ export default function BigNumberStay({
   resetKey,
   isDarkMode = false,
   isExpanded = false,
+  autoRefresh = true,
 }: BigNumberStayProps): JSX.Element {
   const [bigNumber, setBigNumber] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number>(0);
@@ -436,6 +438,10 @@ useEffect(
 
 // Auto refresh every 60s - only when viewing today's data
 useEffect(() => {
+  if (!autoRefresh) {
+    return undefined;
+  }
+
   const intervalId = setInterval(() => {
     if (selectedIsToday) {
       loadData();
@@ -443,7 +449,7 @@ useEffect(() => {
   }, 60000);
 
   return () => clearInterval(intervalId);
-}, [selectedIsToday]);
+}, [autoRefresh, selectedIsToday]);
 
   // Graph options
   const gradientPlugin: Plugin<'line'> = {

@@ -1303,6 +1303,7 @@ const Header = () => {
         const data = await res.json();
 
         const apiTimestamp = new Date(data.last_updated).getTime();
+        const isFirstTimestamp = lastUpdatedRef.current === 0;
         if (apiTimestamp > lastUpdatedRef.current) {
           console.log('API change detected — refreshing charts');
           lastUpdatedRef.current = apiTimestamp;
@@ -1311,6 +1312,15 @@ const Header = () => {
           const affectedCharts = chartIds.filter(id => !immune.includes(id));
   
            boundActionCreators.fetchCharts(affectedCharts, true, 0, dashboardInfo.id);
+
+          // In slideshow, also refresh the Patient Stay view charts when new data lands.
+          // This keeps the Stay slide in sync with the same update-status signal driving
+          // the Clinical Service Monitoring refresh.
+          if (!isFirstTimestamp && isSlideshow && isPatientStayView) {
+            setBigNumberRefreshKey(prev => prev + 1);
+            setPieRefreshKey(prev => prev + 1);
+            setRunChartRefreshKey(prev => prev + 1);
+          }
         }
       } catch (err) {
         console.error('Failed to poll update status:', err);
@@ -1318,7 +1328,15 @@ const Header = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [chartIds, dashboardInfo.id, dashboardInfo.metadata, isStandalone, boundActionCreators]);
+  }, [
+    chartIds,
+    dashboardInfo.id,
+    dashboardInfo.metadata,
+    isStandalone,
+    boundActionCreators,
+    isPatientStayView,
+    isSlideshow,
+  ]);
 
   useEffect(() => {
     if (UNDO_LIMIT - undoLength <= 0 && !didNotifyMaxUndoHistoryToast) {
@@ -2663,6 +2681,7 @@ const handleSaveAsImage = async () => {
                     resetKey={bigNumberResetKey}
                     isDarkMode={isDarkMode}
                     isExpanded
+                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -2699,6 +2718,7 @@ const handleSaveAsImage = async () => {
                     resetKey={pieResetKey}
                     isDarkMode={isDarkMode}
                     isExpanded
+                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -2735,6 +2755,7 @@ const handleSaveAsImage = async () => {
                     resetKey={runChartResetKey}
                     isDarkMode={isDarkMode}
                     compact
+                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -3707,6 +3728,7 @@ const handleSaveAsImage = async () => {
                   refreshKey={bigNumberRefreshKey}
                   resetKey={bigNumberResetKey}
                   isDarkMode={isDarkMode}
+                  autoRefresh={!isSlideshow}
                 />
               </div>
             </div>
@@ -3816,6 +3838,7 @@ const handleSaveAsImage = async () => {
                   refreshKey={pieRefreshKey}
                   resetKey={pieResetKey}
                   isDarkMode={isDarkMode}
+                  autoRefresh={!isSlideshow}
                 />
               </div>
             </div>
@@ -3925,6 +3948,7 @@ const handleSaveAsImage = async () => {
                 refreshKey={runChartRefreshKey}
                 resetKey={runChartResetKey}
                 isDarkMode={isDarkMode}
+                autoRefresh={!isSlideshow}
               />
             </div>
             </div>

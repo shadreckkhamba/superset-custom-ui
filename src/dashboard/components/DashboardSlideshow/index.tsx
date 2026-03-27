@@ -255,7 +255,7 @@ const SLIDES = [
   { key: 'stay', label: 'Patient Stay Times', view: 'stay' },
 ];
 
-const ROTATION_INTERVAL = 60000; // 60 seconds per slide
+const ROTATION_INTERVAL = 120000; // 60 seconds per slide
 const TITLE_PULSE_INTERVAL_MS = 30000;
 const TITLE_PULSE_DURATION_MS = 5000;
 
