@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useMemo } from 'react';
+import React, { useEffect, useMemo, useState } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
 import { Hash, Database, TrendingUp, Trophy } from 'lucide-react';
@@ -209,6 +209,14 @@ const SectionTitle = styled.h3`
   height: auto;
 `;
 
+const SectionMeta = styled.div`
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--color-text-muted);
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+`;
+
 const DataTable = styled.div`
   flex: 1;
   overflow: auto;
@@ -369,7 +377,7 @@ const TrendIcon = styled.span`
 
 
 // Types
-interface TableChartProps {
+interface UnifiedChartTableProps {
   data?: DataRecord[];
   height?: number;
   width?: number;
@@ -381,11 +389,15 @@ const locationColors = [
   '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
 ];
 
-export default function TableChart({
+const AUTO_ROTATE_MS = 9000;
+const ESTIMATED_FIXED_HEIGHT = 260;
+const ESTIMATED_ROW_HEIGHT = 56;
+
+export default function UnifiedChartTable({
   data,
   height,
   width = 900,
-}: TableChartProps) {
+}: UnifiedChartTableProps) {
   // Calculate dynamic height based on data
   const dynamicHeight = useMemo(() => {
     if (!data || data.length === 0) return 400;
@@ -460,6 +472,36 @@ export default function TableChart({
     return Math.max(...data.map(row => Number(row[valueColumn]) || 0));
   }, [data, valueColumn]);
 
+  const rowsPerPage = useMemo(
+    () =>
+      Math.max(
+        1,
+        Math.floor((containerHeight - ESTIMATED_FIXED_HEIGHT) / ESTIMATED_ROW_HEIGHT),
+      ),
+    [containerHeight],
+  );
+  const totalRows = data?.length || 0;
+  const totalPages = Math.max(1, Math.ceil(totalRows / rowsPerPage));
+  const [pageIndex, setPageIndex] = useState(0);
+
+  useEffect(() => {
+    setPageIndex(0);
+  }, [totalRows, rowsPerPage]);
+
+  useEffect(() => {
+    if (totalPages <= 1) return undefined;
+    const timer = window.setInterval(() => {
+      setPageIndex(prev => (prev + 1) % totalPages);
+    }, AUTO_ROTATE_MS);
+    return () => window.clearInterval(timer);
+  }, [totalPages]);
+
+  const pagedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const start = pageIndex * rowsPerPage;
+    return data.slice(start, start + rowsPerPage);
+  }, [data, pageIndex, rowsPerPage]);
+
   return (
     <Container $dynamicHeight={containerHeight} style={{ width: '100%' }}>
       {/* KPI Banner */}
@@ -511,6 +553,7 @@ export default function TableChart({
         <TableSection>
           <SectionHeader>
             <SectionTitle>Data Distribution</SectionTitle>
+            <SectionMeta>{`Page ${pageIndex + 1}/${totalPages}`}</SectionMeta>
           </SectionHeader>
           <DataTable>
             <Table>
@@ -522,14 +565,15 @@ export default function TableChart({
                 </tr>
               </TableHead>
               <TableBody>
-                {data?.map((row, rowIndex) => {
+                {pagedData.map((row, rowIndex) => {
+                  const globalIndex = rowIndex + pageIndex * rowsPerPage;
                   const barWidth = maxBarValue > 0 && valueColumn
                     ? (Number(row[valueColumn]) / maxBarValue) * 100
                     : 0;
-                  const color = locationColors[rowIndex % locationColors.length];
+                  const color = locationColors[globalIndex % locationColors.length];
                   
                   return (
-                    <TableRow key={rowIndex}>
+                    <TableRow key={globalIndex}>
                       {columns.map((col, colIndex) => {
                         const value = row[col];
                         const isNumeric = numericColumns.includes(col);
