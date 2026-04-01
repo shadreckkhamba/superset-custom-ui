@@ -16,40 +16,33 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecord } from '@superset-ui/core';
 
-interface TableChartProps {
-  height: number;
-  width: number;
-  queriesData?: Array<{
-    data?: DataRecord[];
-  }>;
+import {
+  QueryFormData,
+  QueryFormMetric,
+} from '@superset-ui/core';
+import { BaseChartProps } from '../../types';
+
+export interface DoughnutChartDataItem {
+  name: string;
+  value: number;
 }
 
-interface TableChartTransformedProps {
-  height: number;
-  width: number;
-  data: DataRecord[];
-}
-
-const transformProps = (
-  chartProps: TableChartProps,
-): TableChartTransformedProps => {
-  const {
-    height,
-    width,
-    queriesData = [],
-  } = chartProps;
-
-  // Pass data directly to the chart component for custom visualization
-  const baseQuery = queriesData[0];
-  const data = baseQuery?.data || [];
-  
-  return {
-    height,
-    width,
-    data,
-  };
+export type DoughnutChartFormData = QueryFormData & {
+  metric?: QueryFormMetric;
+  title?: string;
+  data?: DoughnutChartDataItem[];
 };
 
-export default transformProps;
+export type DoughnutChartChartProps =
+  BaseChartProps<DoughnutChartFormData> & {
+    formData: DoughnutChartFormData;
+  };
+
+export type DoughnutChartProps = {
+  className?: string;
+  width: number;
+  height: number;
+  data: DoughnutChartDataItem[];
+  title?: string;
+};

@@ -1,0 +1,38 @@
+{
+  "name": "@superset-ui/plugin-chart-patient-analytics",
+  "version": "0.1.0",
+  "description": "Custom patient analytics charts for Apache Superset",
+  "publishConfig": {
+    "access": "public"
+  },
+  "keywords": [
+    "superset",
+    "superset-ui",
+    "echarts",
+    "patient-analytics"
+  ],
+  "main": "lib/index.js",
+  "module": "lib/index.esm.js",
+  "types": "lib/index.d.ts",
+  "files": [
+    "lib"
+  ],
+  "scripts": {
+    "build": "tsc",
+    "dev": "tsc --watch",
+    "test": "jest"
+  },
+  "dependencies": {
+    "@superset-ui/core": "*",
+    "echarts": "*",
+    "echarts-for-react": "*"
+  },
+  "devDependencies": {
+    "@types/react": "^17.0.0",
+    "typescript": "^5.0.0"
+  },
+  "peerDependencies": {
+    "@superset-ui/core": "*",
+    "react": "^17.0.2"
+  }
+}

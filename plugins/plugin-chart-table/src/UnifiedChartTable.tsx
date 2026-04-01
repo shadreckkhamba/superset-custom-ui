@@ -58,7 +58,7 @@ const themeVars = css`
 `;
 
 // Styled components
-const Container = styled.div`
+const Container = styled.div<{ $dynamicHeight?: number }>`
   ${themeVars}
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
@@ -67,6 +67,10 @@ const Container = styled.div`
   animation: fadeIn 0.5s ease-out;
   display: flex;
   flex-direction: column;
+  height: ${props => props.$dynamicHeight ? `${props.$dynamicHeight}px` : 'auto'};
+  min-height: 300px;
+  max-height: 80vh;
+  transition: height 0.3s ease-in-out;
   
   @keyframes fadeIn {
     from {
@@ -174,14 +178,15 @@ const KPILabel = styled.div`
 const ContentArea = styled.div`
   display: flex;
   flex-direction: column;
-  min-height: 300px;
   flex: 1;
+  overflow: hidden;
 `;
 
 const TableSection = styled.div`
   display: flex;
   flex-direction: column;
   flex: 1;
+  overflow: hidden;
 `;
 
 const SectionHeader = styled.div`
@@ -208,6 +213,7 @@ const DataTable = styled.div`
   flex: 1;
   overflow: auto;
   max-height: 100%;
+  transition: max-height 0.3s ease-in-out;
   
   &::-webkit-scrollbar {
     width: 8px;
@@ -387,9 +393,12 @@ export default function UnifiedChartTable({
     const rowHeight = 60; // Approximate height per row
     const maxRows = 50; // Max rows before scrolling
     const rowCount = Math.min(data.length, maxRows);
-    return baseHeight + (rowCount * rowHeight);
+    const calculatedHeight = baseHeight + (rowCount * rowHeight);
+    // Ensure minimum height and respect max-height
+    return Math.max(300, Math.min(calculatedHeight, window.innerHeight * 0.8));
   }, [data]);
 
+  // Use provided height if available, otherwise use dynamic height
   const containerHeight = height || dynamicHeight;
   // Get column names from data
   const columns = useMemo(() => {
@@ -452,7 +461,7 @@ export default function UnifiedChartTable({
   }, [data, valueColumn]);
 
   return (
-    <Container style={{ height: containerHeight, width: '100%' }}>
+    <Container $dynamicHeight={containerHeight} style={{ width: '100%' }}>
       {/* KPI Banner */}
       <KPIBanner>
         <KPITile bgColor="rgba(13, 148, 136, 0.05)">

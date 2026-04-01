@@ -95,7 +95,7 @@ const config: ControlPanelConfig = {
               type: 'CheckboxControl',
               label: t('Show Trend Line'),
               renderTrigger: true,
-              default: true,
+              default: false,
               description: t('Whether to display the trend line'),
             },
           },

@@ -16,40 +16,32 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecord } from '@superset-ui/core';
+import { t } from '@superset-ui/core';
+import { ControlPanelConfig } from '@superset-ui/chart-controls';
 
-interface TableChartProps {
-  height: number;
-  width: number;
-  queriesData?: Array<{
-    data?: DataRecord[];
-  }>;
-}
-
-interface TableChartTransformedProps {
-  height: number;
-  width: number;
-  data: DataRecord[];
-}
-
-const transformProps = (
-  chartProps: TableChartProps,
-): TableChartTransformedProps => {
-  const {
-    height,
-    width,
-    queriesData = [],
-  } = chartProps;
-
-  // Pass data directly to the chart component for custom visualization
-  const baseQuery = queriesData[0];
-  const data = baseQuery?.data || [];
-  
-  return {
-    height,
-    width,
-    data,
-  };
-};
-
-export default transformProps;
+export default {
+  controlPanelSections: [
+    {
+      label: t('Query'),
+      expanded: true,
+      controlSetRows: [['metric'], ['adhoc_filters']],
+    },
+    {
+      label: t('Chart Options'),
+      expanded: true,
+      controlSetRows: [
+        [
+          {
+            name: 'title',
+            config: {
+              type: 'TextControl',
+              label: t('Title'),
+              description: t('Title text shown in the chart header'),
+              default: 'Distribution',
+            },
+          },
+        ],
+      ],
+    },
+  ],
+} as ControlPanelConfig;

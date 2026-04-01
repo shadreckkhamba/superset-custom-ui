@@ -16,60 +16,183 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
-import { User, Users } from 'lucide-react';
 import { styled } from '@superset-ui/core';
-import { PieChartWithCardsProps, PieChartDataItem } from './types';
+import { PieChartDataItem, PieChartWithCardsProps } from './types';
 
-const SliceLabel = styled.text`
-  font-size: 14px;
-  font-weight: bold;
-  fill: white;
-  text-anchor: middle;
-  dominant-baseline: middle;
-  pointer-events: none;
-  text-shadow: 1px 1px 2px rgba(0, 0, 0, 0.5);
+const FEMALE_COLOR = '#f68a00';
+const MALE_COLOR = '#1174de';
+
+const Container = styled.div`
+  display: flex;
+  flex-direction: column;
+  width: 100%;
+  height: 100%;
+  background: ${({ theme }) => theme.colors.grayscale.light4};
 `;
 
-const renderCustomLabel = ({
-  cx,
-  cy,
-  midAngle,
-  innerRadius,
-  outerRadius,
-  value,
-  name,
-  percentage,
-}: any) => {
-  const RADIAN = Math.PI / 180;
-  const radius = innerRadius + (outerRadius - innerRadius) * 0.5;
-  const x = cx + radius * Math.cos(-midAngle * RADIAN);
-  const y = cy + radius * Math.sin(-midAngle * RADIAN);
-  const icon = name.toLowerCase().includes('male') || name.toLowerCase().includes('man') ? '👨' :
-               name.toLowerCase().includes('female') || name.toLowerCase().includes('woman') ? '👩' : '';
+const Header = styled.div`
+  padding: ${({ theme }) => `${theme.gridUnit * 2}px ${theme.gridUnit * 2}px`};
+  border-bottom: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
+`;
 
-  return (
-    <SliceLabel x={x} y={y}>
-      {icon && `${icon} `}
-      {value.toLocaleString()}
-      {'\n'}
-      {percentage}%
-    </SliceLabel>
-  );
-};
+const Title = styled.h3`
+  margin: 0;
+  font-size: ${({ theme }) => theme.typography.sizes.s}px;
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.primary.dark1};
+`;
 
-const CHART_COLORS = [
-  'hsl(28 85% 55%)', // Female - orange
-  'hsl(210 80% 52%)', // Male - blue
-];
+const Body = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: ${({ theme }) => theme.gridUnit * 2}px;
+  padding: ${({ theme }) => `${theme.gridUnit * 2}px ${theme.gridUnit * 2}px`};
+  flex: 1;
+`;
 
-const ICON_COLORS = [
-  'hsl(28 85% 55%)', // Female - orange
-  'hsl(210 80% 52%)', // Male - blue
-];
+const TotalWrap = styled.div`
+  text-align: center;
+`;
 
-const ICONS = [User, Users]; // User for Female, Users for Male
+const TotalLabel = styled.div`
+  text-transform: uppercase;
+  font-size: ${({ theme }) => theme.typography.sizes.xs}px;
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  letter-spacing: 0.06em;
+  color: ${({ theme }) => theme.colors.grayscale.base};
+`;
+
+const TotalValue = styled.div`
+  font-size: 52px;
+  line-height: 1;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.grayscale.dark2};
+`;
+
+const ChartWrap = styled.div`
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  height: 170px;
+`;
+
+const Pie = styled.div<{ $gradient: string }>`
+  width: 148px;
+  height: 148px;
+  border-radius: 50%;
+  background: ${({ $gradient }) => $gradient};
+`;
+
+const CardsGrid = styled.div`
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(132px, 1fr));
+  gap: ${({ theme }) => theme.gridUnit * 1.5}px;
+  margin-top: auto;
+`;
+
+const Card = styled.div`
+  display: flex;
+  gap: ${({ theme }) => theme.gridUnit * 1.5}px;
+  align-items: center;
+  padding: ${({ theme }) =>
+    `${theme.gridUnit * 1.5}px ${theme.gridUnit * 2}px`};
+  border: 1px solid ${({ theme }) => theme.colors.grayscale.light2};
+  border-radius: ${({ theme }) => theme.gridUnit * 2}px;
+  background: ${({ theme }) => theme.colors.grayscale.light5};
+`;
+
+const Dot = styled.span<{ $color: string }>`
+  display: inline-block;
+  width: 10px;
+  height: 10px;
+  border-radius: 999px;
+  background: ${({ $color }) => $color};
+  flex-shrink: 0;
+`;
+
+const CardText = styled.div`
+  display: flex;
+  flex-direction: column;
+  line-height: 1.1;
+`;
+
+const CardLabel = styled.span`
+  text-transform: uppercase;
+  font-size: ${({ theme }) => theme.typography.sizes.xs}px;
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.grayscale.base};
+  letter-spacing: 0.04em;
+`;
+
+const CardValue = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.xl}px;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.grayscale.dark2};
+`;
+
+const CardPercent = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.s}px;
+  color: ${({ theme }) => theme.colors.grayscale.base};
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+`;
+
+function classifyGender(name: string): 'female' | 'male' | 'unknown' {
+  const value = name.trim().toLowerCase();
+
+  if (
+    value === 'female' ||
+    value === 'f' ||
+    value.includes('female') ||
+    value.includes('woman') ||
+    value.includes('girl')
+  ) {
+    return 'female';
+  }
+
+  if (
+    value === 'male' ||
+    value === 'm' ||
+    value.includes('male') ||
+    value.includes('man') ||
+    value.includes('boy')
+  ) {
+    return 'male';
+  }
+
+  return 'unknown';
+}
+
+function colorForName(name: string, index: number): string {
+  const category = classifyGender(name);
+  if (category === 'female') {
+    return FEMALE_COLOR;
+  }
+  if (category === 'male') {
+    return MALE_COLOR;
+  }
+  return index % 2 === 0 ? FEMALE_COLOR : MALE_COLOR;
+}
+
+function buildPieGradient(
+  data: Array<{ value: number; color: string }>,
+): string {
+  const total = data.reduce((sum, item) => sum + item.value, 0);
+  if (total <= 0 || data.length === 0) {
+    return `conic-gradient(${FEMALE_COLOR} 0deg 360deg)`;
+  }
+
+  let current = 0;
+  const stops: string[] = [];
+
+  data.forEach((item, index) => {
+    const angle =
+      index === data.length - 1 ? 360 : current + (item.value / total) * 360;
+    stops.push(`${item.color} ${current}deg ${angle}deg`);
+    current = angle;
+  });
+
+  return `conic-gradient(${stops.join(', ')})`;
+}
 
 export default function PieChartWithCards({
   data = [],
@@ -77,115 +200,50 @@ export default function PieChartWithCards({
   width,
   height,
 }: PieChartWithCardsProps) {
-  const total = data.reduce(
-    (sum: number, item: PieChartDataItem) => sum + item.value,
-    0,
+  const chartData = (data || []).map(
+    (item: PieChartDataItem, index: number) => ({
+      name: item.name || '',
+      value: Number(item.value) || 0,
+      color: colorForName(item.name || '', index),
+    }),
   );
 
-  const chartData = data.map((item: PieChartDataItem, index: number) => ({
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
+
+  const displayData = chartData.map(item => ({
     ...item,
-    color: CHART_COLORS[index % CHART_COLORS.length],
     percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
   }));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
-      className="rounded-2xl bg-card border border-border shadow-card"
-      style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', width, height }}
-    >
-      {/* Header Bar */}
-      <div className="px-5 py-3 border-b border-border">
-        <h2 className="text-sm font-bold" style={{ color: 'hsl(174 60% 40%)' }}>
-          {title || 'Distribution'}
-        </h2>
-      </div>
+    <Container style={{ width, height }}>
+      <Header>
+        <Title>{title || 'Distribution'}</Title>
+      </Header>
 
-      {/* Content */}
-      <div className="p-5">
-        {/* Total Counter */}
-        <div className="text-center mb-4">
-          <div className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold mb-1">
-            Total
-          </div>
-          <div className="text-3xl font-extrabold text-foreground">
-            {total.toLocaleString()}
-          </div>
-        </div>
+      <Body>
+        <TotalWrap>
+          <TotalLabel>Total</TotalLabel>
+          <TotalValue>{total.toLocaleString()}</TotalValue>
+        </TotalWrap>
 
-        {/* Pie Chart */}
-        <div className="flex justify-center mb-4" style={{ height: 160 }}>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={70}
-                strokeWidth={0}
-                dataKey="value"
-                animationBegin={300}
-                animationDuration={800}
-                label={renderCustomLabel}
-                labelLine={false}
-              >
-                {chartData.map(
-                  (entry: PieChartDataItem & { color: string }, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ),
-                )}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </div>
+        <ChartWrap>
+          <Pie $gradient={buildPieGradient(displayData)} />
+        </ChartWrap>
 
-        {/* Detail Cards */}
-        <div className="grid grid-cols-2 gap-3">
-          {chartData.map(
-            (
-              item: PieChartDataItem & { color: string; percentage: string },
-              index: number,
-            ) => {
-              const IconComponent = ICONS[index % ICONS.length];
-              return (
-                <motion.div
-                  key={item.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.12 }}
-                  className="rounded-xl px-3 py-2.5 flex items-center gap-2.5 border border-border"
-                  style={{ backgroundColor: 'hsl(var(--accent) / 0.4)' }}
-                >
-                  {/* Icon Box */}
-                  <div
-                    className="w-8 h-8 rounded-lg flex items-center justify-center"
-                    style={{ backgroundColor: `${ICON_COLORS[index % ICON_COLORS.length]}15` }}
-                  >
-                    <IconComponent
-                      className="w-4 h-4"
-                      style={{ color: ICON_COLORS[index % ICON_COLORS.length] }}
-                    />
-                  </div>
-
-                  {/* Text Stack */}
-                  <div className="flex flex-col">
-                    <span className="text-[10px] uppercase tracking-wider text-muted-foreground font-semibold">
-                      {item.name}
-                    </span>
-                    <span className="text-lg font-bold text-foreground">
-                      {item.value.toLocaleString()}
-                    </span>
-                    <span className="text-[10px] text-muted-foreground font-semibold">
-                      {item.percentage}%
-                    </span>
-                  </div>
-                </motion.div>
-              );
-            },
-          )}
-        </div>
-      </div>
-    </motion.div>
+        <CardsGrid>
+          {displayData.map(item => (
+            <Card key={`${item.name}-${item.value}`}>
+              <Dot $color={item.color} />
+              <CardText>
+                <CardLabel>{item.name}</CardLabel>
+                <CardValue>{item.value.toLocaleString()}</CardValue>
+                <CardPercent>{item.percentage}%</CardPercent>
+              </CardText>
+            </Card>
+          ))}
+        </CardsGrid>
+      </Body>
+    </Container>
   );
 }

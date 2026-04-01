@@ -16,40 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { DataRecord } from '@superset-ui/core';
+import { buildQueryContext, QueryFormData } from '@superset-ui/core';
 
-interface TableChartProps {
-  height: number;
-  width: number;
-  queriesData?: Array<{
-    data?: DataRecord[];
-  }>;
+export default function buildQuery(formData: QueryFormData) {
+  return buildQueryContext(formData, baseQueryObject => [baseQueryObject]);
 }
-
-interface TableChartTransformedProps {
-  height: number;
-  width: number;
-  data: DataRecord[];
-}
-
-const transformProps = (
-  chartProps: TableChartProps,
-): TableChartTransformedProps => {
-  const {
-    height,
-    width,
-    queriesData = [],
-  } = chartProps;
-
-  // Pass data directly to the chart component for custom visualization
-  const baseQuery = queriesData[0];
-  const data = baseQuery?.data || [];
-  
-  return {
-    height,
-    width,
-    data,
-  };
-};
-
-export default transformProps;

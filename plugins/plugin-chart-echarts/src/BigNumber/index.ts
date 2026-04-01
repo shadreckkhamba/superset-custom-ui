@@ -20,3 +20,6 @@
 export { default as BigNumberChartPlugin } from './BigNumberWithTrendline';
 export { default as BigNumberTotalChartPlugin } from './BigNumberTotal';
 export { default as BigNumberPeriodOverPeriodChartPlugin } from './BigNumberPeriodOverPeriod';
+export { default as BigNumberRingGaugeChartPlugin } from './BigNumberRingGauge';
+export { default as DoughnutChartChartPlugin } from './DoughnutChart';
+export { default as PieChartWithCardsChartPlugin } from './PieChartWithCards';

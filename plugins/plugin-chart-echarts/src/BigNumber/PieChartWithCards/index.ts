@@ -20,26 +20,19 @@ import { t, Behavior } from '@superset-ui/core';
 import controlPanel from './controlPanel';
 import transformProps from './transformProps';
 import buildQuery from './buildQuery';
-import example1 from './images/BigNumber.jpg';
-import example2 from './images/BigNumber2.jpg';
 import thumbnail from './images/thumbnail.png';
-import { BigNumberTotalChartProps, BigNumberTotalFormData } from '../types';
+import { PieChartWithCardsChartProps, PieChartWithCardsFormData } from './types';
 import { EchartsChartPlugin } from '../../types';
 
 const metadata = {
   category: t('KPI'),
   description: t(
-    'Showcases a single metric front-and-center. Big number is best used to call attention to a KPI or the one thing you want your audience to focus on.',
+    'Displays data as a pie chart with detailed summary cards showing distribution across categories.',
   ),
-  exampleGallery: [
-    { url: example1, caption: t('A Big Number') },
-    { url: example2, caption: t('With a subheader') },
-  ],
-  name: t('Big Number'),
+  name: t('Pie Chart with Cards'),
   tags: [
     t('Additive'),
     t('Business'),
-    t('Legacy'),
     t('Percentages'),
     t('Featured'),
     t('Report'),
@@ -48,13 +41,13 @@ const metadata = {
   behaviors: [Behavior.DrillToDetail],
 };
 
-export default class BigNumberTotalChartPlugin extends EchartsChartPlugin<
-  BigNumberTotalFormData,
-  BigNumberTotalChartProps
+export default class PieChartWithCardsChartPlugin extends EchartsChartPlugin<
+  PieChartWithCardsFormData,
+  PieChartWithCardsChartProps
 > {
   constructor() {
     super({
-      loadChart: () => import('../BigNumberRingGauge/BigNumberRingGauge'),
+      loadChart: () => import('./PieChartWithCards'),
       metadata,
       buildQuery,
       transformProps,

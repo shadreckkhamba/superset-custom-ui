@@ -159,7 +159,7 @@ const KPIContent = styled.div`
 `;
 
 const KPIValue = styled.div`
-  font-size: 32px;
+  font-size: 42px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.2;
@@ -167,7 +167,7 @@ const KPIValue = styled.div`
 `;
 
 const KPILabel = styled.div`
-  font-size: 14px;
+  font-size: 18px;
   font-weight: 500;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -200,7 +200,7 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
@@ -210,7 +210,7 @@ const SectionTitle = styled.h3`
 `;
 
 const SectionMeta = styled.div`
-  font-size: 13px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -246,7 +246,7 @@ const DataTable = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 20px;
   height: 100%;
 `;
 
@@ -259,10 +259,10 @@ const TableHead = styled.thead`
 `;
 
 const TableHeader = styled.th`
-  padding: 16px 20px;
+  padding: 20px 22px;
   text-align: left;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
@@ -303,11 +303,11 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td`
-  padding: 16px 20px;
+  padding: 20px 22px;
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 15px;
+  font-size: 20px;
   height: auto;
 `;
 
@@ -372,7 +372,7 @@ const TrendCell = styled.div<{ trend: 'up' | 'down' | 'stable' }>`
 `;
 
 const TrendIcon = styled.span`
-  font-size: 12px;
+  font-size: 16px;
 `;
 
 
@@ -390,8 +390,8 @@ const locationColors = [
 ];
 
 const AUTO_ROTATE_MS = 9000;
-const ESTIMATED_FIXED_HEIGHT = 260;
-const ESTIMATED_ROW_HEIGHT = 56;
+const ESTIMATED_FIXED_HEIGHT = 300;
+const ESTIMATED_ROW_HEIGHT = 72;
 
 export default function UnifiedChartTable({
   data,
@@ -453,16 +453,28 @@ export default function UnifiedChartTable({
     if (!data || data.length === 0) {
       return { total: 0, count: 0, average: 0, topItem: 'N/A' };
     }
-    
-    const total = data.reduce((sum, row) => {
-      const value = Number(row[valueColumn]) || 0;
-      return sum + value;
-    }, 0);
-    
+
+    const rowsWithValue = data.map(row => ({
+      label: String(row[labelColumn] ?? 'N/A'),
+      value: Number(row[valueColumn]) || 0,
+    }));
+    const total = rowsWithValue.reduce((sum, row) => sum + row.value, 0);
     const count = data.length;
     const average = count > 0 ? Math.round(total / count) : 0;
-    const topItem = data[0] ? String(data[0][labelColumn] || 'N/A') : 'N/A';
-    
+
+    const maxValue = rowsWithValue.reduce(
+      (max, row) => (row.value > max ? row.value : max),
+      Number.NEGATIVE_INFINITY,
+    );
+    const winners = rowsWithValue.filter(row => row.value === maxValue);
+    const winnerLabels = winners.map(row => row.label);
+    const topItem =
+      winnerLabels.length === 0
+        ? 'N/A'
+        : winnerLabels.length <= 2
+          ? winnerLabels.join(' / ')
+          : `${winnerLabels.slice(0, 2).join(' / ')} +${winnerLabels.length - 2}`;
+
     return { total, count, average, topItem };
   }, [data, valueColumn, labelColumn]);
 
@@ -541,7 +553,7 @@ export default function UnifiedChartTable({
             <Trophy size={20} />
           </KPIIcon>
           <KPIContent>
-            <KPIValue style={{ fontSize: 16 }}>{kpiValues.topItem}</KPIValue>
+            <KPIValue style={{ fontSize: 26 }}>{kpiValues.topItem}</KPIValue>
             <KPILabel>Top Item</KPILabel>
           </KPIContent>
         </KPITile>
@@ -553,7 +565,7 @@ export default function UnifiedChartTable({
         <TableSection>
           <SectionHeader>
             <SectionTitle>Data Distribution</SectionTitle>
-            <SectionMeta>{`Page ${pageIndex + 1}/${totalPages}`}</SectionMeta>
+            <SectionMeta>{`Page ${pageIndex + 1}/${totalPages} | ${rowsPerPage} rows/page`}</SectionMeta>
           </SectionHeader>
           <DataTable>
             <Table>

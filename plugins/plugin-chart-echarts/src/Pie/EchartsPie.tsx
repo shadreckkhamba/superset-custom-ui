@@ -16,225 +16,245 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
-import { User, Users } from 'lucide-react';
+import type { EChartsCoreOption } from 'echarts/core';
 import { styled } from '@superset-ui/core';
+import Echart from '../components/Echart';
+import { allEventHandlers } from '../utils/eventHandlers';
 import { PieChartTransformedProps } from './types';
 
-const Container = styled.div`
-  display: flex;
-  flex-direction: column;
+const FEMALE_COLOR = '#f68a00';
+const MALE_COLOR = '#1174de';
+
+const Root = styled.div`
   width: 100%;
   height: 100%;
-  padding: ${({ theme }) => theme.gridUnit * 4}px;
-  background: hsl(var(--bg-card));
-  border-radius: ${({ theme }) => theme.gridUnit * 3}px;
-  border: 1px solid hsl(var(--border-border));
-  box-shadow: 0 1px 3px 0 hsl(var(--border-border) / 0.1);
-`;
-
-const Header = styled.div`
-  margin-bottom: ${({ theme }) => theme.gridUnit * 4}px;
-  padding-bottom: ${({ theme }) => theme.gridUnit * 3}px;
-  border-bottom: 1px solid hsl(var(--border-border));
-`;
-
-const Title = styled.h3`
-  margin: 0;
-  font-size: ${({ theme }) => theme.typography.sizes.m}px;
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: hsl(var(--text-card-foreground));
-  line-height: 1.4;
-`;
-
-const Content = styled.div`
   display: flex;
   flex-direction: column;
+  background: transparent;
+  overflow: hidden;
+`;
+
+const Body = styled.div`
   flex: 1;
-  gap: ${({ theme }) => theme.gridUnit * 4}px;
-`;
-
-const TotalCounter = styled.div`
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.gridUnit * 2}px;
-`;
-
-const TotalLabel = styled.div`
-  font-size: 10px;
-  text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 600;
-  margin-bottom: ${({ theme }) => theme.gridUnit / 2}px;
-`;
-
-const TotalValue = styled.div`
-  font-size: ${({ theme }) => theme.typography.sizes.xxl}px;
-  font-weight: ${({ theme }) => theme.typography.weights.bold};
-  color: hsl(var(--text-card-foreground));
-`;
-
-const ChartContainer = styled.div`
   display: flex;
-  justify-content: center;
-  align-items: center;
-  height: 200px;
-`;
-
-const DetailCardsGrid = styled.div`
-  display: grid;
-  grid-template-columns: repeat(2, 1fr);
-  gap: ${({ theme }) => theme.gridUnit * 3}px;
-`;
-
-const DetailCard = styled(motion.div)`
-  display: flex;
+  flex-direction: column;
   align-items: center;
   gap: ${({ theme }) => theme.gridUnit * 2}px;
-  padding: ${({ theme }) => theme.gridUnit * 2}px;
-  background: hsl(var(--accent) / 0.4);
-  border-radius: ${({ theme }) => theme.gridUnit * 2}px;
-  border: 1px solid hsl(var(--border-border));
+  padding: ${({ theme }) =>
+    `${theme.gridUnit * 1.5}px ${theme.gridUnit * 1.75}px`};
+  min-height: 0;
+  overflow: hidden;
 `;
 
-const IconBox = styled.div<{ $color: string }>`
-  width: 32px;
-  height: 32px;
-  border-radius: 8px;
+const TotalBlock = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: ${({ theme }) => theme.gridUnit * 0.5}px;
+`;
+
+const TotalLabel = styled.span`
+  text-transform: uppercase;
+  font-size: ${({ theme }) => theme.typography.sizes.s}px;
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.grayscale.base};
+  line-height: 1;
+`;
+
+const TotalValue = styled.span`
+  font-size: 56px;
+  line-height: 1;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.grayscale.dark2};
+`;
+
+const PieWrap = styled.div`
+  width: 170px;
+  height: 170px;
   display: flex;
   align-items: center;
   justify-content: center;
-  background: ${({ $color }) => `${$color}15`};
+  flex-shrink: 0;
 `;
 
-const CardContent = styled.div`
+const Cards = styled.div`
+  width: 100%;
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: ${({ theme }) => theme.gridUnit * 1.5}px;
+`;
+
+const Card = styled.div`
+  padding: ${({ theme }) =>
+    `${theme.gridUnit * 0.5}px ${theme.gridUnit * 0.5}px`};
+  display: grid;
+  grid-template-columns: auto 1fr;
+  align-items: center;
+  gap: ${({ theme }) => theme.gridUnit}px;
+  min-width: 0;
+`;
+
+const GenderIcon = styled.span<{ $color: string }>`
+  font-size: ${({ theme }) => theme.typography.sizes.m}px;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ $color }) => $color};
+`;
+
+const CardText = styled.div`
   display: flex;
   flex-direction: column;
+  line-height: 1.05;
+  min-width: 0;
 `;
 
 const CardLabel = styled.span`
-  font-size: 10px;
   text-transform: uppercase;
-  letter-spacing: 0.05em;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 600;
+  font-size: ${({ theme }) => theme.typography.sizes.s}px;
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
+  color: ${({ theme }) => theme.colors.grayscale.base};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
 const CardValue = styled.span`
-  font-size: ${({ theme }) => theme.typography.sizes.l}px;
-  font-weight: bold;
-  color: hsl(var(--text-card-foreground));
+  font-size: 34px;
+  font-weight: ${({ theme }) => theme.typography.weights.bold};
+  color: ${({ theme }) => theme.colors.grayscale.dark2};
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 `;
 
-const CardPercentage = styled.span`
-  font-size: 10px;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 600;
+const CardPercent = styled.span`
+  font-size: ${({ theme }) => theme.typography.sizes.s}px;
+  color: ${({ theme }) => theme.colors.grayscale.base};
+  font-weight: ${({ theme }) => theme.typography.weights.medium};
 `;
 
-const CHART_COLORS = [
-  'hsl(28 85% 55%)', // Female - orange
-  'hsl(210 80% 52%)', // Male - blue
-];
+function toNumericValue(value: unknown): number {
+  if (typeof value === 'number') {
+    return value;
+  }
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : 0;
+}
 
-const ICON_COLORS = [
-  'hsl(28 85% 55%)', // Female - orange
-  'hsl(210 80% 52%)', // Male - blue
-];
+function classifyGender(name: string): 'female' | 'male' | 'unknown' {
+  const value = name.trim().toLowerCase();
+  if (value.includes('female') || value === 'f') return 'female';
+  if (value.includes('male') || value === 'm') return 'male';
+  return 'unknown';
+}
 
-const ICONS = [User, Users]; // User for Female, Users for Male
+function colorByName(name: string, index: number): string {
+  const type = classifyGender(name);
+  if (type === 'female') return FEMALE_COLOR;
+  if (type === 'male') return MALE_COLOR;
+  return index % 2 === 0 ? FEMALE_COLOR : MALE_COLOR;
+}
+
+function iconByName(name: string): string {
+  const type = classifyGender(name);
+  if (type === 'female') return '♀';
+  if (type === 'male') return '♂';
+  return '•';
+}
 
 export default function EchartsPie(props: PieChartTransformedProps) {
-  const { height, width, echartOptions } = props;
-  
-  // Extract data from echartOptions
-  const series = echartOptions?.series?.[0];
-  const data = series?.data || [];
-  const title = echartOptions?.title?.text || 'Distribution';
-  
-  const total = data.reduce(
-    (sum: number, item: { value: number }) => sum + (item.value || 0),
-    0,
-  );
+  const { echartOptions, height, refs, selectedValues, width } = props;
 
-  const chartData = data.map((item: { name: string; value: number }, index: number) => ({
-    ...item,
-    color: CHART_COLORS[index % CHART_COLORS.length],
-    percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
+  const sourceSeries = (echartOptions?.series?.[0] as {
+    radius?: string | number | Array<string | number>;
+    center?: Array<string | number>;
+    startAngle?: number;
+    clockwise?: boolean;
+    data?: Array<{ name?: string; value?: unknown }>;
+  }) || { data: [] };
+
+  const rawSeries = (sourceSeries as {
+    data?: Array<{ name?: string; value?: unknown }>;
+  }) || { data: [] };
+
+  const sourceRadius = sourceSeries.radius;
+  const resolvedRadius: string | number | Array<string | number> =
+    sourceRadius ?? ['0%', '78%'];
+
+  const chartData = (rawSeries.data || []).map((item, index) => ({
+    name: item.name || '',
+    value: toNumericValue(item.value),
+    color: colorByName(item.name || '', index),
   }));
 
-  return (
-    <Container style={{ width, height }}>
-      <Header>
-        <Title>{title}</Title>
-      </Header>
+  const total = chartData.reduce((sum, item) => sum + item.value, 0);
 
-      <Content>
-        {/* Total Counter */}
-        <TotalCounter>
+  const displayData = chartData.map(item => ({
+    ...item,
+    percent: total > 0 ? (item.value / total) * 100 : 0,
+  }));
+
+  const pieOptions: EChartsCoreOption = {
+    ...echartOptions,
+    tooltip: { show: false },
+    legend: { show: false },
+    title: undefined,
+    series: [
+      {
+        type: 'pie',
+        radius: resolvedRadius,
+        center: sourceSeries.center ?? ['50%', '50%'],
+        startAngle: sourceSeries.startAngle ?? 0,
+        clockwise: sourceSeries.clockwise ?? true,
+        avoidLabelOverlap: true,
+        silent: true,
+        label: { show: false },
+        labelLine: { show: false },
+        data: displayData.map(item => ({
+          value: item.value,
+          name: item.name,
+          itemStyle: { color: item.color, opacity: 1 },
+        })),
+      },
+    ],
+  };
+
+  const eventHandlers = allEventHandlers(props);
+
+  return (
+    <Root style={{ width, height }}>
+      <Body>
+        <TotalBlock>
           <TotalLabel>Total</TotalLabel>
           <TotalValue>{total.toLocaleString()}</TotalValue>
-        </TotalCounter>
+        </TotalBlock>
 
-        {/* Pie Chart */}
-        <ChartContainer>
-          <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie
-                data={chartData}
-                cx="50%"
-                cy="50%"
-                outerRadius={80}
-                strokeWidth={0}
-                dataKey="value"
-                animationBegin={300}
-                animationDuration={800}
-              >
-                {chartData.map(
-                  (entry: { name: string; value: number; color: string }, index: number) => (
-                    <Cell key={`cell-${index}`} fill={entry.color} />
-                  ),
-                )}
-              </Pie>
-            </PieChart>
-          </ResponsiveContainer>
-        </ChartContainer>
+        <PieWrap>
+          <Echart
+            refs={refs}
+            width={170}
+            height={170}
+            echartOptions={pieOptions}
+            eventHandlers={eventHandlers}
+            selectedValues={selectedValues}
+          />
+        </PieWrap>
 
-        {/* Detail Cards */}
-        <DetailCardsGrid>
-          {chartData.map(
-            (
-              item: { name: string; value: number; color: string; percentage: string },
-              index: number,
-            ) => {
-              const IconComponent = ICONS[index % ICONS.length];
-              return (
-                <DetailCard
-                  key={item.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.12, duration: 0.4, ease: 'easeOut' }}
-                >
-                  {/* Icon Box */}
-                  <IconBox $color={ICON_COLORS[index % ICON_COLORS.length]}>
-                    <IconComponent
-                      style={{ width: 16, height: 16, color: ICON_COLORS[index % ICON_COLORS.length] }}
-                    />
-                  </IconBox>
-
-                  {/* Text Stack */}
-                  <CardContent>
-                    <CardLabel>{item.name}</CardLabel>
-                    <CardValue>{item.value.toLocaleString()}</CardValue>
-                    <CardPercentage>{item.percentage}%</CardPercentage>
-                  </CardContent>
-                </DetailCard>
-              );
-            },
-          )}
-        </DetailCardsGrid>
-      </Content>
-    </Container>
+        <Cards>
+          {displayData.map(item => (
+            <Card key={`${item.name}-${item.value}`}>
+              <GenderIcon $color={item.color}>
+                {iconByName(item.name)}
+              </GenderIcon>
+              <CardText>
+                <CardLabel>{item.name}</CardLabel>
+                <CardValue>{item.value.toLocaleString()}</CardValue>
+                <CardPercent>{item.percent.toFixed(1)}%</CardPercent>
+              </CardText>
+            </Card>
+          ))}
+        </Cards>
+      </Body>
+    </Root>
   );
 }

@@ -56,6 +56,17 @@ const percentFormatter = getNumberFormatter(NumberFormats.PERCENT_2_POINT);
 const query = new URLSearchParams(location.search);
 const isStandalone = query.get('standalone') === '1';
 
+const getGenderIcon = (name: string): string => {
+  const lowerName = name.toLowerCase();
+  if (lowerName.includes('male') || lowerName.includes('man') || lowerName.includes('boy')) {
+    return '👨';
+  }
+  if (lowerName.includes('female') || lowerName.includes('woman') || lowerName.includes('girl')) {
+    return '👩';
+  }
+  return '';
+};
+
 export function parseParams({
   params,
   numberFormatter,
@@ -283,21 +294,24 @@ export default function transformProps(
       params,
       numberFormatter,
     });
+    const icon = getGenderIcon(name);
+    const iconPrefix = icon ? `${icon} ` : '';
+    
     switch (labelType) {
       case EchartsPieLabelType.Key:
-        return name;
+        return `${iconPrefix}${name}`;
       case EchartsPieLabelType.Value:
-        return formattedValue;
+        return `${iconPrefix}${formattedValue}`;
       case EchartsPieLabelType.Percent:
-        return formattedPercent;
+        return `${iconPrefix}${formattedPercent}`;
       case EchartsPieLabelType.KeyValue:
-        return `${name}: ${formattedValue}`;
+        return `${iconPrefix}${name}: ${formattedValue}`;
       case EchartsPieLabelType.KeyValuePercent:
-        return `${name}: ${formattedValue} (${formattedPercent})`;
+        return `${iconPrefix}${name}: ${formattedValue} (${formattedPercent})`;
       case EchartsPieLabelType.KeyPercent:
-        return `${name}: ${formattedPercent}`;
+        return `${iconPrefix}${name}: ${formattedPercent}`;
       case EchartsPieLabelType.ValuePercent:
-        return `${formattedValue} (${formattedPercent})`;
+        return `${iconPrefix}${formattedValue} (${formattedPercent})`;
       case EchartsPieLabelType.Template:
         if (!labelTemplate) {
           return '';
@@ -312,13 +326,13 @@ export default function transformProps(
           params,
         );
       default:
-        return name;
+        return `${iconPrefix}${name}: ${formattedValue} (${formattedPercent})`;
     }
   };
 
   const defaultLabel = {
     formatter,
-    show: showLabels,
+    show: true, // Always show labels for wall-mounted dashboards
     color: theme.colors.grayscale.dark2,
   };
 
@@ -443,5 +457,6 @@ export default function transformProps(
     refs,
     emitCrossFilters,
     coltypeMapping,
+    title: formData.sliceId ? t('Patient Visits by Gender') : t('Distribution'),
   };
 }

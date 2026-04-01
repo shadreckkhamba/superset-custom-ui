@@ -22,6 +22,7 @@ import {
   Preset,
   VizType,
 } from '@superset-ui/core';
+import { PatientBarChartPlugin, PatientLineChartPlugin } from '@superset-ui/plugin-chart-patient-analytics';
 import CalendarChartPlugin from '@superset-ui/legacy-plugin-chart-calendar';
 import ChordChartPlugin from '@superset-ui/legacy-plugin-chart-chord';
 import CountryMapChartPlugin from '@superset-ui/legacy-plugin-chart-country-map';
@@ -184,6 +185,9 @@ export default class MainPreset extends Preset {
             },
           ],
         }).configure({ key: VizType.Cartodiagram }),
+        // Custom Patient Analytics Charts
+        new PatientBarChartPlugin().configure({ key: VizType.PatientBar }),
+        new PatientLineChartPlugin().configure({ key: VizType.PatientLine }),
         ...experimentalPlugins,
       ],
     });
