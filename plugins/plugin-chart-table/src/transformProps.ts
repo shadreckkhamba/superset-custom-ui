@@ -480,6 +480,7 @@ const transformProps = (
     comparison_color_enabled: comparisonColorEnabled = false,
     comparison_color_scheme: comparisonColorScheme = ColorSchemeEnum.Green,
     comparison_type,
+    table_kpi_section_title: tableKpiSectionTitle = 'DATA DISTRIBUTION',
   } = formData;
   const isUsingTimeComparison =
     !isEmpty(time_compare) &&
@@ -696,9 +697,7 @@ const transformProps = (
     sortDesc,
     includeSearch,
     rowCount,
-    pageSize: serverPagination
-      ? serverPageLength
-      : getPageSize(pageLength, data.length, columns.length),
+    pageSize: 2,
     filters: filterState.filters,
     emitCrossFilters,
     onChangeFilter,
@@ -711,6 +710,8 @@ const transformProps = (
     basicColorFormatters,
     startDateOffset,
     basicColorColumnFormatters,
+    tableKpiStyle: true,
+    tableKpiSectionTitle,
   };
 };
 

@@ -446,6 +446,34 @@ const config: ControlPanelConfig = {
         ],
         [
           {
+            name: 'table_kpi_style',
+            config: {
+              type: 'CheckboxControl',
+              label: t('KPI card layout'),
+              renderTrigger: true,
+              default: true,
+              description: t(
+                'Adds a KPI strip and card-style table formatting for dashboard layouts.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'table_kpi_section_title',
+            config: {
+              type: 'TextControl',
+              label: t('Section title'),
+              renderTrigger: true,
+              default: 'DATA DISTRIBUTION',
+              description: t('Label shown above the table in KPI card layout'),
+              visibility: ({ controls }: ControlPanelsContainerProps) =>
+                Boolean(controls?.table_kpi_style?.value),
+            },
+          },
+        ],
+        [
+          {
             name: 'allow_rearrange_columns',
             config: {
               type: 'CheckboxControl',

@@ -55,11 +55,14 @@ import {
 import { Dropdown, Menu, Tooltip } from '@superset-ui/chart-controls';
 import {
   CheckOutlined,
+  FileTextOutlined,
   InfoCircleOutlined,
+  LineChartOutlined,
   DownOutlined,
   MinusCircleOutlined,
   PlusCircleOutlined,
   TableOutlined,
+  TrophyOutlined,
 } from '@ant-design/icons';
 import { isEmpty } from 'lodash';
 import {
@@ -80,8 +83,8 @@ import { PAGE_SIZE_OPTIONS } from './consts';
 import { updateExternalFormData } from './DataTable/utils/externalAPIs';
 import getScrollBarSize from './DataTable/utils/getScrollBarSize';
 
-//Get the dashboard slug from the URL query parameters
-const query = new URLSearchParams(location.search);
+// Get the dashboard slug from the URL query parameters
+const query = new URLSearchParams(window.location.search);
 const isStandalone = query.get('standalone') === '1';
 
 type ValueRange = [number, number];
@@ -161,13 +164,13 @@ function cellOffset({
  * Cell background color calculation for horizontal bar chart
  */
 function cellBackground({
-  value,
-  colorPositiveNegative = false,
+  value: _value,
+  colorPositiveNegative: _colorPositiveNegative = false,
 }: {
   value: number;
   colorPositiveNegative: boolean;
 }) {
-  //RGB(0, 163, 179) with 40% opacity
+  // RGB(0, 163, 179) with 40% opacity
   return 'rgba(0, 98, 143, 0.4)'; // default color
 }
 
@@ -271,6 +274,8 @@ export default function TableChart<D extends DataRecord = DataRecord>(
     isUsingTimeComparison,
     basicColorFormatters,
     basicColorColumnFormatters,
+    tableKpiStyle = false,
+    tableKpiSectionTitle = 'DATA DISTRIBUTION',
   } = props;
   const comparisonColumns = [
     { key: 'all', label: t('Display all') },
@@ -294,6 +299,77 @@ export default function TableChart<D extends DataRecord = DataRecord>(
   ]);
   const [hideComparisonKeys, setHideComparisonKeys] = useState<string[]>([]);
   const theme = useTheme();
+  const accentColors = [
+    '#8d2dff',
+    '#ff1493',
+    '#00a8ff',
+    '#00b894',
+    '#ff7a00',
+    '#6c5ce7',
+    '#00cec9',
+    '#e84393',
+    '#0984e3',
+    '#2ecc71',
+  ];
+
+  const toNumeric = (value: DataRecordValue) => {
+    if (typeof value === 'number') {
+      return value;
+    }
+    if (typeof value === 'string') {
+      const parsed = Number(value);
+      return Number.isFinite(parsed) ? parsed : 0;
+    }
+    return 0;
+  };
+
+  const primaryMetricColumn = useMemo(
+    () => columnsMeta.find(col => col.isMetric && col.isNumeric),
+    [columnsMeta],
+  );
+  const primaryMetricKey = primaryMetricColumn?.key;
+  const primaryCategoryColumn = useMemo(
+    () => columnsMeta.find(col => !col.isMetric && !col.isPercentMetric),
+    [columnsMeta],
+  );
+  const primaryCategoryKey = primaryCategoryColumn?.key;
+
+  const totalMetricValue = useMemo(() => {
+    if (!primaryMetricKey) {
+      return 0;
+    }
+    if (totals?.[primaryMetricKey] !== undefined) {
+      return toNumeric(totals[primaryMetricKey]);
+    }
+    return data.reduce(
+      (acc, row) => acc + toNumeric(row[primaryMetricKey] as DataRecordValue),
+      0,
+    );
+  }, [data, primaryMetricKey, totals]);
+
+  const totalRecordsValue = rowCount || data.length;
+  const averageMetricValue =
+    totalRecordsValue > 0 ? totalMetricValue / totalRecordsValue : 0;
+  const maxMetricValue = useMemo(() => {
+    if (!primaryMetricKey || !data.length) {
+      return 0;
+    }
+    return data.reduce((maxValue, row) => {
+      const metricValue = toNumeric(row[primaryMetricKey] as DataRecordValue);
+      return Math.max(maxValue, metricValue);
+    }, 0);
+  }, [data, primaryMetricKey]);
+  const topItem = useMemo(() => {
+    if (!primaryMetricKey || !primaryCategoryKey || !data.length) {
+      return '';
+    }
+    const topRow = [...data].sort(
+      (a, b) =>
+        toNumeric(b[primaryMetricKey] as DataRecordValue) -
+        toNumeric(a[primaryMetricKey] as DataRecordValue),
+    )[0];
+    return `${topRow?.[primaryCategoryKey] || ''}`;
+  }, [data, primaryCategoryKey, primaryMetricKey]);
 
   // only take relevant page size options
   const pageSizeOptions = useMemo(() => {
@@ -740,8 +816,10 @@ export default function TableChart<D extends DataRecord = DataRecord>(
         isUsingTimeComparison &&
         Array.isArray(basicColorFormatters) &&
         basicColorFormatters.length > 0;
+      const disableDefaultCellBar = tableKpiStyle && key === primaryMetricKey;
 
       const valueRange =
+        !disableDefaultCellBar &&
         !hasBasicColorFormatters &&
         !hasColumnColorFormatters &&
         (config.showCellBars === undefined
@@ -774,6 +852,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
         Cell: ({ value, row }: { value: DataRecordValue; row: Row<D> }) => {
           const [isHtml, text] = formatColumnValue(column, value);
           const html = isHtml && allowRenderHtml ? { __html: text } : undefined;
+          const rowAccentColor = accentColors[row.index % accentColors.length];
 
           let backgroundColor;
           let arrow = '';
@@ -815,16 +894,16 @@ export default function TableChart<D extends DataRecord = DataRecord>(
           }
 
           const StyledCell = styled.td`
-  	   text-align: ${sharedStyle.textAlign};
-  	   white-space: ${value instanceof Date ? 'nowrap' : 'nowrap'};
-	   position: relative;
-  	   background: ${backgroundColor || undefined};
- 	   padding: 2px 6px;
-  	   font-size: 10px;
-  	   line-height: 1.1;
-	   height: 20px;
- 	   min-height: 20px;
-	  `;
+            text-align: ${sharedStyle.textAlign};
+            white-space: ${value instanceof Date ? 'nowrap' : 'nowrap'};
+            position: relative;
+            background: ${backgroundColor || undefined};
+            padding: 2px 6px;
+            font-size: 10px;
+            line-height: 1.1;
+            height: 20px;
+            min-height: 20px;
+          `;
 
           const cellBarStyles = css`
             position: absolute;
@@ -925,6 +1004,19 @@ export default function TableChart<D extends DataRecord = DataRecord>(
           // render `Cell`. This saves some time for large tables.
           return (
             <StyledCell {...cellProps}>
+              {tableKpiStyle && key === primaryCategoryKey ? (
+                <span
+                  css={css`
+                    display: inline-block;
+                    width: 8px;
+                    height: 8px;
+                    border-radius: 999px;
+                    margin-right: ${theme.gridUnit * 2}px;
+                    background: ${rowAccentColor};
+                    vertical-align: middle;
+                  `}
+                />
+              ) : null}
               {valueRange && (
                 <div
                   /* The following classes are added to support custom CSS styling */
@@ -948,8 +1040,63 @@ export default function TableChart<D extends DataRecord = DataRecord>(
                 </div>
               ) : (
                 <>
+                  {tableKpiStyle && key === primaryMetricKey ? (
+                    <span
+                      css={css`
+                        position: relative;
+                        display: inline-block;
+                        width: 128px;
+                        height: 7px;
+                        margin-right: ${theme.gridUnit * 2}px;
+                        border-radius: 999px;
+                        background: #e4ebf2;
+                        overflow: hidden;
+                        vertical-align: middle;
+                      `}
+                    >
+                      <span
+                        css={css`
+                          position: absolute;
+                          top: 0;
+                          left: 0;
+                          bottom: 0;
+                          width: ${Math.min(
+                            100,
+                            Math.max(
+                              0,
+                              toNumeric(value) > 0
+                                ? Math.max(
+                                    34,
+                                    (toNumeric(value) /
+                                      Math.max(
+                                        maxMetricValue,
+                                        toNumeric(value),
+                                        1,
+                                      )) *
+                                      100,
+                                  )
+                                : 0,
+                            ),
+                          )}%;
+                          border-radius: 999px;
+                          background: ${rowAccentColor};
+                        `}
+                      />
+                    </span>
+                  ) : null}
                   {arrow && <span css={arrowStyles}>{arrow}</span>}
-                  {text}
+                  <span
+                    css={
+                      tableKpiStyle && column.isPercentMetric
+                        ? css`
+                            color: ${theme.colors.success.base};
+                            font-weight: ${theme.typography.weights.bold};
+                          `
+                        : undefined
+                    }
+                  >
+                    {text}
+                  </span>
                 </>
               )}
             </StyledCell>
@@ -1000,7 +1147,7 @@ export default function TableChart<D extends DataRecord = DataRecord>(
               }}
             >
               <span data-column-name={col.id}>{displayLabel}</span>
-             {!isStandalone && <SortIcon column={col} />}
+              {!isStandalone && <SortIcon column={col} />}
             </div>
           </th>
         ),
@@ -1105,15 +1252,87 @@ export default function TableChart<D extends DataRecord = DataRecord>(
   }, [width, height, handleSizeChange, tableSize]);
 
   const { width: widthFromState, height: heightFromState } = tableSize;
+  const forcedKpiRowsPerPage = tableKpiStyle ? 2 : 0;
+  const rawRowsPerPage = forcedKpiRowsPerPage
+    ? forcedKpiRowsPerPage
+    : serverPagination
+      ? serverPaginationData?.pageSize || pageSize || data.length || 0
+      : pageSize || data.length || 0;
+  const tableRowsPerPage = rawRowsPerPage > 0 ? rawRowsPerPage : data.length;
+  const tablePageCount =
+    tableRowsPerPage > 0
+      ? Math.max(1, Math.ceil((rowCount || data.length) / tableRowsPerPage))
+      : 1;
+  const tableCurrentPage = serverPagination
+    ? (serverPaginationData?.currentPage || 0) + 1
+    : 1;
+  const summaryMetricColumn = primaryMetricColumn || columnsMeta[0];
 
   return (
-    <Styles>
+    <Styles className={tableKpiStyle ? 'table-kpi-layout' : undefined}>
+      {tableKpiStyle && summaryMetricColumn ? (
+        <>
+          <div className="dt-kpi-strip">
+            <div className="dt-kpi-item dt-kpi-item-total">
+              <span className="dt-kpi-icon">
+                #
+              </span>
+              <div className="dt-kpi-copy">
+                <strong>
+                  {formatColumnValue(summaryMetricColumn, totalMetricValue)[1]}
+                </strong>
+                <span>{t('Total')}</span>
+              </div>
+            </div>
+            <div className="dt-kpi-item dt-kpi-item-records">
+              <span className="dt-kpi-icon">
+                <FileTextOutlined />
+              </span>
+              <div className="dt-kpi-copy">
+                <strong>{totalRecordsValue}</strong>
+                <span>{t('Records')}</span>
+              </div>
+            </div>
+            <div className="dt-kpi-item dt-kpi-item-average">
+              <span className="dt-kpi-icon">
+                <LineChartOutlined />
+              </span>
+              <div className="dt-kpi-copy">
+                <strong>
+                  {
+                    formatColumnValue(
+                      summaryMetricColumn,
+                      averageMetricValue,
+                    )[1]
+                  }
+                </strong>
+                <span>{t('Average')}</span>
+              </div>
+            </div>
+            <div className="dt-kpi-item dt-kpi-item-top">
+              <span className="dt-kpi-icon">
+                <TrophyOutlined />
+              </span>
+              <div className="dt-kpi-copy">
+                <strong>{topItem || t('N/A')}</strong>
+                <span>{t('Top item')}</span>
+              </div>
+            </div>
+          </div>
+          <div className="dt-section-header">
+            <strong>{tableKpiSectionTitle}</strong>
+            <span>
+              {`PAGE ${tableCurrentPage}/${tablePageCount} | ${tableRowsPerPage} ROWS/PAGE`}
+            </span>
+          </div>
+        </>
+      ) : null}
       <DataTable<D>
         columns={columns}
         data={data}
         rowCount={rowCount}
-        tableClassName="table table-striped table-condensed"
-        pageSize={pageSize}
+        tableClassName={`table table-striped table-condensed ${tableKpiStyle ? 'table-kpi-theme' : ''}`}
+        pageSize={tableKpiStyle ? 2 : pageSize}
         serverPaginationData={serverPaginationData}
         pageSizeOptions={pageSizeOptions}
         width={widthFromState}

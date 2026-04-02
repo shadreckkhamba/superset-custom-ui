@@ -97,6 +97,8 @@ export type TableChartFormData = QueryFormData & {
   time_grain_sqla?: TimeGranularity;
   column_config?: Record<string, TableColumnConfig>;
   allow_rearrange_columns?: boolean;
+  table_kpi_style?: boolean;
+  table_kpi_section_title?: string;
 };
 
 export interface TableChartProps extends ChartProps {
@@ -152,6 +154,8 @@ export interface TableChartTransformedProps<D extends DataRecord = DataRecord> {
   basicColorFormatters?: { [Key: string]: BasicColorFormatterType }[];
   basicColorColumnFormatters?: { [Key: string]: BasicColorFormatterType }[];
   startDateOffset?: string;
+  tableKpiStyle?: boolean;
+  tableKpiSectionTitle?: string;
 }
 
 export enum ColorSchemeEnum {

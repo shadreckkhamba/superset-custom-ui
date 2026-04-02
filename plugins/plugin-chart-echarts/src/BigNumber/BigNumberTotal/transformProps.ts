@@ -57,6 +57,8 @@ export default function transformProps(
     currencyFormat,
     subheader,
     subheaderFontSize,
+    kpiCardStyle,
+    kpiFooterLabel,
   } = formData;
   const refs: Refs = {};
   const { data = [], coltypes = [] } = queriesData[0] || {};
@@ -122,5 +124,7 @@ export default function transformProps(
     metricName: originalLabel,
     showMetricName,
     metricNameFontSize,
+    kpiCardStyle,
+    kpiFooterLabel,
   };
 }

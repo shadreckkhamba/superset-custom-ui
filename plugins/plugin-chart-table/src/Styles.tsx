@@ -28,95 +28,119 @@ export default styled.div`
       margin: 0;
     }
 
-    th,
-    td {
-      min-width: 4.3em;
+    /* Animated Data Table Styles */
+    .animated-data-table {
+      max-height: 360px;
+      overflow-y: auto;
+      scrollbar-width: thin;
+      scrollbar-color: #cbd5e1 #f1f5f9;
     }
 
-    thead > tr > th {
-      padding-right: 0;
-      position: relative;
-      background: ${theme.colors.grayscale.light5};
+    .animated-data-table::-webkit-scrollbar {
+      width: 6px;
+    }
+
+    .animated-data-table::-webkit-scrollbar-track {
+      background: #f1f5f9;
+      border-radius: 3px;
+    }
+
+    .animated-data-table::-webkit-scrollbar-thumb {
+      background: #cbd5e1;
+      border-radius: 3px;
+    }
+
+    .animated-data-table::-webkit-scrollbar-thumb:hover {
+      background: #94a3b8;
+    }
+
+    .animated-data-table table {
+      width: 100%;
+      border-collapse: collapse;
+    }
+
+    .animated-data-table thead {
+      position: sticky;
+      top: 0;
+      background: white;
+      z-index: 10;
+    }
+
+    .animated-data-table th {
+      padding: 12px 16px;
       text-align: left;
-    }
-    th svg {
-      color: ${theme.colors.grayscale.light2};
-      margin: ${theme.gridUnit / 2}px;
-    }
-    th.is-sorted svg {
-      color: ${theme.colors.grayscale.base};
-    }
-    .table > tbody > tr:first-of-type > td,
-    .table > tbody > tr:first-of-type > th {
-      border-top: 0;
+      font-size: 12px;
+      font-weight: 600;
+      color: #6b7280;
+      text-transform: uppercase;
+      letter-spacing: 0.05em;
+      border-bottom: 1px solid #e5e7eb;
     }
 
-    .table > tbody tr td {
-      font-feature-settings: 'tnum' 1;
+    .animated-data-table td {
+      padding: 12px 16px;
+      border-bottom: 1px solid #f3f4f6;
     }
 
-    .dt-controls {
-      padding-bottom: 0.65em;
-    }
-    .dt-metric {
-      text-align: right;
-    }
-    .dt-totals {
-      font-weight: ${theme.typography.weights.bold};
-    }
-    .dt-is-null {
-      color: ${theme.colors.grayscale.light1};
-    }
-    td.dt-is-filter {
-      cursor: pointer;
-    }
-    td.dt-is-filter:hover {
-      background-color: ${theme.colors.secondary.light4};
-    }
-    td.dt-is-active-filter,
-    td.dt-is-active-filter:hover {
-      background-color: ${theme.colors.secondary.light3};
+    .animated-data-table tr:hover {
+      background-color: rgba(0, 169, 214, 0.1);
     }
 
-    .dt-global-filter {
-      float: right;
+    .animated-data-table .teal-dot {
+      width: 8px;
+      height: 8px;
+      border-radius: 50%;
+      background-color: #0d9488;
+      min-width: 8px;
+      min-height: 8px;
     }
 
-    .dt-truncate-cell {
+    .animated-data-table .distribution-bar {
+      position: relative;
+      height: 8px;
+      background-color: #f3f4f6;
+      border-radius: 9999px;
       overflow: hidden;
-      text-overflow: ellipsis;
-      white-space: nowrap;
-    }
-    .dt-truncate-cell:hover {
-      overflow: visible;
-      white-space: normal;
-      height: auto;
     }
 
-    .dt-pagination {
-      text-align: right;
-      /* use padding instead of margin so clientHeight can capture it */
-      padding-top: 0.5em;
-    }
-    .dt-pagination .pagination {
-      margin: 0;
-    }
-
-    .pagination > li > span.dt-pagination-ellipsis:focus,
-    .pagination > li > span.dt-pagination-ellipsis:hover {
-      background: ${theme.colors.grayscale.light5};
+    .animated-data-table .distribution-bar-fill {
+      position: absolute;
+      top: 0;
+      left: 0;
+      height: 100%;
+      background-color: #0d9488;
+      border-radius: 9999px;
+      transform-origin: left;
     }
 
-    .dt-no-results {
-      text-align: center;
-      padding: 1em 0.6em;
+    .animated-data-table .count {
+      font-size: 14px;
+      font-weight: 700;
+      color: #0d9488;
+      font-family: 'Fira Code', 'Monaco', 'Consolas', monospace;
     }
 
-    .right-border-only {
-      border-right: 2px solid ${theme.colors.grayscale.light2};
+    .animated-data-table .trend-indicator {
+      display: flex;
+      align-items: center;
+      gap: 4px;
     }
-    table .right-border-only:last-child {
-      border-right: none;
+
+    .animated-data-table .trend-indicator.positive {
+      color: #22c55e;
+    }
+
+    .animated-data-table .trend-indicator.negative {
+      color: #ef4444;
+    }
+
+    .animated-data-table .trend-indicator.neutral {
+      color: #9ca3af;
+    }
+
+    .animated-data-table .last-visit {
+      font-size: 14px;
+      color: #9ca3af;
     }
   `}
 `;

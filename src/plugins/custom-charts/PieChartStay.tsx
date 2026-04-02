@@ -100,6 +100,15 @@ export default function StayTimePie({
   isDarkMode = false,
   isExpanded = false,
 }: PieChartStayProps): JSX.Element {
+  const LOVABLE = {
+    accent: '#00a9d6',
+    accentDark: '#0f8ecf',
+    success: '#0aa493',
+    warning: '#f5a623',
+    danger: '#f55353',
+    purple: '#8d2dff',
+    pink: '#ff1493',
+  };
   const [percentages, setPercentages] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
   const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
@@ -170,7 +179,14 @@ export default function StayTimePie({
   };
 
   const ranges = ["< 1 hr", "1-2 hrs", "2-3 hrs", "3-4 hrs", "4-5 hrs", "> 5 hrs"];
-  const colors = ["#13c2c2", "#1890ff", "#52c41a", "#faad14", "#f5222d", "#722ed1"];
+  const colors = [
+    LOVABLE.accent,
+    LOVABLE.purple,
+    LOVABLE.success,
+    LOVABLE.warning,
+    LOVABLE.danger,
+    LOVABLE.pink,
+  ];
 
 // Main data loader
 const loadData = async () => {
@@ -694,7 +710,7 @@ useEffect(() => {
         }}
         onMouseEnter={(e) => {
           e.currentTarget.style.transform = 'scale(1.06)';
-          e.currentTarget.style.color = '#1890ff';
+          e.currentTarget.style.color = LOVABLE.accent;
         }}
         onMouseLeave={(e) => {
           e.currentTarget.style.transform = 'scale(1)';
@@ -808,7 +824,7 @@ useEffect(() => {
                 }}
               >
                 Total Patients Counted:
-                <span style={{ fontWeight: 600, fontSize: totalPatientsValueFontSize, color: '#1890ff' }}>
+                <span style={{ fontWeight: 600, fontSize: totalPatientsValueFontSize, color: LOVABLE.accent }}>
                   {totalPatientCount}
                 </span>
               </div>
@@ -836,7 +852,7 @@ useEffect(() => {
                     width: filterDotSize,
                     height: filterDotSize,
                     borderRadius: "50%",
-                    background: "#1890ff",
+                    background: LOVABLE.accent,
                     opacity: 0.92,
                   }}
                 />
@@ -851,15 +867,15 @@ useEffect(() => {
                   alignItems: "center",
                   justifyContent: "center",
                   transition: "all 0.3s ease",
-                  color: "#1890ff",
+                  color: LOVABLE.accent,
                 }}
                 onMouseEnter={(e) => {
                   e.currentTarget.style.transform = "scale(1.15)";
-                  e.currentTarget.style.color = "#40a9ff";
+                    e.currentTarget.style.color = LOVABLE.accentDark;
                 }}
                 onMouseLeave={(e) => {
                   e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.color = "#1890ff";
+                    e.currentTarget.style.color = LOVABLE.accent;
                 }}
               >
                 <FilterOutlined />
@@ -896,12 +912,12 @@ useEffect(() => {
                       padding: isExpanded ? "12px 16px" : "16px 24px",
                       fontSize: filterMenuOptionFontSize,
                       fontWeight: 600,
-                      color: selectedPeriod === period ? "#1890ff" : (isDarkMode ? "#e0e0e0" : "#333"),
+                      color: selectedPeriod === period ? LOVABLE.accent : (isDarkMode ? "#e0e0e0" : "#333"),
                       background: isDarkMode ? "rgba(26, 26, 26, 0.65)" : "white",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
                       borderBottom: idx < 2 ? (isDarkMode ? "1px solid #404040" : "1px solid #f0f0f0") : "none",
-                      borderTop: selectedPeriod === period ? "3px solid #1890ff" : "3px solid transparent",
+                      borderTop: selectedPeriod === period ? `3px solid ${LOVABLE.accent}` : "3px solid transparent",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
@@ -921,7 +937,7 @@ useEffect(() => {
                   >
                     <span>{period}</span>
                     {selectedPeriod === period && (
-                      <span style={{ fontSize: isExpanded ? "15px" : "18px", color: "#1890ff" }}>✓</span>
+                    <span style={{ fontSize: isExpanded ? "15px" : "18px", color: LOVABLE.accent }}>✓</span>
                     )}
                   </div>
                 ))}
@@ -934,11 +950,11 @@ useEffect(() => {
         <div
           style={{
             fontSize: mostCommonFontSize,
-            color: '#52c41a',
+            color: LOVABLE.success,
             fontWeight: 700,
             marginBottom: mostCommonMarginBottom,
             padding: mostCommonPadding,
-            backgroundColor: isDarkMode ? 'rgba(82, 196, 26, 0.15)' : '#f6ffed',
+            backgroundColor: isDarkMode ? 'rgba(10, 164, 147, 0.18)' : '#e9f8f5',
             borderRadius: '6px',
             display: 'inline-block',
             overflow: 'hidden',
@@ -970,7 +986,7 @@ useEffect(() => {
                 fontWeight: 600,
               }}
             >
-              <span style={{ color: '#1890ff' }}>
+              <span style={{ color: LOVABLE.accent }}>
                 Actual: {animatedPercent.toFixed(1)}%
               </span>
               <span style={{ color: '#666' }}>
@@ -993,7 +1009,7 @@ useEffect(() => {
                 style={{
                   width: `${Math.min(animatedPercent, 100)}%`,
                   height: '100%',
-                  background: `linear-gradient(to right, #f5222d, #faad14, #52c41a)`,
+                  background: `linear-gradient(to right, ${LOVABLE.danger}, ${LOVABLE.warning}, ${LOVABLE.success})`,
                   borderRadius:
                     animatedPercent >= 100 ? '12px' : '12px 0 0 12px',
                   transition: 'width 0.5s ease, background 0.5s ease',
@@ -1008,7 +1024,7 @@ useEffect(() => {
                   top: 0,
                   bottom: 0,
                   width: isExpanded ? '3px' : '5px',
-                  background: '#f5222d',
+                  background: LOVABLE.danger,
                   borderRadius: '2px',
                 }}
               />
@@ -1032,7 +1048,7 @@ useEffect(() => {
                 style={{
                   fontSize: statValueFontSize,
                   fontWeight: 700,
-                  color: '#1890ff',
+                  color: LOVABLE.accent,
                 }}
               >
                 {formatHours(shortestStay)}
@@ -1288,7 +1304,7 @@ useEffect(() => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    background: `linear-gradient(135deg, ${LOVABLE.accent} 0%, ${LOVABLE.accentDark} 100%)`,
                     color: '#fff',
                   }}
                 >
@@ -1319,25 +1335,25 @@ useEffect(() => {
 
             <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Pie slices (distribution)</div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>Pie slices (distribution)</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
                   Each slice shows what percentage of patients fall into a stay-time range.
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Ranges list (right side)</div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>Ranges list (right side)</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
                   Click a range in the right panel to focus on that one range in the pie chart.
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Time filter</div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>Time filter</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
                   Use the filter menu to switch between daily, weekly, and monthly views.
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Progress bar</div>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>Progress bar</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
                   Shows how close current performance is to the target for shorter stays.
                 </div>

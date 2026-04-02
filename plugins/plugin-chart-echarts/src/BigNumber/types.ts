@@ -38,6 +38,8 @@ export type BigNumberTotalFormData = QueryFormData & {
   metric?: QueryFormMetric;
   yAxisFormat?: string;
   forceTimestampFormatting?: boolean;
+  kpiCardStyle?: boolean;
+  kpiFooterLabel?: string;
 };
 
 export type BigNumberWithTrendlineFormData = BigNumberTotalFormData & {
@@ -102,4 +104,6 @@ export type BigNumberVizProps = {
   formData?: BigNumberWithTrendlineFormData;
   refs: Refs;
   colorThresholdFormatters?: ColorFormatters;
+  kpiCardStyle?: boolean;
+  kpiFooterLabel?: string;
 };

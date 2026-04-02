@@ -48,6 +48,34 @@ export default {
         [subtitleFontSize],
         [showMetricNameControl],
         [metricNameFontSizeWithVisibility],
+        [
+          {
+            name: 'kpi_card_style',
+            config: {
+              type: 'CheckboxControl',
+              label: t('KPI card style'),
+              renderTrigger: true,
+              default: false,
+              description: t(
+                'Render as card layout with a circular focus and footer pill.',
+              ),
+            },
+          },
+        ],
+        [
+          {
+            name: 'kpi_footer_label',
+            config: {
+              type: 'TextControl',
+              label: t('Footer label'),
+              renderTrigger: true,
+              default: 'REFUND RATE',
+              description: t('Label shown on the left side of the footer pill'),
+              visibility: ({ controls }) =>
+                Boolean(controls?.kpi_card_style?.value),
+            },
+          },
+        ],
         ['y_axis_format'],
         ['currency_format'],
         [

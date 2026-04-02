@@ -263,6 +263,91 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     );
   }
 
+  getHeaderDisplay() {
+    const { bigNumber, headerFormatter, colorThresholdFormatters } = this.props;
+    // @ts-ignore
+    const text = bigNumber === null ? t('No data') : headerFormatter(bigNumber);
+
+    const hasThresholdColorFormatter =
+      Array.isArray(colorThresholdFormatters) &&
+      colorThresholdFormatters.length > 0;
+
+    let numberColor;
+    if (hasThresholdColorFormatter) {
+      colorThresholdFormatters!.forEach(formatter => {
+        const formatterResult = bigNumber
+          ? formatter.getColorFromValue(bigNumber as number)
+          : false;
+        if (formatterResult) {
+          numberColor = formatterResult;
+        }
+      });
+    } else {
+      numberColor = 'black';
+    }
+
+    return { text, numberColor };
+  }
+
+  renderKpiCard() {
+    const {
+      width,
+      height,
+      subtitle,
+      kpiFooterLabel = 'REFUND RATE',
+      onContextMenu,
+    } = this.props;
+    const { text, numberColor } = this.getHeaderDisplay();
+    const ringSize = Math.max(120, Math.min(width * 0.45, height * 0.42, 190));
+    const valueMaxHeight = Math.floor(ringSize * 0.45);
+    const valueMaxWidth = Math.floor(ringSize * 0.7);
+
+    const container = this.createTemporaryContainer();
+    document.body.append(container);
+    const valueFontSize = computeMaxFontSize({
+      text: `${text}`,
+      maxWidth: valueMaxWidth,
+      maxHeight: valueMaxHeight,
+      className: 'header-line',
+      container,
+    });
+    container.remove();
+
+    const onKpiContextMenu = (e: MouseEvent<HTMLDivElement>) => {
+      if (onContextMenu) {
+        e.preventDefault();
+        onContextMenu(e.nativeEvent.clientX, e.nativeEvent.clientY);
+      }
+    };
+
+    return (
+      <div className="kpi-card">
+        <div className="kpi-center-wrap">
+          <div
+            className="kpi-ring"
+            style={{ width: ringSize, height: ringSize }}
+            onContextMenu={onKpiContextMenu}
+          >
+            <span className="kpi-ring-accent" />
+            <span className="kpi-refresh-icon">↻</span>
+            <span
+              className="kpi-value"
+              style={{ fontSize: valueFontSize, color: numberColor }}
+            >
+              {text}
+            </span>
+          </div>
+        </div>
+        {subtitle ? (
+          <div className="kpi-footer-pill">
+            <span className="kpi-footer-label">{kpiFooterLabel}</span>
+            <span className="kpi-footer-value">{subtitle}</span>
+          </div>
+        ) : null}
+      </div>
+    );
+  }
+
   rendermetricComparisonSummary(maxHeight: number) {
     const { subheader, width } = this.props;
     let fontSize = 0;
@@ -484,6 +569,14 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       );
     }
     const shouldApplyOverflow = this.shouldApplyOverflow(height);
+    const { kpiCardStyle } = this.props;
+    if (kpiCardStyle) {
+      return (
+        <div className={className} style={{ height }}>
+          {this.renderKpiCard()}
+        </div>
+      );
+    }
     return (
       <div
         className={className}
@@ -580,6 +673,94 @@ export default styled(BigNumberVis)`
       .subheader-line {
         opacity: ${theme.opacity.mediumHeavy};
       }
+    }
+
+    .kpi-card {
+      width: 100%;
+      height: 100%;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: space-between;
+      padding: ${theme.gridUnit * 4}px ${theme.gridUnit * 2.5}px
+        ${theme.gridUnit * 2.5}px;
+      box-sizing: border-box;
+    }
+
+    .kpi-center-wrap {
+      flex: 1;
+      width: 100%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    .kpi-ring {
+      position: relative;
+      border-radius: 50%;
+      border: 10px solid ${theme.colors.grayscale.light4};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      background: transparent;
+    }
+
+    .kpi-ring-accent {
+      position: absolute;
+      top: -8px;
+      left: 50%;
+      width: 22px;
+      height: 10px;
+      margin-left: -11px;
+      border-radius: 999px;
+      background: ${theme.colors.grayscale.dark2};
+    }
+
+    .kpi-refresh-icon {
+      position: absolute;
+      top: 28%;
+      left: 50%;
+      transform: translateX(-50%);
+      font-size: ${theme.typography.sizes.m}px;
+      color: ${theme.colors.grayscale.base};
+      line-height: 1;
+      user-select: none;
+    }
+
+    .kpi-value {
+      line-height: 1;
+      font-weight: ${theme.typography.weights.bold};
+      color: ${theme.colors.grayscale.dark2};
+      user-select: none;
+    }
+
+    .kpi-footer-pill {
+      width: 100%;
+      min-height: 40px;
+      border-radius: 12px;
+      background: ${theme.colors.grayscale.light4};
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      padding: 8px 14px;
+      box-sizing: border-box;
+      gap: 8px;
+    }
+
+    .kpi-footer-label {
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      font-size: ${theme.typography.sizes.xs}px;
+      color: ${theme.colors.grayscale.base};
+      font-weight: ${theme.typography.weights.bold};
+    }
+
+    .kpi-footer-value {
+      font-size: ${theme.typography.sizes.l}px;
+      color: ${theme.colors.primary.base};
+      font-weight: ${theme.typography.weights.bold};
+      line-height: 1;
+      white-space: nowrap;
     }
   `}
 `;

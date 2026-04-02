@@ -47,6 +47,7 @@ export type EchartsPieFormData = QueryFormData &
     dateFormat: string;
     showLabelsThreshold: number;
     roseType: 'radius' | 'area' | null;
+    showTotal: boolean;
   };
 
 export enum EchartsPieLabelType {
@@ -68,17 +69,18 @@ export interface EchartsPieChartProps
 // @ts-ignore
 export const DEFAULT_FORM_DATA: EchartsPieFormData = {
   ...DEFAULT_LEGEND_FORM_DATA,
-  donut: false,
+  donut: true,
   groupby: [],
-  innerRadius: 30,
+  innerRadius: 58,
   labelLine: false,
   labelType: EchartsPieLabelType.Key,
-  legendOrientation: LegendOrientation.Top,
-  legendType: LegendType.Scroll,
+  legendOrientation: LegendOrientation.Right,
+  legendType: LegendType.Plain,
   numberFormat: 'SMART_NUMBER',
-  outerRadius: 70,
-  showLabels: true,
-  labelsOutside: true,
+  outerRadius: 82,
+  showLabels: false,
+  labelsOutside: false,
+  showTotal: true,
   showLabelsThreshold: 5,
   dateFormat: 'smart_date',
   roseType: null,

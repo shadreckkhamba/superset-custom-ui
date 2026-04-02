@@ -23,7 +23,6 @@ import {
   getNumberFormatter,
   getTimeFormatter,
   NumberFormats,
-  t,
   ValueFormatter,
   getValueFormatter,
   tooltipHtml,
@@ -52,9 +51,6 @@ import { getDefaultTooltip } from '../utils/tooltip';
 import { Refs } from '../types';
 
 const percentFormatter = getNumberFormatter(NumberFormats.PERCENT_2_POINT);
-
-const query = new URLSearchParams(location.search);
-const isStandalone = query.get('standalone') === '1';
 
 export function parseParams({
   params,
@@ -328,15 +324,6 @@ export default function transformProps(
     legendMargin,
   );
 
-  const isNightTime = () => {
-    const hour = new Date().getHours();
-    console.log('Current hour is', hour);
-    return hour >= 18 || hour < 6;
-  };
-
-  const isDarkMode = document.body.classList.contains('dark-theme') || (isStandalone && isNightTime());
-  console.log('Pie chart isDarkMode:', isDarkMode, 'body classes:', document.body.className);
-
   const series: PieSeriesOption[] = [
     {
       type: 'pie',
@@ -347,39 +334,36 @@ export default function transformProps(
       center: ['50%', '50%'],
       avoidLabelOverlap: true,
       minShowLabelAngle,
-      labelLine: labelsOutside && labelLine
-        ? {
-            show: true,
-            length: 24,
-            length2: 12,
-            lineStyle: {
-              width: 2,
-              color: isDarkMode ? '#999' : '#333',
-            },
-          }
-        : { show: false },
+      labelLine:
+        labelsOutside && labelLine
+          ? {
+              show: true,
+              length: 10,
+              length2: 6,
+              lineStyle: {
+                width: 1,
+                color: theme.colors.grayscale.base,
+              },
+            }
+          : { show: false },
       label: labelsOutside
         ? {
             ...defaultLabel,
             position: 'outer',
             alignTo: 'none',
             bleedMargin: 5,
-            fontSize: 46,
-            color: isDarkMode ? '#d0d0d0' : '#111',
+            fontSize: 12,
           }
         : {
             ...defaultLabel,
             position: 'inner',
-            fontSize: 46,
-            fontWeight: 'bold',
-            color: isDarkMode ? '#d0d0d0' : '#111',
+            fontSize: 12,
+            fontWeight: 'normal',
           },
       emphasis: {
         label: {
           show: true,
-          backgroundColor: isDarkMode
-            ? 'rgba(255, 255, 255, 0.1)'
-            : theme.colors.grayscale.light5,
+          backgroundColor: theme.colors.grayscale.light5,
         },
       },
       data: transformedData,
@@ -410,20 +394,42 @@ export default function transformProps(
       ...getLegendProps(legendType, legendOrientation, showLegend, theme),
       data: keys,
       textStyle: {
-        fontSize: 54,
-        color: isDarkMode ? '#aaa' : '#000',
+        fontSize: 12,
+        color: theme.colors.grayscale.dark2,
       },
     },
     graphic: showTotal
       ? {
-          type: 'text',
+          type: 'group',
           ...getTotalValuePadding({ chartPadding, donut, width, height }),
-          style: {
-            text: t('Total: %s', numberFormatter(totalValue)),
-            fontSize: 38,
-            fontWeight: 'bold',
-            fill: isDarkMode ? '#d0d0d0' : '#000',
-          },
+          children: [
+            {
+              type: 'text',
+              left: 'center',
+              top: donut ? -14 : 0,
+              style: {
+                text: 'TOTAL',
+                fontSize: 12,
+                fontWeight: 600,
+                fill: theme.colors.grayscale.base,
+                align: 'center',
+              },
+              z: 10,
+            },
+            {
+              type: 'text',
+              left: 'center',
+              top: donut ? 4 : 20,
+              style: {
+                text: numberFormatter(totalValue),
+                fontSize: 38,
+                fontWeight: 700,
+                fill: theme.colors.grayscale.dark2,
+                align: 'center',
+              },
+              z: 10,
+            },
+          ],
           z: 10,
         }
       : null,

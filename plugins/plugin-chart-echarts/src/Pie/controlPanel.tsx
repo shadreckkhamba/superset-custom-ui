@@ -40,6 +40,7 @@ const {
   outerRadius,
   numberFormat,
   showLabels,
+  showTotal,
   roseType,
 } = DEFAULT_FORM_DATA;
 
@@ -223,7 +224,7 @@ const config: ControlPanelConfig = {
             config: {
               type: 'CheckboxControl',
               label: t('Show Total'),
-              default: false,
+              default: showTotal,
               renderTrigger: true,
               description: t('Whether to display the aggregate count'),
             },

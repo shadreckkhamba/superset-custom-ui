@@ -159,6 +159,12 @@ export default function BigNumberStay({
   isDarkMode = false,
   isExpanded = false,
 }: BigNumberStayProps): JSX.Element {
+  const LOVABLE = {
+    accent: '#00a9d6',
+    accentDark: '#0f8ecf',
+    success: '#0aa493',
+    danger: '#f55353',
+  };
   const [bigNumber, setBigNumber] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number>(0);
   const [chartData, setChartData] = useState<ChartData<'line', number[], string>>({ labels: [], datasets: [] });
@@ -367,13 +373,13 @@ const loadData = async (resetToToday = false) => {
         datasets: [
           {
             data: updatedTrend.map((item) => item.avg_hours),
-            borderColor: 'rgba(24,144,255,1)',
-            backgroundColor: 'rgba(24,144,255,0.2)',
+            borderColor: 'rgba(0,169,214,1)',
+            backgroundColor: 'rgba(0,169,214,0.2)',
             fill: true,
             tension: 0.35,
             pointRadius: 2,
             pointHitRadius: 6,
-            pointBackgroundColor: 'rgba(24,144,255,1)',
+            pointBackgroundColor: 'rgba(0,169,214,1)',
             pointBorderColor: '#ffffff',
             pointBorderWidth: 1,
           },
@@ -506,7 +512,7 @@ useEffect(() => {
       point: {
         radius: 5,
         hoverRadius: 10,
-        backgroundColor: '#1890ff',
+        backgroundColor: LOVABLE.accent,
         borderWidth: 2,
         borderColor: '#fff',
         hoverBorderWidth: 3,
@@ -584,7 +590,7 @@ useEffect(() => {
       }}
       onMouseEnter={(e) => {
         e.currentTarget.style.transform = 'scale(1.06)';
-        e.currentTarget.style.color = '#1890ff';
+        e.currentTarget.style.color = LOVABLE.accent;
       }}
       onMouseLeave={(e) => {
         e.currentTarget.style.transform = 'scale(1)';
@@ -673,7 +679,7 @@ useEffect(() => {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#0f172a';
+              e.currentTarget.style.color = isDarkMode ? LOVABLE.accent : '#0f172a';
               e.currentTarget.style.boxShadow = isDarkMode
                 ? '0 3px 8px rgba(0, 0, 0, 0.12)'
                 : '0 10px 22px rgba(15, 23, 42, 0.14)';
@@ -894,7 +900,7 @@ useEffect(() => {
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#0f172a';
+              e.currentTarget.style.color = isDarkMode ? LOVABLE.accent : '#0f172a';
               e.currentTarget.style.boxShadow = isDarkMode
                 ? '0 3px 8px rgba(0, 0, 0, 0.12)'
                 : '0 10px 22px rgba(15, 23, 42, 0.14)';
@@ -929,7 +935,7 @@ useEffect(() => {
           fontWeight: 800,
           marginBottom: '0.6rem',
           textAlign: 'center',
-          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+          background: `linear-gradient(135deg, ${LOVABLE.accent} 0%, ${LOVABLE.accentDark} 100%)`,
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
@@ -940,7 +946,7 @@ useEffect(() => {
           alignItems: 'center',
           justifyContent: 'center',
           flex: '0 0 auto',
-          textShadow: '0 2px 4px rgba(24, 144, 255, 0.1)',
+          textShadow: '0 2px 4px rgba(0, 169, 214, 0.15)',
         }}
       >
         {bigNumber !== null ? formatHours(animatedNumber) : 'No data available'}
@@ -964,7 +970,7 @@ useEffect(() => {
           return (
         <div
           style={{
-            color: isNegative ? '#52c41a' : isPositive ? '#ff4d4f' : isDarkMode ? '#b0b0b0' : '#8c8c8c',
+            color: isNegative ? LOVABLE.success : isPositive ? LOVABLE.danger : isDarkMode ? '#b0b0b0' : '#8c8c8c',
           fontSize: isExpanded
               ? 'clamp(1.05rem, 1.5vw, 1.8rem)'
               : 'clamp(1.4rem, 3vw, 2.4rem)',
@@ -1028,14 +1034,14 @@ useEffect(() => {
           {selectedIsToday ? (
             <>
               Compared to last average recorded today:{" "}
-              <span style={{ color: '#1890ff' }}>
+              <span style={{ color: LOVABLE.accent }}>
                 {formatHours(lastRecordedAverage)}
               </span>
             </>
           ) : (
             <>
               Compared to today’s average:{" "}
-              <span style={{ color: '#1890ff' }}>
+              <span style={{ color: LOVABLE.accent }}>
                 {formatHours(lastRecordedAverage)}
               </span>
             </>
@@ -1175,8 +1181,8 @@ useEffect(() => {
                         width: '9px',
                         height: '2px',
                         borderRadius: '999px',
-                        background: 'linear-gradient(90deg, #1890ff 0%, #69c0ff 100%)',
-                        boxShadow: '0 1px 3px rgba(24, 144, 255, 0.35)',
+                        background: `linear-gradient(90deg, ${LOVABLE.accent} 0%, ${LOVABLE.accentDark} 100%)`,
+                        boxShadow: '0 1px 3px rgba(0, 169, 214, 0.35)',
                       }}
                     />
                     <span>{label}</span>
@@ -1198,7 +1204,7 @@ useEffect(() => {
               }}>
                 {buckets.map((bucket, idx) => {
                   // Color intensity based on count
-                  const baseColor = { r: 24, g: 144, b: 255 }; // #1890ff
+                  const baseColor = { r: 0, g: 169, b: 214 }; // lovable accent
                   const alpha = bucket.count === 0 
                     ? 0.08 
                     : 0.2 + (bucket.intensity * 0.8); // 0.2 to 1.0
@@ -1332,7 +1338,7 @@ useEffect(() => {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
+                    background: `linear-gradient(135deg, ${LOVABLE.accent} 0%, ${LOVABLE.accentDark} 100%)`,
                     color: '#fff',
                   }}
                 >
@@ -1362,7 +1368,7 @@ useEffect(() => {
             </div>
             <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>
                   Main value (average stay time)
                 </div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
@@ -1370,7 +1376,7 @@ useEffect(() => {
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>
                   Change compared to baseline
                 </div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
@@ -1378,7 +1384,7 @@ useEffect(() => {
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
-                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>
+                <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: LOVABLE.accent }}>
                   Duration grid (heatmap)
                 </div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
@@ -1425,7 +1431,7 @@ useEffect(() => {
             return (
               <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
                 <div style={{ 
-                  color: '#1890ff', 
+                  color: LOVABLE.accent, 
                   fontSize: '1rem', 
                   fontWeight: 700,
                   letterSpacing: '0.8px',
