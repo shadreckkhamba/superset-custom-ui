@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
 import { Hash, Database, TrendingUp, Trophy } from 'lucide-react';
@@ -211,34 +211,15 @@ const SectionTitle = styled.h3`
 
 const DataTable = styled.div`
   flex: 1;
-  overflow: auto;
+  overflow: hidden;
   max-height: 100%;
   transition: max-height 0.3s ease-in-out;
-  
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-  
-  &::-webkit-scrollbar-track {
-    background: var(--color-bg-muted);
-    border-radius: var(--radius-sm);
-  }
-  
-  &::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: var(--radius-sm);
-    
-    &:hover {
-      background: var(--color-text-muted);
-    }
-  }
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 15px;
+  font-size: 18px;
   height: 100%;
 `;
 
@@ -381,11 +362,34 @@ const locationColors = [
   '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
 ];
 
+const ROWS_PER_PAGE = 5;
+
 export default function TableChart({
   data,
   height,
   width = 900,
 }: TableChartProps) {
+  const [currentPage, setCurrentPage] = useState(0);
+
+  const totalPages = useMemo(() => {
+    if (!data || data.length === 0) return 1;
+    return Math.ceil(data.length / ROWS_PER_PAGE);
+  }, [data]);
+
+  useEffect(() => {
+    if (totalPages <= 1) return;
+    const interval = setInterval(() => {
+      setCurrentPage(prev => (prev + 1) % totalPages);
+    }, 3000);
+    return () => clearInterval(interval);
+  }, [totalPages]);
+
+  const paginatedData = useMemo(() => {
+    if (!data || data.length === 0) return [];
+    const start = currentPage * ROWS_PER_PAGE;
+    return data.slice(start, start + ROWS_PER_PAGE);
+  }, [data, currentPage]);
+
   // Calculate dynamic height based on data
   const dynamicHeight = useMemo(() => {
     if (!data || data.length === 0) return 400;
@@ -449,7 +453,13 @@ export default function TableChart({
     
     const count = data.length;
     const average = count > 0 ? Math.round(total / count) : 0;
-    const topItem = data[0] ? String(data[0][labelColumn] || 'N/A') : 'N/A';
+
+    const topRow = data.reduce((best, row) => {
+      const currentValue = Number(row[valueColumn]) || 0;
+      const bestValue = Number(best[valueColumn]) || 0;
+      return currentValue > bestValue ? row : best;
+    }, data[0]);
+    const topItem = topRow ? String(topRow[labelColumn] || 'N/A') : 'N/A';
     
     return { total, count, average, topItem };
   }, [data, valueColumn, labelColumn]);
@@ -522,11 +532,12 @@ export default function TableChart({
                 </tr>
               </TableHead>
               <TableBody>
-                {data?.map((row, rowIndex) => {
+                {paginatedData.map((row, rowIndex) => {
+                  const globalIndex = currentPage * ROWS_PER_PAGE + rowIndex;
                   const barWidth = maxBarValue > 0 && valueColumn
                     ? (Number(row[valueColumn]) / maxBarValue) * 100
                     : 0;
-                  const color = locationColors[rowIndex % locationColors.length];
+                  const color = locationColors[globalIndex % locationColors.length];
                   
                   return (
                     <TableRow key={rowIndex}>
