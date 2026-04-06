@@ -15,7 +15,7 @@ import {
   Filler,
 } from 'chart.js';
 import { ChartOptions, TooltipItem, FontSpec } from 'chart.js';
-import { TrendingUp, TrendingDown, Info, X } from 'lucide-react';
+import { TrendingUp, TrendingDown, RotateCcw, Info, X } from 'lucide-react';
 import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
@@ -536,6 +536,19 @@ useEffect(() => {
     }, 360);
   };
 
+  const percentageValue = hasComparisonData ? Math.min(100, Math.abs(percentChange)) : 0;
+  const isDecrease = percentChange < 0;
+  const gaugeMetricValue = bigNumber !== null ? `${Math.round(animatedNumber)}` : '--';
+  const comparisonLabel = 'REFUND RATE';
+  const comparisonValue = hasComparisonData
+    ? `${percentageValue.toFixed(1)}%`
+    : '--';
+  const comparisonColor = !hasComparisonData
+    ? isDarkMode
+      ? '#9ca3af'
+      : '#64748b'
+    : '#00a67d';
+
   return (
     <div
       ref={containerRef} 
@@ -921,127 +934,133 @@ useEffect(() => {
       {/* Big Number */}
       <div
         style={{
-          fontSize: isExpanded
-            ? bigNumber === null
-              ? 'clamp(1.6rem, 3.6vw, 3.6rem)'
-              : 'clamp(2.6rem, 6vw, 6.6rem)'
-            : 'clamp(3.6rem, 9vw, 9rem)',
-          fontWeight: 800,
-          marginBottom: '0.6rem',
-          textAlign: 'center',
-          background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
-          WebkitBackgroundClip: 'text',
-          WebkitTextFillColor: 'transparent',
-          backgroundClip: 'text',
-          lineHeight: 1.08,
-          overflow: 'visible',
-          minHeight: '1rem',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          flex: '0 0 auto',
-          textShadow: '0 2px 4px rgba(24, 144, 255, 0.1)',
-        }}
-      >
-        {bigNumber !== null ? formatHours(animatedNumber) : 'No data available'}
-      </div>
-
-      {/* Percent Change */}
-      <div
-        style={{
-          textAlign: 'center',
-          marginBottom: '0.4rem',
+          marginBottom: isExpanded ? '0.55rem' : '0.95rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.2rem',
+          justifyContent: 'flex-start',
+          flex: '0 0 auto',
+          gap: isExpanded ? '0.45rem' : '0.7rem',
         }}
       >
-        {(() => {
-          const clampedPercent = Math.min(100, Math.abs(percentChange));
-          const isNegative = percentChange < 0;
-          const isPositive = percentChange > 0;
-          return (
         <div
           style={{
-            color: isNegative ? '#52c41a' : isPositive ? '#ff4d4f' : isDarkMode ? '#b0b0b0' : '#8c8c8c',
-          fontSize: isExpanded
-              ? 'clamp(1.05rem, 1.5vw, 1.8rem)'
-              : 'clamp(1.4rem, 3vw, 2.4rem)',
-            fontWeight: 600,
+            position: 'relative',
+            width: isExpanded ? 'clamp(110px, 24vw, 132px)' : 'clamp(136px, 35vw, 176px)',
+            height: isExpanded ? 'clamp(110px, 24vw, 132px)' : 'clamp(136px, 35vw, 176px)',
+            borderRadius: '50%',
+            background: isDarkMode ? '#45535c' : '#d7e3e6',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            gap: '0.25rem',
+            boxShadow: 'inset 0 0 0 1px rgba(38,70,83,0.08)',
           }}
         >
+          <div
+            style={{
+              position: 'absolute',
+              top: isExpanded ? '4px' : '6px',
+              left: '50%',
+              transform: 'translateX(-50%)',
+              width: isExpanded ? '18px' : '22px',
+              height: isExpanded ? '9px' : '10px',
+              borderRadius: '999px',
+              background: '#17343e',
+            }}
+          />
+          <div
+            style={{
+              width: '80%',
+              height: '80%',
+              borderRadius: '50%',
+              background: isDarkMode ? '#2d2d2d' : '#fafbfc',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              flexDirection: 'column',
+              gap: '0.12rem',
+            }}
+          >
+            <span
+              style={{
+                color: isDarkMode ? '#9fb3bc' : '#62808a',
+                marginBottom: isExpanded ? '0.1rem' : '0.16rem',
+              }}
+            >
+              <RotateCcw size={isExpanded ? 13 : 15} strokeWidth={2} />
+            </span>
+            <span
+              style={{
+                color: isDarkMode ? '#e2e8f0' : '#1f2937',
+                fontWeight: 800,
+                lineHeight: 1,
+                fontSize: isExpanded ? 'clamp(2rem, 5.2vw, 2.5rem)' : 'clamp(2.3rem, 6.4vw, 3.3rem)',
+              }}
+            >
+              {gaugeMetricValue}
+            </span>
+          </div>
           {hasComparisonData && percentChange !== 0 && (
-            <span>
-              {isNegative ? (
-                <TrendingDown size={isExpanded ? 24 : 32} />
+            <span
+              style={{
+                position: 'absolute',
+                top: '12px',
+                transform: 'translateY(-50%)',
+                width: isExpanded ? 16 : 18,
+                height: isExpanded ? 16 : 18,
+                borderRadius: '50%',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                color: '#264653',
+                background: isDarkMode ? '#d1d5db' : '#eaf1f3',
+                border: '1px solid rgba(38,70,83,0.15)',
+              }}
+            >
+              {isDecrease ? (
+                <TrendingDown size={isExpanded ? 9 : 10} />
               ) : (
-                <TrendingUp size={isExpanded ? 24 : 32} />
+                <TrendingUp size={isExpanded ? 9 : 10} />
               )}
             </span>
           )}
-          {hasComparisonData ? (
-            <span>{clampedPercent.toFixed(1)}%</span>
-          ) : (
-            <span>No data to compare</span>
-          )}
-          <span
-            style={{
-              color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
-              fontSize: isExpanded
-                ? 'clamp(0.85rem, 1.2vw, 1.1rem)'
-                : 'clamp(1.2rem, 2.5vw, 2rem)',
-              marginLeft: '0.5rem',
-              fontWeight: 400,
-            }}
-          >
-            {hasComparisonData
-              ? percentChange < 0
-                ? 'Reduction in Stay Time'
-                : percentChange > 0
-                ? 'Increase in Stay Time'
-                : 'No Change in Stay Time'
-              : ''}
-          </span>
         </div>
-          );
-        })()}
-
         <div
           style={{
-            color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
-            padding: '0.25rem 0.5rem',
-            borderRadius: '0.5rem',
-            fontSize: isExpanded
-              ? 'clamp(0.85rem, 1.15vw, 1.05rem)'
-              : 'clamp(1.2rem, 2.5vw, 2rem)',
-            fontWeight: 500,
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: isExpanded ? 'nowrap' : 'normal',
+            width: '100%',
+            maxWidth: isExpanded ? '100%' : '340px',
+            background: isDarkMode ? 'rgba(98, 144, 144, 0.34)' : '#c7e4e0',
+            borderRadius: '12px',
+            padding: isExpanded ? '0.48rem 0.78rem' : '0.72rem 0.95rem',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '0.7rem',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.06)' : '1px solid rgba(38,70,83,0.06)',
           }}
         >
-          {selectedIsToday ? (
-            <>
-              Compared to last average recorded today:{" "}
-              <span style={{ color: '#1890ff' }}>
-                {formatHours(lastRecordedAverage)}
-              </span>
-            </>
-          ) : (
-            <>
-              Compared to today’s average:{" "}
-              <span style={{ color: '#1890ff' }}>
-                {formatHours(lastRecordedAverage)}
-              </span>
-            </>
-          )}
+          <span
+            style={{
+              color: isDarkMode ? '#94cad2' : '#4b70a1',
+              fontSize: isExpanded ? 'clamp(0.62rem, 1.4vw, 0.76rem)' : 'clamp(0.68rem, 1.6vw, 0.8rem)',
+              fontWeight: 700,
+              letterSpacing: '0.12em',
+              textTransform: 'uppercase',
+            }}
+          >
+            {comparisonLabel}
+          </span>
+          <span
+            style={{
+              color: comparisonColor,
+              fontSize: isExpanded ? 'clamp(1.1rem, 2.4vw, 1.3rem)' : 'clamp(1.28rem, 2.8vw, 1.56rem)',
+              fontWeight: 800,
+              whiteSpace: 'nowrap',
+            }}
+          >
+            {comparisonValue}
+          </span>
         </div>
-
       </div>
       </div>
 
