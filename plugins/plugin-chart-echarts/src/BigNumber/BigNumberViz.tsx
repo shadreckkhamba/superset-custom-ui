@@ -431,6 +431,8 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       subtitleFontSize,
       metricNameFontSize,
       subheaderFontSize,
+      metricName,
+      subtitle,
     } = this.props;
     const className = this.getClassName();
 
@@ -484,6 +486,34 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       );
     }
     const shouldApplyOverflow = this.shouldApplyOverflow(height);
+    const metricLabelText = metricName ? String(metricName) : '';
+    const subtitleText = subtitle ? String(subtitle).trim() : '';
+    const metricLabelLower = metricLabelText.toLowerCase();
+    const normalizedMetricLabel = metricLabelLower.replace(/\s+/g, '');
+    const isCountAlias =
+      normalizedMetricLabel === 'sum(count)' ||
+      normalizedMetricLabel === 'sum__count' ||
+      normalizedMetricLabel === 'count';
+    const displayMetricLabel = isCountAlias
+      ? t('Refunded rate')
+      : metricLabelText;
+    const shouldUsePercentFallback =
+      isCountAlias ||
+      metricLabelLower.includes('rate') ||
+      metricLabelLower.includes('percent') ||
+      metricLabelLower.includes('%');
+    const footerLabel = displayMetricLabel
+      ? displayMetricLabel.toUpperCase()
+      : t('Metric');
+    const fallbackFromBigNumber =
+      typeof this.props.bigNumber === 'number' &&
+      Number.isFinite(this.props.bigNumber)
+        ? shouldUsePercentFallback
+          ? `${this.props.bigNumber.toFixed(1)}%`
+          : defaultNumberFormatter(this.props.bigNumber)
+        : '';
+    const footerValue = subtitleText || fallbackFromBigNumber;
+
     return (
       <div
         className={className}
@@ -500,15 +530,21 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
             : {}),
         }}
       >
-        <div className="text-container">
+        <div className="text-container text-container--kpi">
           {this.renderFallbackWarning()}
-          {this.renderMetricName((metricNameFontSize || 0) * height)}
-          {this.renderKicker((kickerFontSize || 0) * height)}
-          {this.renderHeader(Math.ceil(headerFontSize * height))}
-          {this.rendermetricComparisonSummary(
-            Math.ceil(subheaderFontSize * height),
+          <div className="kpi-circle">
+            <div className="kpi-circle-cap" />
+            <div className="kpi-circle-inner">
+              <div className="kpi-circle-icon">&#8635;</div>
+              {this.renderHeader(Math.ceil(headerFontSize * height))}
+            </div>
+          </div>
+          {footerValue && (
+            <div className="kpi-footer">
+              <span className="kpi-footer-label">{footerLabel}</span>
+              <span className="kpi-footer-value">{footerValue}</span>
+            </div>
           )}
-          {this.renderSubtitle(Math.ceil(subtitleFontSize * height))}
         </div>
       </div>
     );
@@ -541,6 +577,112 @@ export default styled(BigNumberVis)`
         padding: ${theme.gridUnit}px;
         border-radius: ${theme.gridUnit}px;
       }
+    }
+
+    &.no-trendline {
+      justify-content: flex-start;
+      align-items: center;
+      width: 100%;
+      height: 100%;
+      padding: ${theme.gridUnit * 4}px ${theme.gridUnit * 4}px
+        ${theme.gridUnit * 2}px;
+      background: ${theme.colors.grayscale.light5};
+      border-radius: ${theme.gridUnit * 3}px;
+    }
+
+    &.no-trendline .text-container--kpi {
+      flex: 1;
+      justify-content: center;
+      align-items: center;
+      gap: ${theme.gridUnit * 3}px;
+      width: 100%;
+    }
+
+    &.no-trendline .kpi-circle {
+      position: relative;
+      width: min(42vw, 150px);
+      height: min(42vw, 150px);
+      border-radius: 50%;
+      background: ${theme.colors.grayscale.light4};
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+
+    &.no-trendline .kpi-circle-cap {
+      position: absolute;
+      top: ${theme.gridUnit * 0.75}px;
+      left: 50%;
+      transform: translateX(-50%);
+      width: ${theme.gridUnit * 4.5}px;
+      height: ${theme.gridUnit * 1.9}px;
+      border-radius: ${theme.gridUnit * 2}px;
+      background: ${theme.colors.grayscale.dark2};
+    }
+
+    &.no-trendline .kpi-circle-inner {
+      width: 84%;
+      height: 84%;
+      border-radius: 50%;
+      background: ${theme.colors.grayscale.light5};
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      gap: ${theme.gridUnit * 0.8}px;
+    }
+
+    &.no-trendline .kpi-circle-icon {
+      line-height: 1;
+      width: ${theme.gridUnit * 4.5}px;
+      height: ${theme.gridUnit * 4.5}px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: ${theme.typography.sizes.l}px;
+      font-weight: ${theme.typography.weights.bold};
+      color: ${theme.colors.primary.base};
+      background: ${theme.colors.grayscale.light4};
+      border: 1px solid ${theme.colors.grayscale.light2};
+    }
+
+    &.no-trendline .header-line {
+      margin-bottom: 0;
+      color: ${theme.colors.grayscale.dark2};
+      font-weight: ${theme.typography.weights.bold};
+      line-height: 0.95em;
+    }
+
+    &.no-trendline .kpi-footer {
+      width: 100%;
+      max-width: 360px;
+      border-radius: ${theme.gridUnit * 3.5}px;
+      background: ${theme.colors.grayscale.light4};
+      border: 1px solid ${theme.colors.grayscale.light2};
+      padding: ${theme.gridUnit * 2}px ${theme.gridUnit * 3}px;
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: ${theme.gridUnit * 2}px;
+    }
+
+    &.no-trendline .kpi-footer-label {
+      color: ${theme.colors.primary.base};
+      font-size: ${theme.typography.sizes.xs}px;
+      font-weight: ${theme.typography.weights.bold};
+      letter-spacing: 0.08em;
+      text-transform: uppercase;
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+
+    &.no-trendline .kpi-footer-value {
+      color: ${theme.colors.success.base};
+      font-size: ${theme.typography.sizes.m}px;
+      font-weight: ${theme.typography.weights.bold};
+      white-space: nowrap;
     }
 
     .kicker {
