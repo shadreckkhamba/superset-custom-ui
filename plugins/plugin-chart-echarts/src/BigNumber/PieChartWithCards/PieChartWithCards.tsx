@@ -17,7 +17,6 @@
  * under the License.
  */
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { motion } from 'framer-motion';
 import { User, Users } from 'lucide-react';
 import { styled } from '@superset-ui/core';
 import { PieChartWithCardsProps, PieChartDataItem } from './types';
@@ -89,9 +88,7 @@ export default function PieChartWithCards({
   }));
 
   return (
-    <motion.div
-      initial={{ opacity: 0, y: 16 }}
-      animate={{ opacity: 1, y: 0 }}
+    <div
       className="rounded-2xl bg-card border border-border shadow-card"
       style={{ fontFamily: 'Plus Jakarta Sans, sans-serif', width, height }}
     >
@@ -149,11 +146,8 @@ export default function PieChartWithCards({
             ) => {
               const IconComponent = ICONS[index % ICONS.length];
               return (
-                <motion.div
+                <div
                   key={item.name}
-                  initial={{ opacity: 0, y: 10 }}
-                  animate={{ opacity: 1, y: 0 }}
-                  transition={{ delay: 0.5 + index * 0.12 }}
                   className="rounded-xl px-3 py-2.5 flex items-center gap-2.5 border border-border"
                   style={{ backgroundColor: 'hsl(var(--accent) / 0.4)' }}
                 >
@@ -180,12 +174,12 @@ export default function PieChartWithCards({
                       {item.percentage}%
                     </span>
                   </div>
-                </motion.div>
+                </div>
               );
             },
           )}
         </div>
       </div>
-    </motion.div>
+    </div>
   );
 }
