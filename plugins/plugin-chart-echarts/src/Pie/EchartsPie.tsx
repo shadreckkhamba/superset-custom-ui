@@ -353,10 +353,10 @@ const Dot = styled.span<{ $color: string }>`
 `;
 
 const TinyIcon = styled.div<{ $color: string }>`
-  width: 28px !important;
-  height: 28px !important;
-  min-width: 28px !important;
-  min-height: 28px !important;
+  width: 32px !important;
+  height: 32px !important;
+  min-width: 32px !important;
+  min-height: 32px !important;
   border-radius: 50% !important;
   display: inline-flex !important;
   align-items: center !important;
@@ -554,7 +554,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                                 item.name,
                               );
                               return (
-                                <IconComponent size={18} strokeWidth={2.6} />
+                                <IconComponent size={21} strokeWidth={2.6} />
                               );
                             })()}
                           </TinyIcon>
@@ -604,7 +604,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                       >
                         {(() => {
                           const IconComponent = getIconForCategory(item.name);
-                          return <IconComponent size={18} strokeWidth={2.6} />;
+                          return <IconComponent size={21} strokeWidth={2.6} />;
                         })()}
                       </TinyIcon>
                       <PieLegendLabel>{item.name}</PieLegendLabel>
@@ -707,7 +707,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     >
                       {(() => {
                         const IconComponent = getIconForCategory(item.name);
-                        return <IconComponent size={18} strokeWidth={2.6} />;
+                        return <IconComponent size={21} strokeWidth={2.6} />;
                       })()}
                     </TinyIcon>
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
