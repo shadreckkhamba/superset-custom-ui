@@ -1322,18 +1322,23 @@ useEffect(() => {
             aria-modal="true"
             aria-label="Chart explanation"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              width: 'clamp(320px, 90vw, 500px)',
-              maxWidth: 'calc(100% - 20px)',
-              borderRadius: '16px',
-              background: isDarkMode
-                ? 'rgba(30, 35, 42, 0.92)'
-                : '#ffffff',
-              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
-              boxShadow: isDarkMode
-                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
-                : '0 24px 52px rgba(24, 144, 255, 0.24)',
+	            style={{
+	              width: 'clamp(320px, 90vw, 500px)',
+	              maxWidth: 'calc(100% - 20px)',
+	              maxHeight: 'calc(100% - 24px)',
+	              borderRadius: '16px',
+	              background: isDarkMode
+	                ? 'rgba(30, 35, 42, 0.70)'
+	                : 'rgba(255, 255, 255, 0.70)',
+	              backdropFilter: 'blur(16px) saturate(170%)',
+	              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
+	              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+	              boxShadow: isDarkMode
+	                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
+	                : '0 24px 52px rgba(24, 144, 255, 0.24)',
               color: isDarkMode ? '#f0f0f0' : '#1f2937',
+              display: 'flex',
+              flexDirection: 'column',
               overflow: 'hidden',
               transformOrigin: 'top right',
               transform: infoPanelReady ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.38)',
@@ -1389,7 +1394,18 @@ useEffect(() => {
               </button>
             </div>
 
-            <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
+            <div
+              style={{
+                padding: 'clamp(12px, 2.8vw, 16px)',
+                display: 'grid',
+                gap: 'clamp(10px, 2.5vw, 14px)',
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Pie slices (distribution)</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
