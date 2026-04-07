@@ -755,6 +755,23 @@ useEffect(() => {
             max-height: 300px !important;
             margin: 0 8px !important;
           }
+
+          /* Legend compaction for "smaller screens" that still keep 3-column layout. */
+          .pie-stay-wrapper .pie-stay-legend-wrapper {
+            padding-top: 12px !important;
+          }
+          .pie-stay-wrapper .pie-stay-legend-card {
+            margin-top: 8px !important;
+            padding: 8px 10px !important;
+            gap: 4px !important;
+          }
+          .pie-stay-wrapper .pie-stay-legend-title {
+            margin-bottom: 2px !important;
+            padding-bottom: 6px !important;
+          }
+          .pie-stay-wrapper .pie-stay-legend-item {
+            padding: 5px 9px !important;
+          }
         }
         
         /* Dark mode menu button fix */
