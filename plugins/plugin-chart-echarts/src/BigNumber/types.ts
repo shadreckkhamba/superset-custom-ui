@@ -98,6 +98,7 @@ export type BigNumberVizProps = {
     clientY: number,
     filters?: ContextMenuFilters,
   ) => void;
+  onRefresh?: () => void;
   xValueFormatter?: TimeFormatter;
   formData?: BigNumberWithTrendlineFormData;
   refs: Refs;
