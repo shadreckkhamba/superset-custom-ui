@@ -17,50 +17,139 @@
  * under the License.
  */
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { User, Users } from 'lucide-react';
+import { Baby, ShieldPlus, User, UserCheck, Users, Venus } from 'lucide-react';
 import { styled } from '@superset-ui/core';
+import type { CSSProperties } from 'react';
 import { PieChartTransformedProps } from './types';
 
 const Container = styled.div`
+  --pie-bg: #f7fafb;
+  --pie-border: #d8e3e8;
+  --pie-muted: #5d7079;
+  --pie-foreground: #1d2d33;
+  --pie-row-bg: #edf3f6;
+  --pie-row-bg-strong: #e8f0f3;
+  --pie-donut-row-bg: #ebf2f5;
+  --pie-row-border: #d4dfe4;
+  --pie-row-shadow: 0 1px 2px rgba(22, 41, 50, 0.08);
+  --pie-icon-bg: var(--pie-bg);
+  --pie-icon-border: var(--pie-border);
+  --pie-swatch-ring: #ffffff;
+  --pie-swatch-outer-ring: rgba(255, 255, 255, 0.35);
+  --pie-swatch-glow-multiplier: 66;
+
   display: flex;
   flex-direction: column;
   width: 100%;
   height: 100%;
   padding: ${({ theme }) => theme.gridUnit * 3}px;
-  background: hsl(var(--background));
+  background: var(--pie-bg);
   border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
-  border: 1px solid hsl(var(--border-border));
+  border: 1px solid var(--pie-border);
+  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    --pie-bg: radial-gradient(
+        130% 120% at 0% 0%,
+        rgba(0, 195, 255, 0.09) 0%,
+        rgba(0, 195, 255, 0) 45%
+      ),
+      linear-gradient(180deg, #0b1820 0%, #0a141b 100%);
+    --pie-border: #1f3744;
+    --pie-muted: #bfd0d6;
+    --pie-foreground: #ecf6f8;
+    --pie-row-bg: linear-gradient(180deg, #17323d 0%, #112730 100%);
+    --pie-row-bg-strong: linear-gradient(180deg, #1a3743 0%, #142c35 100%);
+    --pie-donut-row-bg: linear-gradient(180deg, #193540 0%, #132a33 100%);
+    --pie-row-border: #2f5667;
+    --pie-row-shadow: 0 8px 18px rgba(0, 0, 0, 0.38);
+    --pie-icon-bg: rgba(17, 39, 48, 0.95);
+    --pie-icon-border: rgba(109, 189, 216, 0.45);
+    --pie-swatch-ring: #dff8ff;
+    --pie-swatch-outer-ring: rgba(190, 235, 248, 0.7);
+    --pie-swatch-glow-multiplier: aa;
+    box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.22),
+      0 10px 24px rgba(0, 0, 0, 0.32);
+  }
+
+  body.theme-transitioning & {
+    position: relative;
+    overflow: hidden;
+  }
+
+  body.theme-transitioning & > * {
+    opacity: 0 !important;
+  }
+
+  body.theme-transitioning &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      rgba(130, 152, 164, 0.16) 0%,
+      rgba(130, 152, 164, 0.32) 45%,
+      rgba(130, 152, 164, 0.16) 100%
+    );
+    background-size: 220% 100%;
+    animation: pieThemeSkeletonShimmer 1.1s linear infinite;
+    z-index: 2;
+  }
+
+  @keyframes pieThemeSkeletonShimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+  }
 `;
 
 const PieTemplate = styled.div`
   display: flex;
   flex-direction: column;
   height: 100%;
+  min-height: 0;
 `;
 
 const TotalCounter = styled.div`
   text-align: center;
   margin-bottom: ${({ theme }) => theme.gridUnit * 2}px;
+  position: relative;
+  z-index: 2;
+  min-height: 78px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
 `;
 
 const TotalLabel = styled.div`
-  font-size: 12px;
+  font-size: 14px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: hsl(var(--text-muted-foreground));
+  color: var(--pie-muted) !important;
   font-weight: 700;
   margin-bottom: ${({ theme }) => theme.gridUnit / 2}px;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #8fd8f2;
+  }
 `;
 
 const TotalValue = styled.div`
-  font-size: 42px;
+  font-size: 54px;
   line-height: 1;
   font-weight: 800;
-  color: hsl(var(--text-card-foreground));
+  color: var(--pie-foreground) !important;
 `;
 
 const PieChartWrap = styled.div`
-  height: 190px;
+  height: clamp(140px, 40%, 190px);
+  min-height: 130px;
+  flex-shrink: 0;
   margin-bottom: ${({ theme }) => theme.gridUnit * 2}px;
 `;
 
@@ -68,14 +157,23 @@ const DetailCardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: ${({ theme }) => theme.gridUnit * 2}px;
+  @media (max-width: 920px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const DetailCard = styled.div`
-  border-radius: ${({ theme }) => theme.gridUnit * 2}px;
-  border: 1px solid hsl(var(--border-border));
-  background: hsl(var(--secondary) / 0.28);
+  border-radius: ${({ theme }) => theme.gridUnit * 2.2}px;
+  border: 1px solid var(--pie-row-border) !important;
+  background: var(--pie-row-bg-strong) !important;
+  box-shadow: var(--pie-row-shadow);
   padding: ${({ theme }) => theme.gridUnit * 1.5}px
     ${({ theme }) => theme.gridUnit * 2}px;
+  transition: all 0.2s ease;
+  overflow: visible;
+  &:hover {
+    transform: translateY(-1px);
+  }
 `;
 
 const DetailTop = styled.div`
@@ -84,69 +182,80 @@ const DetailTop = styled.div`
   gap: ${({ theme }) => theme.gridUnit}px;
 `;
 
-const IconBox = styled.div<{ $color: string }>`
-  width: 20px;
-  height: 20px;
-  border-radius: 999px;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  background: hsl(var(--background));
-  border: 1px solid hsl(var(--border-border));
-  color: ${({ $color }) => $color};
-`;
-
 const CardLabel = styled.span`
-  font-size: 12px;
+  font-size: 21px;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 700;
+  color: var(--pie-muted);
+  font-weight: 800;
+  line-height: 1.2;
+  word-break: break-word;
 `;
 
 const CardValue = styled.div`
-  font-size: 30px;
-  line-height: 1;
-  font-weight: 800;
-  color: hsl(var(--text-card-foreground));
+  font-size: 50px;
+  line-height: 1.05;
+  font-weight: 900;
+  color: var(--pie-foreground);
   margin-top: ${({ theme }) => theme.gridUnit * 0.5}px;
 `;
 
 const CardPercentage = styled.div`
-  font-size: 16px;
-  line-height: 1.1;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 600;
+  font-size: 26px;
+  line-height: 1.2;
+  color: var(--pie-muted);
+  font-weight: 700;
   margin-top: ${({ theme }) => theme.gridUnit * 0.4}px;
 `;
 
 const PieLegend = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.gridUnit}px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: ${({ theme }) => theme.gridUnit * 1.4}px;
   width: 100%;
-  max-width: 320px;
-  margin: 0 auto;
+  max-width: 1100px;
+  margin: 0 auto ${({ theme }) => theme.gridUnit}px auto;
 `;
 
 const PieLegendRow = styled.div`
   display: grid;
-  grid-template-columns: 10px minmax(0, 1fr) minmax(96px, auto);
-  align-items: center;
+  grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
+  align-items: flex-start;
   gap: ${({ theme }) => theme.gridUnit}px;
   padding: ${({ theme }) => theme.gridUnit * 0.7}px
     ${({ theme }) => theme.gridUnit * 1.2}px;
-  border-radius: ${({ theme }) => theme.gridUnit * 1.5}px;
-  background: hsl(var(--secondary) / 0.22);
+  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
+  background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 48%
+    ),
+    var(--pie-row-bg) !important;
+  border: 1px solid var(--pie-row-border) !important;
+  box-shadow: var(--pie-row-shadow);
+  transition: all 0.2s ease;
+  overflow: visible;
+  &:hover {
+    transform: translateY(-1px);
+  }
+`;
+
+const LegendLabelWrap = styled.div`
+  display: inline-flex;
+  align-items: flex-start;
+  gap: ${({ theme }) => theme.gridUnit * 0.8}px;
+  min-width: 0;
 `;
 
 const PieLegendLabel = styled.span`
-  font-size: 13px;
-  color: hsl(var(--text-card-foreground));
-  font-weight: 600;
+  font-size: 21px;
+  color: var(--pie-foreground);
+  font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+  word-break: normal;
 `;
 
 const PieLegendValueStack = styled.div`
@@ -157,23 +266,23 @@ const PieLegendValueStack = styled.div`
 `;
 
 const PieLegendValue = styled.span`
-  font-size: 13px;
-  line-height: 1;
+  font-size: 21px;
+  line-height: 1.2;
   text-align: right;
   white-space: nowrap;
-  color: hsl(var(--text-muted-foreground));
+  color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 800;
 `;
 
 const PieLegendPercent = styled.span`
-  font-size: 12px;
-  line-height: 1;
+  font-size: 20px;
+  line-height: 1.2;
   text-align: right;
   white-space: nowrap;
-  color: hsl(var(--text-muted-foreground));
+  color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
   opacity: 0.9;
 `;
 
@@ -184,6 +293,7 @@ const DonutTemplate = styled.div`
   align-items: center;
   justify-content: center;
   height: 100%;
+  min-height: 0;
 `;
 
 const DonutChartWrap = styled.div`
@@ -191,60 +301,112 @@ const DonutChartWrap = styled.div`
 `;
 
 const DonutLegend = styled.div`
-  display: flex;
-  flex-direction: column;
-  gap: ${({ theme }) => theme.gridUnit * 1.8}px;
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  gap: ${({ theme }) => theme.gridUnit * 1.4}px;
   width: 100%;
-  max-width: 260px;
+  max-width: 1100px;
   min-width: 0;
 `;
 
 const DonutLegendRow = styled.div`
   display: grid;
-  grid-template-columns: 12px minmax(72px, 1fr) minmax(86px, auto);
-  align-items: center;
+  grid-template-columns: minmax(72px, 1fr) minmax(150px, auto);
+  align-items: flex-start;
   gap: ${({ theme }) => theme.gridUnit * 1.2}px;
   min-width: 0;
   padding: ${({ theme }) => theme.gridUnit * 0.8}px
     ${({ theme }) => theme.gridUnit * 1.2}px;
-  border-radius: ${({ theme }) => theme.gridUnit * 1.5}px;
-  background: hsl(var(--secondary) / 0.24);
+  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
+  background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.02) 48%
+    ),
+    var(--pie-donut-row-bg) !important;
+  border: 1px solid var(--pie-row-border) !important;
+  box-shadow: var(--pie-row-shadow);
+  transition: all 0.2s ease;
+  overflow: visible;
+  &:hover {
+    transform: translateY(-1px);
+  }
 `;
 
 const Dot = styled.span<{ $color: string }>`
-  width: 10px;
-  height: 10px;
-  border-radius: 50%;
-  background: ${({ $color }) => $color};
+  width: 20px !important;
+  height: 20px !important;
+  min-width: 20px !important;
+  min-height: 20px !important;
+  border-radius: 50% !important;
+  background: ${({ $color }) => $color} !important;
+  border: 2px solid var(--pie-swatch-ring) !important;
+  box-shadow: 0 0 0 2px var(--pie-swatch-outer-ring),
+    0 0 12px ${({ $color }) => $color}aa !important;
+  display: inline-block !important;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    border-color: rgba(232, 248, 252, 0.95) !important;
+    box-shadow: 0 0 0 1px rgba(23, 44, 54, 0.9) !important;
+    filter: none !important;
+  }
+`;
+
+const TinyIcon = styled.div<{ $color: string }>`
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  border-radius: 50% !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  background: ${({ $color }) => `${$color}1f`} !important;
+  border: 1px solid ${({ $color }) => `${$color}66`} !important;
+  color: ${({ $color }) => $color} !important;
+  flex-shrink: 0 !important;
+  svg {
+    color: inherit !important;
+    stroke: currentColor !important;
+  }
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: ${({ $color }) => $color} !important;
+    border: 1px solid rgba(235, 251, 255, 0.95) !important;
+    color: #08202a !important;
+    box-shadow: 0 0 0 1px rgba(22, 43, 52, 0.9) !important;
+  }
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: 15px;
-  color: hsl(var(--text-card-foreground));
-  font-weight: 600;
+  font-size: 22px;
+  color: var(--pie-foreground);
+  font-weight: 700;
   white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  overflow: visible;
+  text-overflow: clip;
+  line-height: 1.25;
+  word-break: normal;
 `;
 
 const DonutLegendValue = styled.span`
-  font-size: 14px;
-  line-height: 1;
+  font-size: 21px;
+  line-height: 1.2;
   text-align: right;
   white-space: nowrap;
-  color: hsl(var(--text-muted-foreground));
+  color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 800;
 `;
 
 const DonutLegendPercent = styled.span`
-  font-size: 12px;
-  line-height: 1;
+  font-size: 20px;
+  line-height: 1.2;
   text-align: right;
   white-space: nowrap;
-  color: hsl(var(--text-muted-foreground));
+  color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
-  font-weight: 600;
+  font-weight: 700;
   opacity: 0.9;
 `;
 
@@ -256,32 +418,42 @@ const DonutLegendValueStack = styled.div`
 `;
 
 const CenterLabel = styled.div`
-  font-size: 12px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
-  color: hsl(var(--text-muted-foreground));
-  font-weight: 700;
+  color: var(--pie-muted);
+  font-weight: 900;
+  line-height: 1.05;
+  margin-bottom: 2px;
 `;
 
 const CenterValue = styled.div`
-  font-size: 52px;
-  line-height: 1;
-  font-weight: 800;
-  color: hsl(var(--text-card-foreground));
+  font-size: 68px;
+  line-height: 1.05;
+  font-weight: 900;
+  color: var(--pie-foreground);
 `;
 
 const CHART_COLORS = [
-  '#ff7a00',
-  '#2d2de0',
-  '#13c6b3',
-  '#6f0fd2',
-  '#1abd78',
-  '#2f5fd0',
-  '#f7b500',
-  '#ee4d5a',
+  '#00E5FF',
+  '#FF8A00',
+  '#7C4DFF',
+  '#00C853',
+  '#FF1744',
+  '#FFD600',
+  '#2979FF',
+  '#FF4081',
 ];
 
-const ICONS = [User, Users];
+function getIconForCategory(name: string) {
+  const normalized = name.toLowerCase();
+  if (normalized.includes('male')) return User;
+  if (normalized.includes('female')) return Venus;
+  if (normalized.includes('adolescent')) return UserCheck;
+  if (normalized.includes('under')) return Baby;
+  if (normalized.includes('pregnant')) return ShieldPlus;
+  return Users;
+}
 
 export default function EchartsPie(props: PieChartTransformedProps) {
   const { height, width, echartOptions, formData } = props;
@@ -351,21 +523,43 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     color: string;
                     percentage: string;
                   },
-                  index: number,
                 ) => {
-                  const IconComponent = ICONS[index % ICONS.length];
                   return (
-                    <DetailCard key={item.name}>
+                    <DetailCard
+                      key={item.name}
+                      className="pie-mini-row"
+                    >
                       <DetailTop>
-                        <IconBox $color={item.color}>
-                          <IconComponent
-                            style={{
-                              width: 12,
-                              height: 12,
-                            }}
+                        <LegendLabelWrap>
+                          <Dot
+                            $color={item.color}
+                            className="pie-color-dot"
+                            style={
+                              {
+                                ['--dot-color' as string]: item.color,
+                              } as CSSProperties
+                            }
                           />
-                        </IconBox>
-                        <CardLabel>{item.name}</CardLabel>
+                          <TinyIcon
+                            $color={item.color}
+                            className="pie-color-iconchip"
+                            style={
+                              {
+                                ['--dot-color' as string]: item.color,
+                              } as CSSProperties
+                            }
+                          >
+                            {(() => {
+                              const IconComponent = getIconForCategory(
+                                item.name,
+                              );
+                              return (
+                                <IconComponent size={18} strokeWidth={2.6} />
+                              );
+                            })()}
+                          </TinyIcon>
+                          <CardLabel>{item.name}</CardLabel>
+                        </LegendLabelWrap>
                       </DetailTop>
                       <CardValue>{item.value.toLocaleString()}</CardValue>
                       <CardPercentage>{item.percentage}%</CardPercentage>
@@ -385,9 +579,36 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   color: string;
                   percentage: string;
                 }) => (
-                  <PieLegendRow key={`pie-legend-${item.name}`}>
-                    <Dot $color={item.color} />
-                    <PieLegendLabel>{item.name}</PieLegendLabel>
+                  <PieLegendRow
+                    key={`pie-legend-${item.name}`}
+                    className="pie-mini-row"
+                  >
+                    <LegendLabelWrap>
+                      <Dot
+                        $color={item.color}
+                        className="pie-color-dot"
+                        style={
+                          {
+                            ['--dot-color' as string]: item.color,
+                          } as CSSProperties
+                        }
+                      />
+                      <TinyIcon
+                        $color={item.color}
+                        className="pie-color-iconchip"
+                        style={
+                          {
+                            ['--dot-color' as string]: item.color,
+                          } as CSSProperties
+                        }
+                      >
+                        {(() => {
+                          const IconComponent = getIconForCategory(item.name);
+                          return <IconComponent size={18} strokeWidth={2.6} />;
+                        })()}
+                      </TinyIcon>
+                      <PieLegendLabel>{item.name}</PieLegendLabel>
+                    </LegendLabelWrap>
                     <PieLegendValueStack>
                       <PieLegendValue>
                         {item.value.toLocaleString()}
@@ -402,53 +623,56 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         </PieTemplate>
       ) : (
         <DonutTemplate>
-          <DonutChartWrap>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="56%"
-                  outerRadius="84%"
-                  paddingAngle={1}
-                  strokeWidth={0}
-                  dataKey="value"
-                  animationBegin={120}
-                  animationDuration={760}
-                >
-                  {chartData.map(
-                    (
-                      entry: { name: string; value: number; color: string },
-                      index: number,
-                    ) => (
-                      <Cell key={`donut-cell-${index}`} fill={entry.color} />
-                    ),
-                  )}
-                </Pie>
-                <foreignObject
-                  x="30%"
-                  y="36%"
-                  width="40%"
-                  height="30%"
-                  style={{ pointerEvents: 'none' }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                    }}
+          <div>
+            <DonutChartWrap>
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="56%"
+                    outerRadius="84%"
+                    paddingAngle={1}
+                    strokeWidth={0}
+                    dataKey="value"
+                    animationBegin={120}
+                    animationDuration={760}
                   >
-                    <CenterLabel>Total</CenterLabel>
-                    <CenterValue>{total.toLocaleString()}</CenterValue>
-                  </div>
-                </foreignObject>
-              </PieChart>
-            </ResponsiveContainer>
-          </DonutChartWrap>
+                    {chartData.map(
+                      (
+                        entry: { name: string; value: number; color: string },
+                        index: number,
+                      ) => (
+                        <Cell key={`donut-cell-${index}`} fill={entry.color} />
+                      ),
+                    )}
+                  </Pie>
+                  <foreignObject
+                    x="22%"
+                    y="22%"
+                    width="56%"
+                    height="56%"
+                    style={{ pointerEvents: 'none', overflow: 'visible' }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        overflow: 'visible',
+                      }}
+                    >
+                      <CenterLabel>Total</CenterLabel>
+                      <CenterValue>{total.toLocaleString()}</CenterValue>
+                    </div>
+                  </foreignObject>
+                </PieChart>
+              </ResponsiveContainer>
+            </DonutChartWrap>
+          </div>
 
           <DonutLegend>
             {chartData.map(
@@ -458,9 +682,36 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                 color: string;
                 percentage: string;
               }) => (
-                <DonutLegendRow key={`legend-${item.name}`}>
-                  <Dot $color={item.color} />
-                  <DonutLegendLabel>{item.name}</DonutLegendLabel>
+                <DonutLegendRow
+                  key={`legend-${item.name}`}
+                  className="pie-mini-row"
+                >
+                  <LegendLabelWrap>
+                    <Dot
+                      $color={item.color}
+                      className="pie-color-dot"
+                      style={
+                        {
+                          ['--dot-color' as string]: item.color,
+                        } as CSSProperties
+                      }
+                    />
+                    <TinyIcon
+                      $color={item.color}
+                      className="pie-color-iconchip"
+                      style={
+                        {
+                          ['--dot-color' as string]: item.color,
+                        } as CSSProperties
+                      }
+                    >
+                      {(() => {
+                        const IconComponent = getIconForCategory(item.name);
+                        return <IconComponent size={18} strokeWidth={2.6} />;
+                      })()}
+                    </TinyIcon>
+                    <DonutLegendLabel>{item.name}</DonutLegendLabel>
+                  </LegendLabelWrap>
                   <DonutLegendValueStack>
                     <DonutLegendValue>
                       {item.value.toLocaleString()}
