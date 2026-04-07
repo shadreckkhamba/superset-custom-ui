@@ -35,10 +35,10 @@ const defaultNumberFormatter = getNumberFormatter();
 
 const PROPORTION = {
   // text size: proportion of the chart container sans trendline
-  METRIC_NAME: 0.155,
-  KICKER: 0.13,
-  HEADER: 0.37,
-  SUBHEADER: 0.155,
+  METRIC_NAME: 0.18,
+  KICKER: 0.15,
+  HEADER: 0.43,
+  SUBHEADER: 0.18,
   // trendline size: proportion of the whole chart container
   TRENDLINE: 0.3,
 };
@@ -46,6 +46,7 @@ const PROPORTION = {
 type BigNumberVisState = {
   elementsRendered: boolean;
   recalculateTrigger: boolean;
+  isRefreshing: boolean;
 };
 
 class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
@@ -80,6 +81,7 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   state = {
     elementsRendered: false,
     recalculateTrigger: false,
+    isRefreshing: false,
   };
 
   componentDidMount() {
@@ -90,6 +92,15 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   }
 
   componentDidUpdate(prevProps: BigNumberVizProps) {
+    if (
+      this.state.isRefreshing &&
+      (prevProps.bigNumber !== this.props.bigNumber ||
+        prevProps.timestamp !== this.props.timestamp ||
+        prevProps.subtitle !== this.props.subtitle)
+    ) {
+      this.setState({ isRefreshing: false });
+    }
+
     if (
       prevProps.height !== this.props.height ||
       prevProps.showTrendLine !== this.props.showTrendLine
@@ -436,6 +447,32 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     return totalHeight > availableHeight;
   }
 
+  handleRefreshClick = () => {
+    const { onRefresh } = this.props;
+    if (this.state.isRefreshing) return;
+
+    this.setState({ isRefreshing: true });
+    if (onRefresh) {
+      onRefresh();
+    } else {
+      // Fallback interaction path when chart hook doesn't expose onRefresh.
+      // Keeps the icon interactive and gives visual feedback.
+      this.setState(prevState => ({
+        recalculateTrigger: !prevState.recalculateTrigger,
+      }));
+      window.dispatchEvent(new CustomEvent('superset:refresh-chart'));
+      window.dispatchEvent(new CustomEvent('superset:dashboard-refresh'));
+    }
+
+    // Fallback so the icon never gets stuck spinning if refresh callback
+    // doesn't emit a value update for any reason.
+    window.setTimeout(() => {
+      this.setState(prevState =>
+        prevState.isRefreshing ? { isRefreshing: false } : null,
+      );
+    }, onRefresh ? 2200 : 900);
+  };
+
   render() {
     const {
       showTrendLine,
@@ -557,13 +594,24 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       >
         <div className="text-container text-container--kpi">
           {this.renderFallbackWarning()}
-          <div className="kpi-circle">
-            <div className="kpi-circle-cap" />
-            <div className="kpi-circle-inner">
-              <div className="kpi-circle-icon">&#8635;</div>
-              {this.renderHeader(kpiHeaderMaxHeight)}
+            <div className="kpi-circle">
+              <div className="kpi-circle-cap" />
+              <div className="kpi-circle-inner">
+                <button
+                  type="button"
+                  className={`kpi-circle-icon ${
+                    this.state.isRefreshing ? 'is-refreshing' : ''
+                  } is-clickable`}
+                  onClick={this.handleRefreshClick}
+                  disabled={this.state.isRefreshing}
+                  title="Refresh data"
+                  aria-label="Refresh data"
+                >
+                  &#8635;
+                </button>
+                {this.renderHeader(kpiHeaderMaxHeight)}
+              </div>
             </div>
-          </div>
           {footerValue && (
             <div className="kpi-footer">
               <span className="kpi-footer-label">{footerLabel}</span>
@@ -707,9 +755,45 @@ export default styled(BigNumberVis)`
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: ${theme.typography.sizes.xl}px;
+      width: clamp(${theme.gridUnit * 8}px, 7vw, ${theme.gridUnit * 10}px);
+      height: clamp(${theme.gridUnit * 8}px, 7vw, ${theme.gridUnit * 10}px);
+      border-radius: 999px;
+      border: 1px solid transparent;
+      background: transparent;
+      padding: 0;
+      font-size: ${theme.typography.sizes.xxl}px;
       font-weight: ${theme.typography.weights.bold};
       color: #5b7d85;
+      transition: transform 0.2s ease, background-color 0.2s ease,
+        border-color 0.2s ease, color 0.2s ease;
+      -webkit-tap-highlight-color: transparent;
+    }
+
+    &.no-trendline .kpi-circle-icon.is-clickable {
+      cursor: pointer;
+    }
+
+    &.no-trendline .kpi-circle-icon.is-clickable:hover {
+      background: rgba(22, 82, 99, 0.09);
+      border-color: rgba(22, 82, 99, 0.2);
+      transform: scale(1.06);
+    }
+
+    &.no-trendline .kpi-circle-icon.is-clickable:active {
+      transform: scale(0.98);
+    }
+
+    &.no-trendline .kpi-circle-icon.is-refreshing {
+      animation: bigNumberRefreshSpin 0.95s linear infinite;
+    }
+
+    @keyframes bigNumberRefreshSpin {
+      from {
+        transform: rotate(0deg);
+      }
+      to {
+        transform: rotate(360deg);
+      }
     }
 
     &.no-trendline .header-line {
@@ -738,7 +822,7 @@ export default styled(BigNumberVis)`
 
     &.no-trendline .kpi-footer-label {
       color: #4b6fa0;
-      font-size: ${theme.typography.sizes.m}px;
+      font-size: ${theme.typography.sizes.xl}px;
       font-weight: ${theme.typography.weights.bold};
       letter-spacing: 0.1em;
       text-transform: uppercase;
@@ -749,7 +833,7 @@ export default styled(BigNumberVis)`
 
     &.no-trendline .kpi-footer-value {
       color: #00a99d;
-      font-size: ${theme.typography.sizes.xl}px;
+      font-size: ${theme.typography.sizes.xxl * 1.2}px;
       font-weight: ${theme.typography.weights.bold};
       white-space: nowrap;
     }
@@ -831,13 +915,13 @@ export default styled(BigNumberVis)`
     .kicker {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.medium};
+      font-weight: ${theme.typography.weights.semibold};
     }
 
     .metric-name {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.semibold};
+      font-weight: ${theme.typography.weights.bold};
     }
 
     .header-line {
@@ -855,13 +939,13 @@ export default styled(BigNumberVis)`
     .subheader-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.medium};
+      font-weight: ${theme.typography.weights.semibold};
     }
 
     .subtitle-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.medium};
+      font-weight: ${theme.typography.weights.semibold};
     }
 
     &.is-fallback-value {
