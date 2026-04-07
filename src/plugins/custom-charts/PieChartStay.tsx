@@ -508,12 +508,11 @@ useEffect(() => {
         if (!meta?.data) return;
 
         const chartRadius = Math.min(chartWidth, chartHeight) / 2;
-        const sliceOuterRadius = chartRadius * 0.85;
         const selectedIdx = selectedSliceIndex;
 
-        // Make responsive based on chart size with better min/max bounds
-        const outerOffset = Math.min(Math.max(18, chartRadius * 0.08), 28);   // 18-28px range
-        const bendDistance = Math.min(Math.max(35, chartRadius * 0.15), 50);  // 35-50px range (reduced max)
+        // Make responsive based on chart size with tighter bounds so connectors don't get too long.
+        const outerOffset = Math.min(Math.max(10, chartRadius * 0.05), 15); // 10-15px range
+        const bendDistance = Math.min(Math.max(18, chartRadius * 0.10), 28); // 18-28px range
 
         meta.data.forEach((arc: any, index: number) => {
           const value = datasetValues[index] || 0;
@@ -524,14 +523,19 @@ useEffect(() => {
           const cosAngle = Math.cos(angle);
           const sinAngle = Math.sin(angle);
 
-          const lineStartX = centerX + cosAngle * (sliceOuterRadius + 5);
-          const lineStartY = centerY + sinAngle * (sliceOuterRadius + 5);
+          // Anchor the connector line at the actual circumference of the arc (not inside the slice).
+          const arcCenterX = Number(arc.x ?? centerX);
+          const arcCenterY = Number(arc.y ?? centerY);
+          const arcOuterRadius = Number(arc.outerRadius ?? chartRadius * 0.85);
 
-          const midX = centerX + cosAngle * (sliceOuterRadius + outerOffset);
-          const midY = centerY + sinAngle * (sliceOuterRadius + outerOffset);
+          const lineStartX = arcCenterX + cosAngle * arcOuterRadius;
+          const lineStartY = arcCenterY + sinAngle * arcOuterRadius;
+
+          const midX = arcCenterX + cosAngle * (arcOuterRadius + outerOffset);
+          const midY = arcCenterY + sinAngle * (arcOuterRadius + outerOffset);
 
           // Reduce bend distance on left side to prevent cutoff
-          const adjustedBendDistance = cosAngle < 0 ? bendDistance * 0.8 : bendDistance;
+          const adjustedBendDistance = cosAngle < 0 ? bendDistance * 0.75 : bendDistance;
           const bendX = midX + (cosAngle >= 0 ? adjustedBendDistance : -adjustedBendDistance);
           const bendY = midY;
           const clampedBendX = Math.min(canvasWidth - 10, Math.max(10, bendX));
