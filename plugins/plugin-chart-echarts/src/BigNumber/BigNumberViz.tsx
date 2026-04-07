@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PureComponent, MouseEvent, createRef } from 'react';
+import { PureComponent, MouseEvent, createRef, CSSProperties } from 'react';
 import {
   t,
   getNumberFormatter,
@@ -35,10 +35,10 @@ const defaultNumberFormatter = getNumberFormatter();
 
 const PROPORTION = {
   // text size: proportion of the chart container sans trendline
-  METRIC_NAME: 0.125,
-  KICKER: 0.1,
-  HEADER: 0.3,
-  SUBHEADER: 0.125,
+  METRIC_NAME: 0.155,
+  KICKER: 0.13,
+  HEADER: 0.37,
+  SUBHEADER: 0.155,
   // trendline size: proportion of the whole chart container
   TRENDLINE: 0.3,
 };
@@ -204,14 +204,24 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   }
 
   renderHeader(maxHeight: number) {
-    const { bigNumber, headerFormatter, width, colorThresholdFormatters } =
-      this.props;
+    const {
+      bigNumber,
+      headerFormatter,
+      width,
+      colorThresholdFormatters,
+      showTrendLine,
+    } = this.props;
     // @ts-ignore
     const text = bigNumber === null ? t('No data') : headerFormatter(bigNumber);
 
     const hasThresholdColorFormatter =
       Array.isArray(colorThresholdFormatters) &&
       colorThresholdFormatters.length > 0;
+    const isDarkMode =
+      typeof document !== 'undefined' &&
+      (document.body.classList.contains('dark-theme') ||
+        document.body.getAttribute('data-theme') === 'dark' ||
+        document.documentElement.getAttribute('data-theme') === 'dark');
 
     let numberColor;
     if (hasThresholdColorFormatter) {
@@ -224,14 +234,18 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
         }
       });
     } else {
-      numberColor = 'black';
+      numberColor = isDarkMode ? '#eef8fa' : 'black';
     }
+
+    const maxHeaderWidth = showTrendLine
+      ? width * 0.9
+      : Math.max(Math.min(width * 0.42, 180), 84);
 
     const container = this.createTemporaryContainer();
     document.body.append(container);
     const fontSize = computeMaxFontSize({
       text,
-      maxWidth: width * 0.9, // reduced it's max width
+      maxWidth: maxHeaderWidth,
       maxHeight,
       className: 'header-line',
       container,
@@ -426,6 +440,7 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const {
       showTrendLine,
       height,
+      width,
       kickerFontSize,
       headerFontSize,
       subtitleFontSize,
@@ -513,12 +528,22 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           : defaultNumberFormatter(this.props.bigNumber)
         : '';
     const footerValue = subtitleText || fallbackFromBigNumber;
+    const safeWidth = Number.isFinite(width) ? width : 320;
+    const kpiCircleSize = Math.max(
+      Math.min(safeWidth * 0.58, height * 0.56, 188),
+      124,
+    );
+    const kpiHeaderMaxHeight = Math.floor(kpiCircleSize * 0.48);
+    const noTrendlineStyle: CSSProperties = {
+      height,
+      '--kpi-circle-size': `${kpiCircleSize}px`,
+    } as CSSProperties;
 
     return (
       <div
         className={className}
         style={{
-          height,
+          ...noTrendlineStyle,
           ...(shouldApplyOverflow
             ? {
                 display: 'block',
@@ -536,7 +561,7 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
             <div className="kpi-circle-cap" />
             <div className="kpi-circle-inner">
               <div className="kpi-circle-icon">&#8635;</div>
-              {this.renderHeader(Math.ceil(headerFontSize * height))}
+              {this.renderHeader(kpiHeaderMaxHeight)}
             </div>
           </div>
           {footerValue && (
@@ -560,6 +585,40 @@ export default styled(BigNumberVis)`
     justify-content: center;
     align-items: flex-start;
 
+    body.theme-transitioning & {
+      position: relative;
+      overflow: hidden;
+    }
+
+    body.theme-transitioning & > * {
+      opacity: 0 !important;
+    }
+
+    body.theme-transitioning &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: ${theme.gridUnit * 3}px;
+      background: linear-gradient(
+        90deg,
+        rgba(130, 152, 164, 0.16) 0%,
+        rgba(130, 152, 164, 0.32) 45%,
+        rgba(130, 152, 164, 0.16) 100%
+      );
+      background-size: 220% 100%;
+      animation: bigNumberThemeSkeletonShimmer 1.1s linear infinite;
+      z-index: 3;
+    }
+
+    @keyframes bigNumberThemeSkeletonShimmer {
+      0% {
+        background-position: 100% 0;
+      }
+      100% {
+        background-position: -100% 0;
+      }
+    }
+
     &.no-trendline .subheader-line {
       padding-bottom: 0.3em;
     }
@@ -580,30 +639,41 @@ export default styled(BigNumberVis)`
     }
 
     &.no-trendline {
+      --kpi-panel-radius: ${theme.gridUnit * 4}px;
       justify-content: flex-start;
       align-items: center;
       width: 100%;
       height: 100%;
+      box-sizing: border-box;
       padding: ${theme.gridUnit * 4}px ${theme.gridUnit * 4}px
         ${theme.gridUnit * 2}px;
-      background: ${theme.colors.grayscale.light5};
-      border-radius: ${theme.gridUnit * 3}px;
+      background: #eef0f1;
+      border-radius: var(--kpi-panel-radius);
+      overflow: hidden;
     }
 
     &.no-trendline .text-container--kpi {
       flex: 1;
       justify-content: center;
       align-items: center;
-      gap: ${theme.gridUnit * 3}px;
+      gap: ${theme.gridUnit * 4}px;
       width: 100%;
+      height: 100%;
+      background: #eef0f1;
+      border-top-left-radius: var(--kpi-panel-radius);
+      border-top-right-radius: var(--kpi-panel-radius);
+      border-bottom-left-radius: var(--kpi-panel-radius);
+      border-bottom-right-radius: var(--kpi-panel-radius);
+      overflow: hidden;
     }
 
     &.no-trendline .kpi-circle {
       position: relative;
-      width: min(42vw, 150px);
-      height: min(42vw, 150px);
+      width: var(--kpi-circle-size, 172px);
+      height: var(--kpi-circle-size, 172px);
       border-radius: 50%;
-      background: ${theme.colors.grayscale.light4};
+      border: ${theme.gridUnit * 2}px solid #d5e2e5;
+      background: transparent;
       display: flex;
       align-items: center;
       justify-content: center;
@@ -611,56 +681,55 @@ export default styled(BigNumberVis)`
 
     &.no-trendline .kpi-circle-cap {
       position: absolute;
-      top: ${theme.gridUnit * 0.75}px;
+      top: -${theme.gridUnit * 1.25}px;
       left: 50%;
       transform: translateX(-50%);
-      width: ${theme.gridUnit * 4.5}px;
-      height: ${theme.gridUnit * 1.9}px;
+      width: ${theme.gridUnit * 5}px;
+      height: ${theme.gridUnit * 2.2}px;
       border-radius: ${theme.gridUnit * 2}px;
-      background: ${theme.colors.grayscale.dark2};
+      background: #19353c;
     }
 
     &.no-trendline .kpi-circle-inner {
-      width: 84%;
-      height: 84%;
+      width: 100%;
+      height: 100%;
       border-radius: 50%;
-      background: ${theme.colors.grayscale.light5};
+      background: transparent;
       display: flex;
       flex-direction: column;
       align-items: center;
       justify-content: center;
-      gap: ${theme.gridUnit * 0.8}px;
+      gap: ${theme.gridUnit * 1.1}px;
     }
 
     &.no-trendline .kpi-circle-icon {
       line-height: 1;
-      width: ${theme.gridUnit * 4.5}px;
-      height: ${theme.gridUnit * 4.5}px;
-      border-radius: 50%;
       display: flex;
       align-items: center;
       justify-content: center;
-      font-size: ${theme.typography.sizes.l}px;
+      font-size: ${theme.typography.sizes.xl}px;
       font-weight: ${theme.typography.weights.bold};
-      color: ${theme.colors.primary.base};
-      background: ${theme.colors.grayscale.light4};
-      border: 1px solid ${theme.colors.grayscale.light2};
+      color: #5b7d85;
     }
 
     &.no-trendline .header-line {
       margin-bottom: 0;
-      color: ${theme.colors.grayscale.dark2};
+      color: #15333a;
       font-weight: ${theme.typography.weights.bold};
-      line-height: 0.95em;
+      line-height: 0.92em;
+      max-width: 78%;
+      overflow: hidden;
+      text-overflow: clip;
+      justify-content: center;
     }
 
     &.no-trendline .kpi-footer {
       width: 100%;
       max-width: 360px;
       border-radius: ${theme.gridUnit * 3.5}px;
-      background: ${theme.colors.grayscale.light4};
-      border: 1px solid ${theme.colors.grayscale.light2};
-      padding: ${theme.gridUnit * 2}px ${theme.gridUnit * 3}px;
+      background: #cfe8e6;
+      border: 1px solid #c2e2df;
+      padding: ${theme.gridUnit * 2.3}px ${theme.gridUnit * 3.2}px;
       display: flex;
       align-items: center;
       justify-content: space-between;
@@ -668,10 +737,10 @@ export default styled(BigNumberVis)`
     }
 
     &.no-trendline .kpi-footer-label {
-      color: ${theme.colors.primary.base};
-      font-size: ${theme.typography.sizes.xs}px;
+      color: #4b6fa0;
+      font-size: ${theme.typography.sizes.m}px;
       font-weight: ${theme.typography.weights.bold};
-      letter-spacing: 0.08em;
+      letter-spacing: 0.1em;
       text-transform: uppercase;
       white-space: nowrap;
       overflow: hidden;
@@ -679,20 +748,96 @@ export default styled(BigNumberVis)`
     }
 
     &.no-trendline .kpi-footer-value {
-      color: ${theme.colors.success.base};
-      font-size: ${theme.typography.sizes.m}px;
+      color: #00a99d;
+      font-size: ${theme.typography.sizes.xl}px;
       font-weight: ${theme.typography.weights.bold};
       white-space: nowrap;
+    }
+
+    body.dark-theme &.no-trendline,
+    [data-theme='dark'] &.no-trendline {
+      background: radial-gradient(
+          130% 120% at 0% 0%,
+          rgba(0, 195, 255, 0.09) 0%,
+          rgba(0, 195, 255, 0) 46%
+        ),
+        linear-gradient(180deg, #0b1820 0%, #0a141b 100%);
+      border: 1px solid #1f3744;
+      box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.22),
+        0 10px 24px rgba(0, 0, 0, 0.32);
+    }
+
+    body.dark-theme &.no-trendline .kpi-circle,
+    [data-theme='dark'] &.no-trendline .kpi-circle {
+      border-color: #1d3b4a;
+      box-shadow: inset 0 0 0 1px rgba(105, 176, 199, 0.15);
+    }
+
+    body.dark-theme &.no-trendline .kpi-circle-cap,
+    [data-theme='dark'] &.no-trendline .kpi-circle-cap {
+      background: #ecf8fb;
+    }
+
+    body.dark-theme &.no-trendline .kpi-circle-icon,
+    [data-theme='dark'] &.no-trendline .kpi-circle-icon {
+      color: #77cbe5;
+    }
+
+    body.dark-theme &.no-trendline .header-line,
+    [data-theme='dark'] &.no-trendline .header-line {
+      color: #eef8fa;
+    }
+
+    body.dark-theme &.no-trendline .kpi-footer,
+    [data-theme='dark'] &.no-trendline .kpi-footer {
+      background: linear-gradient(180deg, #12343f 0%, #0f2c35 100%);
+      border-color: #2f5667;
+      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
+    }
+
+    body.dark-theme &.no-trendline .text-container--kpi,
+    [data-theme='dark'] &.no-trendline .text-container--kpi {
+      background: transparent;
+    }
+
+    body.dark-theme &.no-trendline .kpi-footer-label,
+    [data-theme='dark'] &.no-trendline .kpi-footer-label {
+      color: #8fd8f2;
+    }
+
+    body.dark-theme &.no-trendline .kpi-footer-value,
+    [data-theme='dark'] &.no-trendline .kpi-footer-value {
+      color: #51f0dc;
+    }
+
+    body.dark-theme & .metric-name,
+    [data-theme='dark'] & .metric-name,
+    body.dark-theme & .kicker,
+    [data-theme='dark'] & .kicker,
+    body.dark-theme & .subheader-line,
+    [data-theme='dark'] & .subheader-line,
+    body.dark-theme & .subtitle-line,
+    [data-theme='dark'] & .subtitle-line {
+      color: #d8e7ea;
+    }
+
+    body.dark-theme & .text-container .alert,
+    [data-theme='dark'] & .text-container .alert {
+      background: #2f3f43;
+      border-color: #40565c;
+      color: #d8e7ea;
     }
 
     .kicker {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
+      font-weight: ${theme.typography.weights.medium};
     }
 
     .metric-name {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
+      font-weight: ${theme.typography.weights.semibold};
     }
 
     .header-line {
@@ -700,6 +845,7 @@ export default styled(BigNumberVis)`
       line-height: 1em;
       white-space: nowrap;
       margin-bottom:${theme.gridUnit * 2}px;
+      font-weight: ${theme.typography.weights.bold};
       span {
         position: absolute;
         bottom: 0;
@@ -709,11 +855,13 @@ export default styled(BigNumberVis)`
     .subheader-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
+      font-weight: ${theme.typography.weights.medium};
     }
 
     .subtitle-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
+      font-weight: ${theme.typography.weights.medium};
     }
 
     &.is-fallback-value {
