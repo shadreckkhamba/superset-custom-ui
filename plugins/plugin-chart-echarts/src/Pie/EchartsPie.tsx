@@ -210,20 +210,21 @@ const CardPercentage = styled.div`
 
 const PieLegend = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
   gap: ${({ theme }) => theme.gridUnit * 1.4}px;
   width: 100%;
-  max-width: 1100px;
+  max-width: 100%;
   margin: 0 auto ${({ theme }) => theme.gridUnit}px auto;
+  align-items: stretch;
 `;
 
 const PieLegendRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(150px, auto);
+  grid-template-columns: minmax(0, 1fr) minmax(132px, auto);
   align-items: flex-start;
   gap: ${({ theme }) => theme.gridUnit}px;
   padding: ${({ theme }) => theme.gridUnit * 0.7}px
-    ${({ theme }) => theme.gridUnit * 1.2}px;
+    ${({ theme }) => theme.gridUnit * 1.6}px;
   border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
   background: linear-gradient(
       120deg,
@@ -235,14 +236,19 @@ const PieLegendRow = styled.div`
   box-shadow: var(--pie-row-shadow);
   transition: all 0.2s ease;
   overflow: visible;
+  width: 100%;
+  min-width: 0;
+  box-sizing: border-box;
+  min-height: 78px;
   &:hover {
     transform: translateY(-1px);
   }
 `;
 
 const LegendLabelWrap = styled.div`
-  display: inline-flex;
-  align-items: flex-start;
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
   gap: ${({ theme }) => theme.gridUnit * 0.8}px;
   min-width: 0;
 `;
@@ -251,11 +257,11 @@ const PieLegendLabel = styled.span`
   font-size: 21px;
   color: var(--pie-foreground);
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
   overflow: visible;
   text-overflow: clip;
   line-height: 1.25;
-  word-break: normal;
+  word-break: break-word;
 `;
 
 const PieLegendValueStack = styled.div`
@@ -263,6 +269,11 @@ const PieLegendValueStack = styled.div`
   flex-direction: column;
   align-items: flex-end;
   gap: ${({ theme }) => theme.gridUnit * 0.3}px;
+  justify-self: end;
+  width: 132px;
+  margin-left: auto;
+  padding-right: 0;
+  transform: translateX(-20px);
 `;
 
 const PieLegendValue = styled.span`
@@ -288,12 +299,20 @@ const PieLegendPercent = styled.span`
 
 const DonutTemplate = styled.div`
   display: grid;
-  grid-template-columns: minmax(150px, 220px) minmax(170px, 260px);
+  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
   gap: ${({ theme }) => theme.gridUnit * 3}px;
   align-items: center;
-  justify-content: center;
+  justify-content: stretch;
   height: 100%;
   min-height: 0;
+  width: 100%;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+    justify-items: center;
+    align-content: start;
+    gap: ${({ theme }) => theme.gridUnit * 2}px;
+  }
 `;
 
 const DonutChartWrap = styled.div`
@@ -302,21 +321,26 @@ const DonutChartWrap = styled.div`
 
 const DonutLegend = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(340px, 1fr));
+  grid-template-columns: 1fr;
   gap: ${({ theme }) => theme.gridUnit * 1.4}px;
   width: 100%;
-  max-width: 1100px;
+  max-width: 920px;
   min-width: 0;
+
+  @media (max-width: 1200px) {
+    grid-template-columns: 1fr;
+    max-width: 100%;
+  }
 `;
 
 const DonutLegendRow = styled.div`
   display: grid;
-  grid-template-columns: minmax(72px, 1fr) minmax(150px, auto);
+  grid-template-columns: minmax(0, 1fr) minmax(146px, auto);
   align-items: flex-start;
   gap: ${({ theme }) => theme.gridUnit * 1.2}px;
   min-width: 0;
   padding: ${({ theme }) => theme.gridUnit * 0.8}px
-    ${({ theme }) => theme.gridUnit * 1.2}px;
+    ${({ theme }) => theme.gridUnit * 1.6}px;
   border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
   background: linear-gradient(
       120deg,
@@ -328,9 +352,20 @@ const DonutLegendRow = styled.div`
   box-shadow: var(--pie-row-shadow);
   transition: all 0.2s ease;
   overflow: visible;
+  width: 100%;
+  box-sizing: border-box;
+  min-width: 0;
   &:hover {
     transform: translateY(-1px);
   }
+`;
+
+const DonutLegendLabelWrap = styled.div`
+  display: grid;
+  grid-template-columns: auto auto minmax(0, 1fr);
+  align-items: center;
+  gap: ${({ theme }) => theme.gridUnit * 0.8}px;
+  min-width: 0;
 `;
 
 const Dot = styled.span<{ $color: string }>`
@@ -379,14 +414,14 @@ const TinyIcon = styled.div<{ $color: string }>`
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: 22px;
+  font-size: 21px;
   color: var(--pie-foreground);
   font-weight: 700;
-  white-space: nowrap;
+  white-space: normal;
   overflow: visible;
   text-overflow: clip;
   line-height: 1.25;
-  word-break: normal;
+  word-break: break-word;
 `;
 
 const DonutLegendValue = styled.span`
@@ -415,6 +450,12 @@ const DonutLegendValueStack = styled.div`
   flex-direction: column;
   align-items: flex-end;
   gap: ${({ theme }) => theme.gridUnit * 0.3}px;
+  justify-self: end;
+  min-width: 0;
+  width: 146px;
+  margin-left: auto;
+  padding-right: 0;
+  transform: translateX(-20px);
 `;
 
 const CenterLabel = styled.div`
@@ -684,9 +725,9 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               }) => (
                 <DonutLegendRow
                   key={`legend-${item.name}`}
-                  className="pie-mini-row"
+                  className="pie-mini-row donut-mini-row"
                 >
-                  <LegendLabelWrap>
+                  <DonutLegendLabelWrap>
                     <Dot
                       $color={item.color}
                       className="pie-color-dot"
@@ -711,7 +752,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                       })()}
                     </TinyIcon>
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
-                  </LegendLabelWrap>
+                  </DonutLegendLabelWrap>
                   <DonutLegendValueStack>
                     <DonutLegendValue>
                       {item.value.toLocaleString()}
