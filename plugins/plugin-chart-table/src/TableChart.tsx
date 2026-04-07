@@ -19,7 +19,14 @@
 import React, { useMemo, useState, useEffect } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
-import { Hash, Database, TrendingUp, Trophy } from 'lucide-react';
+import {
+  Hash,
+  Database,
+  TrendingUp,
+  Trophy,
+  ChevronLeft,
+  ChevronRight,
+} from 'lucide-react';
 
 // CSS Variables for teal medical/clinical palette
 const themeVars = css`
@@ -71,6 +78,31 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
   min-height: 300px;
   max-height: 80vh;
   transition: height 0.3s ease-in-out;
+
+  body.theme-transitioning & {
+    position: relative;
+    overflow: hidden;
+  }
+
+  body.theme-transitioning & > * {
+    opacity: 0 !important;
+  }
+
+  body.theme-transitioning &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      rgba(130, 152, 164, 0.16) 0%,
+      rgba(130, 152, 164, 0.32) 45%,
+      rgba(130, 152, 164, 0.16) 100%
+    );
+    background-size: 220% 100%;
+    animation: tableThemeSkeletonShimmer 1.1s linear infinite;
+    z-index: 2;
+  }
   
   @keyframes fadeIn {
     from {
@@ -80,6 +112,15 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
     to {
       opacity: 1;
       transform: translateY(0);
+    }
+  }
+
+  @keyframes tableThemeSkeletonShimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
     }
   }
 `;
@@ -141,14 +182,14 @@ const KPIIcon = styled.div<{ color?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 40px;
-  height: 40px;
+  width: 48px;
+  height: 48px;
   border-radius: var(--radius-md);
   background: ${props => props.color || 'var(--color-primary)'};
   color: white;
-  font-size: 18px;
+  font-size: 22px;
   flex-shrink: 0;
-  min-height: 40px;
+  min-height: 48px;
 `;
 
 const KPIContent = styled.div`
@@ -159,7 +200,7 @@ const KPIContent = styled.div`
 `;
 
 const KPIValue = styled.div`
-  font-size: 32px;
+  font-size: 44px;
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.2;
@@ -167,7 +208,7 @@ const KPIValue = styled.div`
 `;
 
 const KPILabel = styled.div`
-  font-size: 14px;
+  font-size: 17px;
   font-weight: 500;
   color: var(--color-text-muted);
   text-transform: uppercase;
@@ -200,13 +241,49 @@ const SectionHeader = styled.div`
 `;
 
 const SectionTitle = styled.h3`
-  font-size: 18px;
+  font-size: 24px;
   font-weight: 600;
   color: var(--color-text-primary);
   margin: 0;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   height: auto;
+`;
+
+const HeaderControls = styled.div`
+  display: inline-flex;
+  align-items: center;
+  gap: 10px;
+`;
+
+const PageMeta = styled.span`
+  font-size: 16px;
+  font-weight: 600;
+  color: var(--color-text-secondary);
+`;
+
+const NavButton = styled.button`
+  width: 38px;
+  height: 38px;
+  border-radius: 50%;
+  border: 1px solid var(--color-border);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover:not(:disabled) {
+    background: var(--color-bg-hover);
+    transform: translateY(-1px);
+  }
+
+  &:disabled {
+    opacity: 0.45;
+    cursor: not-allowed;
+  }
 `;
 
 const DataTable = styled.div`
@@ -219,7 +296,7 @@ const DataTable = styled.div`
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 18px;
+  font-size: 21px;
   height: 100%;
 `;
 
@@ -235,7 +312,7 @@ const TableHeader = styled.th`
   padding: 16px 20px;
   text-align: left;
   font-weight: 600;
-  font-size: 13px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
@@ -280,7 +357,7 @@ const TableCell = styled.td`
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 15px;
+  font-size: 19px;
   height: auto;
 `;
 
@@ -291,8 +368,8 @@ const LocationCell = styled.div`
 `;
 
 const LocationDot = styled.span<{ color?: string }>`
-  width: 8px;
-  height: 8px;
+  width: 12px;
+  height: 12px;
   border-radius: 50%;
   background: ${props => props.color || 'var(--color-primary)'};
   flex-shrink: 0;
@@ -306,7 +383,7 @@ const BarCell = styled.div`
 
 const BarContainer = styled.div`
   flex: 1;
-  height: 8px;
+  height: 10px;
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -345,7 +422,7 @@ const TrendCell = styled.div<{ trend: 'up' | 'down' | 'stable' }>`
 `;
 
 const TrendIcon = styled.span`
-  font-size: 12px;
+  font-size: 14px;
 `;
 
 
@@ -363,6 +440,7 @@ const locationColors = [
 ];
 
 const ROWS_PER_PAGE = 5;
+const AUTO_PAGE_DELAY_MS = 7000;
 
 export default function TableChart({
   data,
@@ -380,7 +458,7 @@ export default function TableChart({
     if (totalPages <= 1) return;
     const interval = setInterval(() => {
       setCurrentPage(prev => (prev + 1) % totalPages);
-    }, 3000);
+    }, AUTO_PAGE_DELAY_MS);
     return () => clearInterval(interval);
   }, [totalPages]);
 
@@ -521,6 +599,29 @@ export default function TableChart({
         <TableSection>
           <SectionHeader>
             <SectionTitle>Data Distribution</SectionTitle>
+            {totalPages > 1 && (
+              <HeaderControls>
+                <PageMeta>
+                  Page {currentPage + 1} / {totalPages}
+                </PageMeta>
+                <NavButton
+                  type="button"
+                  aria-label="Previous page"
+                  onClick={() =>
+                    setCurrentPage(prev => (prev - 1 + totalPages) % totalPages)
+                  }
+                >
+                  <ChevronLeft size={18} />
+                </NavButton>
+                <NavButton
+                  type="button"
+                  aria-label="Next page"
+                  onClick={() => setCurrentPage(prev => (prev + 1) % totalPages)}
+                >
+                  <ChevronRight size={18} />
+                </NavButton>
+              </HeaderControls>
+            )}
           </SectionHeader>
           <DataTable>
             <Table>
