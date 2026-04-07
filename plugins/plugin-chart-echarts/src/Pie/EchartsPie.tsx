@@ -163,7 +163,7 @@ const DetailCardsGrid = styled.div`
 `;
 
 const DetailCard = styled.div`
-  border-radius: ${({ theme }) => theme.gridUnit * 2.2}px;
+  border-radius: ${({ theme }) => theme.gridUnit * 2.2}px !important;
   border: 1px solid var(--pie-row-border) !important;
   background: var(--pie-row-bg-strong) !important;
   box-shadow: var(--pie-row-shadow);
@@ -210,12 +210,18 @@ const CardPercentage = styled.div`
 
 const PieLegend = styled.div`
   display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
   gap: ${({ theme }) => theme.gridUnit * 1.4}px;
   width: 100%;
   max-width: 100%;
   margin: 0 auto ${({ theme }) => theme.gridUnit}px auto;
   align-items: stretch;
+  @media (max-width: 1200px) {
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
+  }
+  @media (max-width: 760px) {
+    grid-template-columns: 1fr;
+  }
 `;
 
 const PieLegendRow = styled.div`
@@ -225,7 +231,7 @@ const PieLegendRow = styled.div`
   gap: ${({ theme }) => theme.gridUnit}px;
   padding: ${({ theme }) => theme.gridUnit * 0.7}px
     ${({ theme }) => theme.gridUnit * 1.6}px;
-  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
+  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px !important;
   background: linear-gradient(
       120deg,
       rgba(255, 255, 255, 0.12) 0%,
@@ -273,7 +279,7 @@ const PieLegendValueStack = styled.div`
   width: 132px;
   margin-left: auto;
   padding-right: 0;
-  transform: translateX(-20px);
+  transform: translateX(-34px);
 `;
 
 const PieLegendValue = styled.span`
@@ -341,7 +347,7 @@ const DonutLegendRow = styled.div`
   min-width: 0;
   padding: ${({ theme }) => theme.gridUnit * 0.8}px
     ${({ theme }) => theme.gridUnit * 1.6}px;
-  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px;
+  border-radius: ${({ theme }) => theme.gridUnit * 1.8}px !important;
   background: linear-gradient(
       120deg,
       rgba(255, 255, 255, 0.12) 0%,
@@ -455,7 +461,7 @@ const DonutLegendValueStack = styled.div`
   width: 146px;
   margin-left: auto;
   padding-right: 0;
-  transform: translateX(-20px);
+  transform: translateX(-34px);
 `;
 
 const CenterLabel = styled.div`
