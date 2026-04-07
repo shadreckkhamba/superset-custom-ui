@@ -26,6 +26,8 @@ import {
   Trophy,
   ChevronLeft,
   ChevronRight,
+  Pause,
+  Play,
 } from 'lucide-react';
 
 // CSS Variables for teal medical/clinical palette
@@ -312,7 +314,7 @@ const TableHeader = styled.th`
   padding: 16px 20px;
   text-align: left;
   font-weight: 600;
-  font-size: 16px;
+  font-size: 18px;
   text-transform: uppercase;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
@@ -357,7 +359,7 @@ const TableCell = styled.td`
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 19px;
+  font-size: 22px;
   height: auto;
 `;
 
@@ -365,11 +367,13 @@ const LocationCell = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  font-size: 22px;
+  font-weight: 600;
 `;
 
 const LocationDot = styled.span<{ color?: string }>`
-  width: 12px;
-  height: 12px;
+  width: 14px;
+  height: 14px;
   border-radius: 50%;
   background: ${props => props.color || 'var(--color-primary)'};
   flex-shrink: 0;
@@ -448,6 +452,7 @@ export default function TableChart({
   width = 900,
 }: TableChartProps) {
   const [currentPage, setCurrentPage] = useState(0);
+  const [isAutoRotatePaused, setIsAutoRotatePaused] = useState(false);
 
   const totalPages = useMemo(() => {
     if (!data || data.length === 0) return 1;
@@ -455,12 +460,12 @@ export default function TableChart({
   }, [data]);
 
   useEffect(() => {
-    if (totalPages <= 1) return;
+    if (totalPages <= 1 || isAutoRotatePaused) return;
     const interval = setInterval(() => {
       setCurrentPage(prev => (prev + 1) % totalPages);
     }, AUTO_PAGE_DELAY_MS);
     return () => clearInterval(interval);
-  }, [totalPages]);
+  }, [totalPages, isAutoRotatePaused]);
 
   const paginatedData = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -606,6 +611,28 @@ export default function TableChart({
                 </PageMeta>
                 <NavButton
                   type="button"
+                  aria-label={
+                    isAutoRotatePaused
+                      ? 'Resume auto pagination'
+                      : 'Pause auto pagination'
+                  }
+                  title={
+                    isAutoRotatePaused
+                      ? 'Resume auto pagination'
+                      : 'Pause auto pagination'
+                  }
+                  onClick={() =>
+                    setIsAutoRotatePaused(prevPaused => !prevPaused)
+                  }
+                >
+                  {isAutoRotatePaused ? (
+                    <Play size={18} />
+                  ) : (
+                    <Pause size={18} />
+                  )}
+                </NavButton>
+                <NavButton
+                  type="button"
                   aria-label="Previous page"
                   onClick={() =>
                     setCurrentPage(prev => (prev - 1 + totalPages) % totalPages)
@@ -660,12 +687,12 @@ export default function TableChart({
                                 <BarContainer>
                                   <BarFill width={barWidth} color={color} />
                                 </BarContainer>
-                                <span style={{ fontWeight: 600, minWidth: 60, textAlign: 'right' }}>
+                                <span style={{ fontWeight: 700, fontSize: 22, minWidth: 70, textAlign: 'right' }}>
                                   {Number(value).toLocaleString()}
                                 </span>
                               </BarCell>
                             ) : isPercent ? (
-                              <span style={{ fontWeight: 600, color: '#0d9488' }}>
+                              <span style={{ fontWeight: 700, fontSize: 22, color: '#0d9488' }}>
                                 {value}%
                               </span>
                             ) : (
