@@ -24,6 +24,7 @@ import { debounce } from 'lodash';
 import { useHistory } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchDateRanges, getDateRangeForChart, getFallbackDateRange } from '../../../utils/dateRangeUtils';
 
 import { exportChart, mountExploreUrl } from 'src/explore/exploreUtils';
 import ChartContainer from 'src/components/Chart/ChartContainer';
@@ -191,6 +192,7 @@ const Chart = props => {
   const [descriptionHeight, setDescriptionHeight] = useState(0);
   const [height, setHeight] = useState(props.height);
   const [width, setWidth] = useState(props.width);
+  const [dateRanges, setDateRanges] = useState(null);
   const history = useHistory();
   const resize = useCallback(
     debounce(() => {
@@ -225,6 +227,52 @@ const Chart = props => {
       setDescriptionHeight(descriptionHeight);
     }
   }, [isExpanded]);
+
+  // Fetch date ranges from API
+  useEffect(() => {
+    if (isStandalone) {
+      fetchDateRanges()
+        .then(data => {
+          console.log('Initial date ranges fetch:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to fetch date ranges:', error);
+          setDateRanges(null); // This will trigger fallback
+        });
+    }
+  }, [isStandalone]);
+
+  // Refresh date ranges when chart updates (for auto-refresh)
+  useEffect(() => {
+    if (isStandalone && chart.chartUpdateEndTime) {
+      console.log('Chart updated, refreshing date ranges...', chart.chartUpdateEndTime);
+      // Force refresh date ranges when chart data updates
+      fetchDateRanges(true)
+        .then(data => {
+          console.log('Date ranges refreshed:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to refresh date ranges:', error);
+        });
+    }
+  }, [isStandalone, chart.chartUpdateEndTime]);
+
+  // Also refresh when chart finishes loading
+  useEffect(() => {
+    if (isStandalone && chart.chartStatus && chart.chartStatus !== 'loading') {
+      console.log('Chart finished loading, refreshing date ranges...', chart.chartStatus);
+      fetchDateRanges(true)
+        .then(data => {
+          console.log('Date ranges refreshed after load:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to refresh date ranges after chart load:', error);
+        });
+    }
+  }, [isStandalone, chart.chartStatus]);
 
   useEffect(
     () => () => {
@@ -457,22 +505,22 @@ const Chart = props => {
 
  
   const dateRangeLabel = useMemo(() => {
-   const today = new Date();
-   const todayDay = today.getDate();
-
-   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-   const options = { day: 'numeric', month: 'short', year: 'numeric' };
-
-   const from = startOfMonth.toLocaleDateString('en-GB', options);
-   const to = today.toLocaleDateString('en-GB', options);
-
-   if (todayDay === 1) {
-     return `Today, ${from}`;
-   }
-
-   return `${from} - ${to}`;
-  }, []);
+    if (dateRanges && slice.slice_name) {
+      // Try to get date range from API based on slice name
+      const apiDateRange = getDateRangeForChart(dateRanges, slice.slice_name);
+      if (apiDateRange) {
+        console.log(`Using API date range for ${slice.slice_name}:`, apiDateRange);
+        return apiDateRange;
+      } else {
+        console.log(`No API date range found for ${slice.slice_name}, using fallback`);
+      }
+    }
+    
+    // Fallback to original logic if API data not available or no matching table
+    const fallbackRange = getFallbackDateRange();
+    console.log('Using fallback date range:', fallbackRange);
+    return fallbackRange;
+  }, [dateRanges, slice.slice_name]);
 
   return (
     <SliceContainer
