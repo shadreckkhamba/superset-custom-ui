@@ -599,7 +599,7 @@ const Chart = props => {
           padding: '8px 12px 6px 14px',
           borderRadius: '12px',
           boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-          zIndex: 999,
+          zIndex: 50,
           maxWidth: 'none',
           whiteSpace: 'nowrap',
           overflow: 'hidden',
