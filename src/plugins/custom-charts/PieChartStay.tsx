@@ -388,6 +388,8 @@ useEffect(() => {
   );
 
 
+  const hasData = useMemo(() => percentages.some((p) => p > 0), [percentages]);
+
   // Memoize chart data to prevent unnecessary re-renders
   const chartData = useMemo(() => {
     const validPercentages =
@@ -1139,15 +1141,35 @@ useEffect(() => {
               margin: isExpanded ? '0 4px' : '0 10px',
               padding: isExpanded ? '4px' : '10px'
             }}
-          >
-            <Doughnut
-              ref={chartRef}
-              key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${selectedSliceIndex ?? 'all'}-${refreshKey ?? 0}`}
-              data={chartData}
-              options={options}
-              plugins={[calloutLabelsPlugin]}
-            />
-          </div>
+	          >
+	            {hasData ? (
+	              <Doughnut
+	                ref={chartRef}
+	                key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${selectedSliceIndex ?? 'all'}-${refreshKey ?? 0}`}
+	                data={chartData}
+	                options={options}
+	                plugins={[calloutLabelsPlugin]}
+	              />
+		            ) : (
+		              <div
+		                aria-label="No data to display"
+		                style={{
+		                  width: '100%',
+		                  height: '100%',
+		                  display: 'flex',
+		                  alignItems: 'center',
+		                  justifyContent: 'center',
+		                  padding: '16px',
+		                  textAlign: 'center',
+		                  fontSize: 'clamp(0.95rem, 2.4vw, 1.25rem)',
+		                  fontWeight: 700,
+		                  color: isDarkMode ? '#b0b0b0' : '#999',
+		                }}
+		              >
+		                No patient data available
+		              </div>
+		            )}
+	          </div>
 
         {/* Right - Legend */}
         <div 
@@ -1189,16 +1211,17 @@ useEffect(() => {
           Ranges
           </div>
           
-          {ranges.map((label, idx) => {
-            const percentage = percentages[idx] ?? 0;
-            const isVisible = percentage > 0;
-            const isSelected = selectedSliceIndex === idx;
-            const isHighlighted = selectedSliceIndex === null || isSelected;
+	          {ranges.map((label, idx) => {
+	            const percentage = percentages[idx] ?? 0;
+	            const isVisible = hasData && percentage > 0;
+	            const isSelected = selectedSliceIndex === idx;
+	            const isHighlighted = selectedSliceIndex === null || isSelected;
+	            const displayLabel = hasData ? label : '--';
 
-            return (
-              <div
-                className="pie-stay-legend-item"
-                key={idx}
+	            return (
+	              <div
+	                className="pie-stay-legend-item"
+	                key={idx}
                 onClick={() => {
                   if (isVisible) {
                     setSelectedSliceIndex(selectedSliceIndex === idx ? null : idx);
@@ -1249,32 +1272,42 @@ useEffect(() => {
               >
                 {/* Left side - color dot + label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: legendItemLabelGap, flex: 1 }}>
-                  <div
-                    className="pie-stay-legend-dot"
-                    style={{
-                      width: legendDotSize,
-                      height: legendDotSize,
-                      borderRadius: '50%',
-                      backgroundColor: colors[idx],
-                      boxShadow: `0 0 0 3px ${colors[idx]}20`,
-                      flexShrink: 0,
-                    }}
-                  />
-                  <span
-                    className="pie-stay-legend-label"
-                    style={{ 
-                    fontSize: legendLabelFontSize, 
-                    fontWeight: 600, 
-                    color: isDarkMode ? '#e0e0e0' : '#333',
-                    transition: 'color 0.3s ease',
-                    whiteSpace: 'nowrap',
-                  }}>
-                    {label}
-                  </span>
-                </div>
-              </div>
-            );
-          })}
+	                  <div
+	                    className="pie-stay-legend-dot"
+	                    style={{
+	                      width: legendDotSize,
+	                      height: legendDotSize,
+	                      borderRadius: '50%',
+	                      backgroundColor: hasData
+	                        ? colors[idx]
+	                        : isDarkMode
+	                        ? 'rgba(255, 255, 255, 0.28)'
+	                        : 'rgba(15, 23, 42, 0.22)',
+	                      boxShadow: hasData ? `0 0 0 3px ${colors[idx]}20` : 'none',
+	                      flexShrink: 0,
+	                    }}
+	                  />
+	                  <span
+	                    className="pie-stay-legend-label"
+	                    style={{ 
+	                    fontSize: legendLabelFontSize, 
+	                    fontWeight: 600, 
+	                    color: hasData
+	                      ? isDarkMode
+	                        ? '#e0e0e0'
+	                        : '#333'
+	                      : isDarkMode
+	                      ? 'rgba(255, 255, 255, 0.40)'
+	                      : 'rgba(15, 23, 42, 0.42)',
+	                    transition: 'color 0.3s ease',
+	                    whiteSpace: 'nowrap',
+	                  }}>
+	                    {displayLabel}
+	                  </span>
+	                </div>
+	              </div>
+	            );
+	          })}
         </div>
         </div>
 

@@ -212,7 +212,7 @@ const createNoDataPlugin = (isDarkMode: boolean) => ({
     ctx.textBaseline = "middle";
     ctx.fillStyle = isDarkMode ? "#b0b0b0" : "#999";
     ctx.font = "bold 18px sans-serif";
-    ctx.fillText("No patient data available for this week", width / 2, height / 2);
+    ctx.fillText("No patient data available", width / 2, height / 2);
     ctx.restore();
   },
 });

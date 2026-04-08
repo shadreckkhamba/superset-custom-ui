@@ -223,22 +223,22 @@ const headerContainerStyle = theme => css`
     padding-top: 1px;
   }
 
-  .slideshow-countdown-ring-value {
-    font-size: 14px;
-    font-weight: 700;
-    line-height: 1;
-    font-variant-numeric: tabular-nums;
-  }
+	  .slideshow-countdown-ring-value {
+	    font-size: 16px;
+	    font-weight: 800;
+	    line-height: 1;
+	    font-variant-numeric: tabular-nums;
+	  }
 
-  .slideshow-countdown-ring-label {
-    margin-top: 1px;
-    font-size: 5.5px;
-    line-height: 1;
-    font-weight: 700;
-    letter-spacing: 0.05em;
-    text-transform: uppercase;
-    white-space: nowrap;
-  }
+	  .slideshow-countdown-ring-label {
+	    margin-top: 1px;
+	    font-size: 6.2px;
+	    line-height: 1;
+	    font-weight: 800;
+	    letter-spacing: 0.04em;
+	    text-transform: uppercase;
+	    white-space: nowrap;
+	  }
 
   @media (max-width: 900px) {
     .refresh-badge-wrapper {
@@ -251,14 +251,14 @@ const headerContainerStyle = theme => css`
       flex-basis: 44px;
     }
 
-    .slideshow-countdown-ring-value {
-      font-size: 12px;
-    }
+	    .slideshow-countdown-ring-value {
+	      font-size: 14px;
+	    }
 
-    .slideshow-countdown-ring-label {
-      font-size: 4.6px;
-      letter-spacing: 0.04em;
-    }
+	    .slideshow-countdown-ring-label {
+	      font-size: 5.4px;
+	      letter-spacing: 0.03em;
+	    }
 
     .refresh-badge .refresh-text {
       font-size: 11px;
@@ -276,15 +276,15 @@ const headerContainerStyle = theme => css`
       flex-basis: 40px;
     }
 
-    .slideshow-countdown-ring-value {
-      font-size: 10px;
-    }
+	    .slideshow-countdown-ring-value {
+	      font-size: 12px;
+	    }
 
-    .slideshow-countdown-ring-label {
-      margin-top: 0;
-      font-size: 4px;
-      letter-spacing: 0.03em;
-    }
+	    .slideshow-countdown-ring-label {
+	      margin-top: 0;
+	      font-size: 4.8px;
+	      letter-spacing: 0.02em;
+	    }
 
     .refresh-badge {
       gap: 6px;
@@ -1663,16 +1663,24 @@ const Header = () => {
     timeZone: 'Africa/Blantyre',
   };
 
-  const shouldShowSyncLoader =
-    isSlideshow ? showSlideshowSyncLoader : isSynced === false;
-  const countdownDisplayValue = Math.max(
-    0,
-    Math.ceil(slideshowCountdownSeconds),
-  );
-  const countdownProgress = Math.max(
-    0,
-    Math.min(1, slideshowCountdownProgress),
-  );
+	  const shouldShowSyncLoader =
+	    isSlideshow ? showSlideshowSyncLoader : isSynced === false;
+	  const countdownTotalSeconds = Math.max(0, Math.ceil(slideshowCountdownSeconds));
+	  const countdownInSecondsMode = countdownTotalSeconds < 60;
+	  const countdownDisplayValue = countdownInSecondsMode
+	    ? countdownTotalSeconds
+	    : Math.max(1, Math.ceil(countdownTotalSeconds / 60));
+	  const countdownDisplayLabel = countdownInSecondsMode
+	    ? countdownTotalSeconds === 1
+	      ? 'SECOND'
+	      : 'SECONDS'
+	    : countdownDisplayValue === 1
+	      ? 'MIN'
+	      : 'MINS';
+	  const countdownProgress = Math.max(
+	    0,
+	    Math.min(1, slideshowCountdownProgress),
+	  );
   const countdownRadius = 19;
   const countdownStrokeWidth = 4;
   const countdownViewBoxSize = 52;
@@ -1718,15 +1726,15 @@ const Header = () => {
             >
               {countdownDisplayValue}
             </span>
-            <span
-              className="slideshow-countdown-ring-label"
-              style={{ color: isDarkMode ? '#9fb5c9' : '#8b96a5' }}
-            >
-              SECONDS
-            </span>
-          </div>
-        </div>
-      )}
+	            <span
+	              className="slideshow-countdown-ring-label"
+	              style={{ color: isDarkMode ? '#c6d8ea' : '#5c6b7a' }}
+	            >
+	              {countdownDisplayLabel}
+	            </span>
+	          </div>
+	        </div>
+	      )}
       <div className="refresh-badge">
         <span className="clock-icon">🕒</span>
         <span
