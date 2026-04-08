@@ -231,6 +231,7 @@ const Chart = props => {
   // Fetch date ranges from API
   useEffect(() => {
     if (isStandalone) {
+      console.log('Fetching date ranges for chart:', props.id);
       fetchDateRanges()
         .then(data => {
           console.log('Initial date ranges fetch:', data);
@@ -242,6 +243,20 @@ const Chart = props => {
         });
     }
   }, [isStandalone]);
+
+  // Clean up any duplicate badges on mount
+  useEffect(() => {
+    if (isStandalone) {
+      // Remove any existing badges for this chart to prevent duplicates
+      const existingBadges = document.querySelectorAll(`[data-chart-id="${props.id}"].date-range-badge`);
+      if (existingBadges.length > 1) {
+        // Keep only the first one, remove the rest
+        for (let i = 1; i < existingBadges.length; i++) {
+          existingBadges[i].remove();
+        }
+      }
+    }
+  }, [isStandalone, props.id]);
 
   // Refresh date ranges when chart updates (for auto-refresh)
   useEffect(() => {
@@ -569,7 +584,9 @@ const Chart = props => {
 
       {/* 📅 Date range badge aligned with chart title */}
       { isStandalone && (
-        <div className="date-range-badge"
+        <div 
+          className="date-range-badge"
+          data-chart-id={props.id}
         style={{
           position: 'absolute',
           top: '0px',

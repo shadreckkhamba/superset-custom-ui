@@ -243,6 +243,7 @@ export const useHeaderActionsMenu = ({
     const isSlideshowEnabledFromUrl =
       new URLSearchParams(window.location.search).get('slideshow') === '1';
     const isSlideshowActive = isSlideshowMenuOpen || isSlideshowEnabledFromUrl;
+    const isFullscreen = getUrlParam(URL_PARAMS.standalone) === 1;
 
     return (
       <Menu
@@ -280,6 +281,12 @@ export const useHeaderActionsMenu = ({
               isSlideshowActive
                 ? 'exit-slideshow-menu-item'
                 : 'enter-slideshow-menu-item'
+            }
+            disabled={isFullscreen && !isSlideshowActive}
+            title={
+              isFullscreen && !isSlideshowActive
+                ? t('Exit fullscreen to setup slideshow')
+                : undefined
             }
           >
             {isSlideshowActive ? t('Exit slideshow') : t('Enter slideshow')}
