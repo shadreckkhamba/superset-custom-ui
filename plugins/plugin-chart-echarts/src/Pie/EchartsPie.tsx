@@ -42,70 +42,12 @@ const Container = styled.div`
   flex-direction: column;
   width: 100%;
   height: 100%;
-  padding: ${({ theme }) => theme.gridUnit * 3}px;
+  padding: 0;
   background: var(--pie-bg);
   border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
   border: 1px solid var(--pie-border);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
-
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    --pie-bg: radial-gradient(
-        130% 120% at 0% 0%,
-        rgba(0, 195, 255, 0.09) 0%,
-        rgba(0, 195, 255, 0) 45%
-      ),
-      linear-gradient(180deg, #0b1820 0%, #0a141b 100%);
-    --pie-border: #1f3744;
-    --pie-muted: #bfd0d6;
-    --pie-foreground: #ecf6f8;
-    --pie-row-bg: linear-gradient(180deg, #17323d 0%, #112730 100%);
-    --pie-row-bg-strong: linear-gradient(180deg, #1a3743 0%, #142c35 100%);
-    --pie-donut-row-bg: linear-gradient(180deg, #193540 0%, #132a33 100%);
-    --pie-row-border: #2f5667;
-    --pie-row-shadow: 0 8px 18px rgba(0, 0, 0, 0.38);
-    --pie-icon-bg: rgba(17, 39, 48, 0.95);
-    --pie-icon-border: rgba(109, 189, 216, 0.45);
-    --pie-swatch-ring: #dff8ff;
-    --pie-swatch-outer-ring: rgba(190, 235, 248, 0.7);
-    --pie-swatch-glow-multiplier: aa;
-    box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.22),
-      0 10px 24px rgba(0, 0, 0, 0.32);
-  }
-
-  body.theme-transitioning & {
-    position: relative;
-    overflow: hidden;
-  }
-
-  body.theme-transitioning & > * {
-    opacity: 0 !important;
-  }
-
-  body.theme-transitioning &::after {
-    content: '';
-    position: absolute;
-    inset: 0;
-    border-radius: inherit;
-    background: linear-gradient(
-      90deg,
-      rgba(130, 152, 164, 0.16) 0%,
-      rgba(130, 152, 164, 0.32) 45%,
-      rgba(130, 152, 164, 0.16) 100%
-    );
-    background-size: 220% 100%;
-    animation: pieThemeSkeletonShimmer 1.1s linear infinite;
-    z-index: 2;
-  }
-
-  @keyframes pieThemeSkeletonShimmer {
-    0% {
-      background-position: 100% 0;
-    }
-    100% {
-      background-position: -100% 0;
-    }
-  }
+  box-sizing: border-box;
 `;
 
 const PieTemplate = styled.div`
@@ -327,20 +269,23 @@ const PieLegendPercent = styled.span`
 const DonutTemplate = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
-  justify-content: center;
+  align-items: stretch;
+  justify-content: flex-start;
   height: 100%;
-  min-height: 0;
+  min-height: 250px;
   width: 100%;
-  gap: 24px;
+  gap: 0;
+  overflow: visible;
 
   @media (max-width: 1200px) {
-    gap: 16px;
+    min-height: 220px;
   }
 `;
 
 const DonutChartWrap = styled.div`
-  height: 350px;
+  flex: 0 0 auto;
+  height: 60%;
+  min-height: 180px;
   width: 100%;
   display: flex;
   align-items: center;
@@ -348,12 +293,15 @@ const DonutChartWrap = styled.div`
 `;
 
 const DonutLegend = styled.div`
+  flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: ${({ theme }) => theme.gridUnit * 1.4}px;
+  gap: 2px;
   width: 100%;
-  max-width: 920px;
   min-width: 0;
+  padding: 8px;
+  overflow-y: auto;s
+  box-sizing: border-box;
 
   @media (max-width: 1200px) {
     grid-template-columns: 1fr;
@@ -362,13 +310,12 @@ const DonutLegend = styled.div`
 `;
 
 const DonutLegendRow = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(172px, auto);
+  display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.gridUnit * 1.2}px;
+  justify-content: space-between;
+  gap: 5px;
   min-width: 0;
-  padding: ${({ theme }) => theme.gridUnit * 0.8}px
-    ${({ theme }) => theme.gridUnit * 1.6}px;
+  padding: 2px 6px;
   border-radius: ${({ theme }) => theme.gridUnit * 1.8}px !important;
   background: linear-gradient(
       120deg,
@@ -383,11 +330,10 @@ const DonutLegendRow = styled.div`
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 102px;
+  min-height: 32px;
   &.priority-mini-row {
-    min-height: 108px;
-    padding-top: ${({ theme }) => theme.gridUnit * 0.7}px;
-    padding-bottom: ${({ theme }) => theme.gridUnit * 0.7}px;
+    min-height: 32px;
+    padding: 2px 6px;
   }
   &:hover {
     transform: translateY(-1px);
@@ -395,12 +341,11 @@ const DonutLegendRow = styled.div`
 `;
 
 const DonutLegendLabelWrap = styled.div`
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
+  display: flex;
   align-items: center;
-  gap: ${({ theme }) => theme.gridUnit * 0.8}px;
+  gap: 4px;
+  flex-shrink: 0;
   min-width: 0;
-  justify-items: start;
 `;
 
 const Dot = styled.span<{ $color: string }>`
@@ -414,6 +359,7 @@ const Dot = styled.span<{ $color: string }>`
   box-shadow: 0 0 0 2px var(--pie-swatch-outer-ring),
     0 0 12px ${({ $color }) => $color}aa !important;
   display: inline-block !important;
+  flex-shrink: 0;
   body.dark-theme &,
   [data-theme='dark'] & {
     border-color: rgba(232, 248, 252, 0.95) !important;
@@ -422,34 +368,10 @@ const Dot = styled.span<{ $color: string }>`
   }
 `;
 
-const TinyIcon = styled.div<{ $color: string }>`
-  width: 46px !important;
-  height: 46px !important;
-  min-width: 46px !important;
-  min-height: 46px !important;
-  border-radius: 50% !important;
-  display: inline-flex !important;
-  align-items: center !important;
-  justify-content: center !important;
-  background: ${({ $color }) => `${$color}1f`} !important;
-  border: 1px solid ${({ $color }) => `${$color}66`} !important;
-  color: ${({ $color }) => $color} !important;
-  flex-shrink: 0 !important;
-  svg {
-    color: inherit !important;
-    stroke: currentColor !important;
-  }
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    background: ${({ $color }) => $color} !important;
-    border: 1px solid rgba(235, 251, 255, 0.95) !important;
-    color: #08202a !important;
-    box-shadow: 0 0 0 1px rgba(22, 43, 52, 0.9) !important;
-  }
-`;
+
 
 const DonutLegendLabel = styled.span`
-  font-size: 26px;
+  font-size: 24px;
   color: var(--pie-foreground);
   font-weight: 700;
   white-space: nowrap;
@@ -461,9 +383,9 @@ const DonutLegendLabel = styled.span`
 `;
 
 const DonutLegendValue = styled.span`
-  font-size: 26px;
+  font-size: 30px;
   line-height: 1.2;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
   color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
@@ -471,9 +393,9 @@ const DonutLegendValue = styled.span`
 `;
 
 const DonutLegendPercent = styled.span`
-  font-size: 24px;
+  font-size: 28px;
   line-height: 1.2;
-  text-align: right;
+  text-align: left;
   white-space: nowrap;
   color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
@@ -484,28 +406,24 @@ const DonutLegendPercent = styled.span`
 const DonutLegendValueStack = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-end;
-  gap: ${({ theme }) => theme.gridUnit * 0.3}px;
-  justify-self: end;
-  min-width: 0;
-  width: 172px;
-  margin-left: auto;
-  padding-right: 0;
-  transform: translateX(-14px);
+  align-items: flex-start;
+  gap: 0;
+  min-width: 80px;
+  flex-shrink: 0;
 `;
 
 const CenterLabel = styled.div`
-  font-size: 18px;
+  font-size: 16px;
   text-transform: uppercase;
   letter-spacing: 0.08em;
   color: var(--pie-muted);
-  font-weight: 900;
+  font-weight: 700;
   line-height: 1.05;
-  margin-bottom: 2px;
+  margin-bottom: 4px;
 `;
 
 const CenterValue = styled.div`
-  font-size: 68px;
+  font-size: 52px;
   line-height: 1.05;
   font-weight: 900;
   color: var(--pie-foreground);
@@ -555,9 +473,15 @@ export default function EchartsPie(props: PieChartTransformedProps) {
     0,
   );
 
+  const capitalizeFirst = (str: string): string => {
+    if (!str) return str;
+    return str.charAt(0).toUpperCase() + str.slice(1);
+  };
+
   const chartData = data.map(
     (item: { name: string; value: number }, index: number) => ({
       ...item,
+      name: capitalizeFirst(item.name),
       color: CHART_COLORS[index % CHART_COLORS.length],
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
@@ -682,56 +606,54 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         </PieTemplate>
       ) : (
         <DonutTemplate>
-          <div>
-            <DonutChartWrap>
-              <ResponsiveContainer width="100%" height="100%">
-                <PieChart>
-                  <Pie
-                    data={chartData}
-                    cx="50%"
-                    cy="50%"
-                    innerRadius="56%"
-                    outerRadius="84%"
-                    paddingAngle={1}
-                    strokeWidth={0}
-                    dataKey="value"
-                    animationBegin={120}
-                    animationDuration={760}
+          <DonutChartWrap>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={chartData}
+                  cx="50%"
+                  cy="50%"
+                  innerRadius="56%"
+                  outerRadius="84%"
+                  paddingAngle={1}
+                  strokeWidth={0}
+                  dataKey="value"
+                  animationBegin={120}
+                  animationDuration={760}
+                >
+                  {chartData.map(
+                    (
+                      entry: { name: string; value: number; color: string },
+                      index: number,
+                    ) => (
+                      <Cell key={`donut-cell-${index}`} fill={entry.color} />
+                    ),
+                  )}
+                </Pie>
+                <foreignObject
+                  x="22%"
+                  y="22%"
+                  width="56%"
+                  height="56%"
+                  style={{ pointerEvents: 'none', overflow: 'visible' }}
+                >
+                  <div
+                    style={{
+                      display: 'flex',
+                      flexDirection: 'column',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      height: '100%',
+                      overflow: 'visible',
+                    }}
                   >
-                    {chartData.map(
-                      (
-                        entry: { name: string; value: number; color: string },
-                        index: number,
-                      ) => (
-                        <Cell key={`donut-cell-${index}`} fill={entry.color} />
-                      ),
-                    )}
-                  </Pie>
-                  <foreignObject
-                    x="22%"
-                    y="22%"
-                    width="56%"
-                    height="56%"
-                    style={{ pointerEvents: 'none', overflow: 'visible' }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        overflow: 'visible',
-                      }}
-                    >
-                      <CenterLabel>Total</CenterLabel>
-                      <CenterValue>{total.toLocaleString()}</CenterValue>
-                    </div>
-                  </foreignObject>
-                </PieChart>
-              </ResponsiveContainer>
-            </DonutChartWrap>
-          </div>
+                    <CenterLabel>Total</CenterLabel>
+                    <CenterValue>{total.toLocaleString()}</CenterValue>
+                  </div>
+                </foreignObject>
+              </PieChart>
+            </ResponsiveContainer>
+          </DonutChartWrap>
 
           <DonutLegend>
             {chartData.map(
