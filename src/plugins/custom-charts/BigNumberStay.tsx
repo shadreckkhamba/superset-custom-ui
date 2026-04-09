@@ -199,6 +199,7 @@ export default function BigNumberStay({
   const [selectedDayKey, setSelectedDayKey] = useState<string>('');
   const [heatmapVisible, setHeatmapVisible] = useState(false);
   const [heatmapMounted, setHeatmapMounted] = useState(false);
+  const [isCompactHeatmapTooltip, setIsCompactHeatmapTooltip] = useState(false);
 
   const toDateKey = (d: Date) =>
     `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}-${String(d.getDate()).padStart(2, '0')}`;
@@ -541,6 +542,24 @@ useEffect(() => {
       infoCloseTimeoutRef.current = null;
     }, 360);
   };
+
+  useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const updateTooltipMode = () => {
+      const containerWidth =
+        containerRef.current?.getBoundingClientRect().width ??
+        Number.POSITIVE_INFINITY;
+      const viewportWidth = window.innerWidth;
+      setIsCompactHeatmapTooltip(containerWidth <= 520 || viewportWidth <= 900);
+    };
+
+    updateTooltipMode();
+    window.addEventListener('resize', updateTooltipMode);
+    return () => window.removeEventListener('resize', updateTooltipMode);
+  }, []);
 
   return (
     <div
@@ -1473,9 +1492,9 @@ useEffect(() => {
             transform: 'translateY(-50%)',
             background: isDarkMode ? '#2d2d2d' : '#ffffff',
             color: isDarkMode ? '#e0e0e0' : '#262626',
-            padding: 'clamp(10px, 1.6vw, 16px) clamp(12px, 2.2vw, 20px)',
-            borderRadius: 'clamp(10px, 1.8vw, 12px)',
-            fontSize: 'clamp(0.85rem, 1.6vw, 1.15rem)',
+            padding: isCompactHeatmapTooltip ? '6px 8px' : '10px 14px',
+            borderRadius: isCompactHeatmapTooltip ? '7px' : '10px',
+            fontSize: isCompactHeatmapTooltip ? '0.72rem' : '0.86rem',
             fontWeight: 500,
             boxShadow: isDarkMode 
               ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)' 
@@ -1484,33 +1503,49 @@ useEffect(() => {
             zIndex: 10000,
             whiteSpace: 'normal',
             border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
-            minWidth: 'clamp(160px, 28vw, 220px)',
-            maxWidth: 'min(280px, 80vw)',
-            lineHeight: 1.3,
+            minWidth: isCompactHeatmapTooltip ? '104px' : '150px',
+            maxWidth: isCompactHeatmapTooltip ? 'min(156px, 60vw)' : 'min(240px, 75vw)',
+            lineHeight: isCompactHeatmapTooltip ? 1.2 : 1.3,
           }}
         >
           {(() => {
             const [timeRange, patients] = tooltipData.content.split('|');
             return (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              <div
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  gap: isCompactHeatmapTooltip ? '3px' : '7px',
+                }}
+              >
                 <div style={{ 
                   color: '#1890ff', 
-                  fontSize: '1rem', 
+                  fontSize: isCompactHeatmapTooltip ? '0.6rem' : '0.78rem', 
                   fontWeight: 700,
-                  letterSpacing: '0.8px',
+                  letterSpacing: isCompactHeatmapTooltip ? '0.25px' : '0.55px',
                   textTransform: 'uppercase',
                 }}>
                   Stay Duration
                 </div>
-                <div style={{ fontSize: 'clamp(1.05rem, 2.2vw, 1.5rem)', fontWeight: 700, color: isDarkMode ? '#ffffff' : '#262626' }}>
+                <div
+                  style={{
+                    fontSize: isCompactHeatmapTooltip
+                      ? 'clamp(0.78rem, 1.6vw, 0.9rem)'
+                      : 'clamp(0.98rem, 1.45vw, 1.16rem)',
+                    fontWeight: 700,
+                    color: isDarkMode ? '#ffffff' : '#262626',
+                  }}
+                >
                   {timeRange}
                 </div>
                 <div style={{ 
-                  marginTop: '4px',
-                  paddingTop: '10px',
-                  borderTop: isDarkMode ? '2px solid #404040' : '2px solid #f0f0f0',
+                  marginTop: isCompactHeatmapTooltip ? '1px' : '3px',
+                  paddingTop: isCompactHeatmapTooltip ? '4px' : '8px',
+                  borderTop: isDarkMode ? '1px solid #404040' : '1px solid #f0f0f0',
                   color: isDarkMode ? '#b0b0b0' : '#595959',
-                  fontSize: 'clamp(0.9rem, 1.7vw, 1.2rem)',
+                  fontSize: isCompactHeatmapTooltip
+                    ? 'clamp(0.68rem, 1.2vw, 0.8rem)'
+                    : 'clamp(0.82rem, 1.2vw, 0.96rem)',
                   fontWeight: 600,
                 }}>
                   {patients}
@@ -1522,11 +1557,11 @@ useEffect(() => {
           <div
             style={{
               position: 'absolute',
-              left: '-6px',
+              left: isCompactHeatmapTooltip ? '-4px' : '-5px',
               top: '50%',
               transform: 'translateY(-50%) rotate(45deg)',
-              width: '12px',
-              height: '12px',
+              width: isCompactHeatmapTooltip ? '8px' : '11px',
+              height: isCompactHeatmapTooltip ? '8px' : '11px',
               background: isDarkMode ? '#2d2d2d' : '#ffffff',
               border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
               borderRight: 'none',
