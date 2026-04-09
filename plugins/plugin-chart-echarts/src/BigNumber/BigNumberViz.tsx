@@ -553,6 +553,10 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       Math.min(safeWidth * 0.35, height * 0.6, 220),
       96,
     );
+    const labelFontSize = Math.max(
+      Math.min(safeWidth * 0.08, height * 0.1, 28),
+      14,
+    );
     const noTrendlineStyle: CSSProperties = {
       height,
     } as CSSProperties;
@@ -593,7 +597,7 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           <div
             className="header-line"
             style={{
-              fontSize: `${fontSize}px`,
+              fontSize: `clamp(${Math.round(fontSize * 0.5)}px, ${fontSize}px, ${fontSize}px)`,
               fontWeight: 800,
               color: '#15333a',
               textAlign: 'center',
@@ -605,7 +609,7 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           </div>
           <div
             style={{
-              fontSize: 'clamp(14px, 2vw, 24px)',
+              fontSize: `clamp(14px, ${labelFontSize}px, 28px)`,
               fontWeight: 700,
               color: '#5b7d85',
               textTransform: 'uppercase',
