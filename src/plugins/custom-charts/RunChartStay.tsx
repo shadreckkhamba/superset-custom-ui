@@ -228,6 +228,7 @@ export default function RunChartStay({
   const [weekOffset, setWeekOffset] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
   const [loading, setLoading] = useState(true);
+  const [chartContainerWidth, setChartContainerWidth] = useState(0);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const chartRef = useRef<ChartJS<"bar" | "line"> | null>(null);
@@ -258,6 +259,16 @@ export default function RunChartStay({
     () => `${weekOffset}-${refreshKey ?? 0}-${resetKey ?? 0}`,
     [weekOffset, refreshKey, resetKey],
   );
+  const useCompactDesktopAxisSizing =
+    compact &&
+    (chartContainerWidth >= 520 ||
+      (typeof window !== "undefined" && window.innerWidth >= 1100));
+  const xAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 18 : 14) : 32;
+  const xAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 14 : 11) : 20;
+  const yAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 38;
+  const yAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
+  const y1AxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 42;
+  const y1AxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
 
   const animateBarsIn = useCallback(() => {
     const chart = chartRef.current;
@@ -574,7 +585,14 @@ useEffect(() => {
     const el = chartContainerRef.current;
     if (!el) return undefined;
 
+    const syncChartContainerWidth = () => {
+      setChartContainerWidth(el.clientWidth);
+    };
+
+    syncChartContainerWidth();
+
     const resizeObserver = new ResizeObserver(() => {
+      syncChartContainerWidth();
       runChartResize();
     });
 
@@ -899,13 +917,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Week Days",
-            font: { size: compact ? 14 : 32, weight: 700 },
+            font: { size: xAxisTitleFontSize, weight: 700 },
             color: "#297acb",
             padding: { top: 8, bottom: 2 },
           },
           ticks: { 
             color: isDarkMode ? "#e0e0e0" : "#262626", 
-            font: { size: compact ? 11 : 20, weight: 700 },
+            font: { size: xAxisTickFontSize, weight: 700 },
             padding: compact ? 8 : 10,
             autoSkip: compact,
           },
@@ -924,13 +942,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Average Stay (hours)",
-            font: { size: compact ? 16 : 38, weight: 700 },
+            font: { size: yAxisTitleFontSize, weight: 700 },
             color: "#1890ff",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: yAxisTickFontSize, weight: 600 },
             stepSize: 1,
             precision: 0,
             autoSkip: false,
@@ -951,13 +969,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Total Patients",
-            font: { size: compact ? 16 : 42, weight: 700 },
+            font: { size: y1AxisTitleFontSize, weight: 700 },
             color: "#52c487",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: y1AxisTickFontSize, weight: 600 },
             stepSize: patientTickStep,
             autoSkip: false,
             padding: compact ? 10 : 15,
@@ -1016,6 +1034,8 @@ useEffect(() => {
               tooltipEl.style.willChange = "transform, opacity";
               tooltipEl.style.opacity = "0";
               tooltipEl.style.transform = "translateY(12px) scale(0.9)";
+              tooltipEl.style.borderRadius = "12px";
+              tooltipEl.style.setProperty("overflow", "visible", "important");
               tooltipEl.dataset.visible = "false";
               tooltipEl.dataset.dayIndex = "-1";
               parent.appendChild(tooltipEl);
@@ -1079,10 +1099,12 @@ useEffect(() => {
               <div style="
                 background: ${tooltipBackground};
                 border-radius: 12px;
+                overflow: hidden;
                 padding: ${tooltipPadding};
                 box-shadow: ${tooltipShadow};
                 border: ${tooltipBorder};
                 min-width: ${tooltipMinWidth}px;
+                background-clip: padding-box;
               ">
                 <div style="display: flex; flex-direction: column; gap: ${tooltipGap}px;">
                   <div style="display: flex; align-items: center; gap: ${tooltipGap}px;">
@@ -1178,7 +1200,20 @@ useEffect(() => {
 
       },
     }),
-    [compact, maxDuration, maxPatients, patientTickStep, dailyAverages, isDarkMode]
+    [
+      compact,
+      maxDuration,
+      maxPatients,
+      patientTickStep,
+      dailyAverages,
+      isDarkMode,
+      xAxisTitleFontSize,
+      xAxisTickFontSize,
+      yAxisTitleFontSize,
+      yAxisTickFontSize,
+      y1AxisTitleFontSize,
+      y1AxisTickFontSize,
+    ]
   );
 
   if (loading) {
@@ -1494,9 +1529,13 @@ useEffect(() => {
             max-height: 100% !important;
             max-width: 100% !important;
           }
-          .run-stay-chart-container div {
+          .run-stay-chart-container div:not(.chartjs-tooltip) {
             overflow: hidden !important;
             max-width: 100% !important;
+          }
+          .run-stay-chart-container .chartjs-tooltip {
+            overflow: visible !important;
+            border-radius: 12px !important;
           }
           .run-stay-chart-container div canvas {
             max-width: 100% !important;
