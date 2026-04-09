@@ -123,6 +123,11 @@ export default function StayTimePie({
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<ChartJS<'doughnut'> | null>(null);
+  const selectedSliceIndexesRef = useRef<number[]>([]);
+
+  useEffect(() => {
+    selectedSliceIndexesRef.current = selectedSliceIndexes;
+  }, [selectedSliceIndexes]);
 
     // Handle external refresh requests
   useEffect(() => {
@@ -453,6 +458,19 @@ useEffect(() => {
       animateScale: false,
       duration: 2500,
     },
+    onClick: (_event: unknown, elements: any[]) => {
+      if (!Array.isArray(elements) || elements.length === 0) return;
+
+      const clickedIndex = elements[0]?.index;
+      if (typeof clickedIndex !== 'number') return;
+      if ((percentages[clickedIndex] ?? 0) <= 0) return;
+
+      setSelectedSliceIndexes(previousIndexes =>
+        previousIndexes.includes(clickedIndex)
+          ? previousIndexes.filter(index => index !== clickedIndex)
+          : [...previousIndexes, clickedIndex],
+      );
+    },
     plugins: {
       legend: { display: false },
       tooltip: {
@@ -516,7 +534,8 @@ useEffect(() => {
         if (!meta?.data) return;
 
         const chartRadius = Math.min(chartWidth, chartHeight) / 2;
-        const hasSelectedSlices = selectedSliceIndexes.length > 0;
+        const selectedIndexes = selectedSliceIndexesRef.current;
+        const hasSelectedSlices = selectedIndexes.length > 0;
 
         // Make responsive based on chart size with tighter bounds so connectors don't get too long.
         const outerOffset = Math.min(Math.max(10, chartRadius * 0.05), 15); // 10-15px range
@@ -525,7 +544,7 @@ useEffect(() => {
         meta.data.forEach((arc: any, index: number) => {
           const value = datasetValues[index] || 0;
           if (value <= 0) return;
-          if (hasSelectedSlices && !selectedSliceIndexes.includes(index)) return;
+          if (hasSelectedSlices && !selectedIndexes.includes(index)) return;
 
           const angle = (arc.startAngle + arc.endAngle) / 2;
           const cosAngle = Math.cos(angle);
@@ -592,7 +611,7 @@ useEffect(() => {
         ctx.restore();
       }
     },
-  }), [selectedSliceIndexes, isDarkMode]);
+  }), [isDarkMode]);
 
   // Reload handler
   const handleReload = async () => {
@@ -1127,7 +1146,7 @@ useEffect(() => {
           </div>
         </div>
 
-          {/* Center - Pie Chart */}
+          {/* Pie Chart */}
           <div 
             className={`chart-container pie-stay-chart-container${isExpanded ? ' pie-stay-chart-container--expanded' : ''}`}
             style={{
@@ -1151,11 +1170,7 @@ useEffect(() => {
 	            {hasData ? (
 	              <Doughnut
 	                ref={chartRef}
-	                key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${
-                    selectedSliceIndexes.length > 0
-                      ? selectedSliceIndexes.slice().sort((a, b) => a - b).join('-')
-                      : 'all'
-                  }-${refreshKey ?? 0}`}
+	                key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${refreshKey ?? 0}`}
 	                data={chartData}
 	                options={options}
 	                plugins={[calloutLabelsPlugin]}
