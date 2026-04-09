@@ -121,6 +121,7 @@ export default function StayTimePie({
   const [selectedSliceIndexes, setSelectedSliceIndexes] = useState<number[]>([]);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
+  const [legendRevealVersion, setLegendRevealVersion] = useState(0);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<ChartJS<'doughnut'> | null>(null);
   const selectedSliceIndexesRef = useRef<number[]>([]);
@@ -308,6 +309,8 @@ useEffect(() => {
     chart.stop();
     chart.reset();
     chart.update('active');
+    // Start legend stagger in sync with pie redraw.
+    setLegendRevealVersion(currentVersion => currentVersion + 1);
   }
 }, [percentages, loading]);
 
@@ -450,7 +453,7 @@ useEffect(() => {
     animation: {
       animateRotate: true,
       animateScale: false,
-      duration: 2500,
+      duration: 3400,
     },
     onClick: (_event: unknown, elements: any[]) => {
       if (!Array.isArray(elements) || elements.length === 0) return;
@@ -740,6 +743,29 @@ useEffect(() => {
       </button>
 
       <style>{`
+        @keyframes pie-stay-legend-slide-down {
+          from {
+            opacity: 0;
+            transform: translateY(-12px);
+          }
+          to {
+            opacity: 1;
+            transform: translateY(0);
+          }
+        }
+
+        .pie-stay-wrapper .pie-stay-legend-row {
+          will-change: transform, opacity;
+        }
+
+        @media (prefers-reduced-motion: reduce) {
+          .pie-stay-wrapper .pie-stay-legend-row {
+            animation: none !important;
+            opacity: 1 !important;
+            transform: none !important;
+          }
+        }
+
         @media (max-width: 768px) {
           .responsive-chart-wrapper {
             flex-direction: column !important;
@@ -1250,97 +1276,107 @@ useEffect(() => {
 
 	            return (
 	              <div
-	                className="pie-stay-legend-item"
-	                key={idx}
-                onClick={() => {
-                  if (isVisible) {
-                    setSelectedSliceIndexes(previousIndexes =>
-                      previousIndexes.includes(idx)
-                        ? previousIndexes.filter(index => index !== idx)
-                        : [...previousIndexes, idx],
-                    );
-                  }
-                }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  padding: legendItemPadding,
-                  borderRadius: legendItemRadius,
-                  backgroundColor: isSelected 
-                    ? `${colors[idx]}25` 
-                    : isVisible 
-                      ? isDarkMode ? `${colors[idx]}15` : `${colors[idx]}08` 
-                      : mutedBackground,
-                  border: isSelected
-                    ? `2px solid ${colors[idx]}`
-                    : isVisible
-                    ? `2px solid ${colors[idx]}30`
-                    : `2px dashed ${mutedBorder}`,
-                  opacity: isEmptyRange
-                    ? 0.78
-                    : isHighlighted
-                    ? 1
-                    : isDarkMode
-                    ? 0.22
-                    : 0.35,
-                  transition: 'all 0.2s ease',
-                  cursor: isVisible ? 'pointer' : 'default',
-                  transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
-                }}
-                onMouseEnter={(e) => {
-                  if (isVisible) {
-                    e.currentTarget.style.backgroundColor = isSelected ? `${colors[idx]}30` : `${colors[idx]}15`;
-                    e.currentTarget.style.borderColor = `${colors[idx]}60`;
-                    if (!isSelected) {
-                      e.currentTarget.style.transform = 'translateX(4px)';
+	                className="pie-stay-legend-row"
+	                key={`${legendRevealVersion}-${idx}`}
+	                style={{
+	                  animation:
+	                    'pie-stay-legend-slide-down 520ms cubic-bezier(0.22, 1, 0.36, 1)',
+	                  animationDelay: `${idx * 120}ms`,
+	                  animationFillMode: 'both',
+	                }}
+	              >
+	                <div
+	                  className="pie-stay-legend-item"
+                  onClick={() => {
+                    if (isVisible) {
+                      setSelectedSliceIndexes(previousIndexes =>
+                        previousIndexes.includes(idx)
+                          ? previousIndexes.filter(index => index !== idx)
+                          : [...previousIndexes, idx],
+                      );
                     }
-                  }
-                }}
-                onMouseLeave={(e) => {
-                  if (isVisible) {
-                    e.currentTarget.style.backgroundColor = isSelected
-                      ? `${colors[idx]}25`
+                  }}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    padding: legendItemPadding,
+                    borderRadius: legendItemRadius,
+                    backgroundColor: isSelected 
+                      ? `${colors[idx]}25` 
+                      : isVisible 
+                        ? isDarkMode ? `${colors[idx]}15` : `${colors[idx]}08` 
+                        : mutedBackground,
+                    border: isSelected
+                      ? `2px solid ${colors[idx]}`
+                      : isVisible
+                      ? `2px solid ${colors[idx]}30`
+                      : `2px dashed ${mutedBorder}`,
+                    opacity: isEmptyRange
+                      ? 0.78
+                      : isHighlighted
+                      ? 1
                       : isDarkMode
-                      ? `${colors[idx]}15`
-                      : `${colors[idx]}08`;
-                    e.currentTarget.style.borderColor = isSelected ? colors[idx] : `${colors[idx]}30`;
-                    if (!isSelected) {
-                      e.currentTarget.style.transform = 'translateX(0)';
+                      ? 0.22
+                      : 0.35,
+                    transition: 'all 0.2s ease',
+                    cursor: isVisible ? 'pointer' : 'default',
+                    transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
+                  }}
+                  onMouseEnter={(e) => {
+                    if (isVisible) {
+                      e.currentTarget.style.backgroundColor = isSelected ? `${colors[idx]}30` : `${colors[idx]}15`;
+                      e.currentTarget.style.borderColor = `${colors[idx]}60`;
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = 'translateX(4px)';
+                      }
                     }
-                  }
-                }}
-              >
-                {/* Left side - color dot + label */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: legendItemLabelGap, flex: 1 }}>
-	                  <div
-	                    className="pie-stay-legend-dot"
-	                    style={{
-	                      width: legendDotSize,
-	                      height: legendDotSize,
-	                      borderRadius: '50%',
-	                      backgroundColor: isVisible ? colors[idx] : 'transparent',
-	                      border: isVisible ? 'none' : `2px solid ${mutedDot}`,
-	                      boxShadow: isVisible
-	                        ? `0 0 0 3px ${colors[idx]}20`
-	                        : 'none',
-	                      flexShrink: 0,
-	                    }}
-	                  />
-	                  <span
-	                    className="pie-stay-legend-label"
-	                    style={{ 
-	                    fontSize: legendLabelFontSize, 
-	                    fontWeight: 600, 
-	                    color: isVisible
-	                      ? isDarkMode
-	                        ? '#e0e0e0'
-	                        : '#333'
-	                      : mutedText,
-	                    transition: 'color 0.3s ease',
-	                    whiteSpace: 'nowrap',
-	                  }}>
-	                    {displayLabel}
-	                  </span>
+                  }}
+                  onMouseLeave={(e) => {
+                    if (isVisible) {
+                      e.currentTarget.style.backgroundColor = isSelected
+                        ? `${colors[idx]}25`
+                        : isDarkMode
+                        ? `${colors[idx]}15`
+                        : `${colors[idx]}08`;
+                      e.currentTarget.style.borderColor = isSelected ? colors[idx] : `${colors[idx]}30`;
+                      if (!isSelected) {
+                        e.currentTarget.style.transform = 'translateX(0)';
+                      }
+                    }
+                  }}
+                >
+                  {/* Left side - color dot + label */}
+                  <div style={{ display: 'flex', alignItems: 'center', gap: legendItemLabelGap, flex: 1 }}>
+	                    <div
+	                      className="pie-stay-legend-dot"
+	                      style={{
+	                        width: legendDotSize,
+	                        height: legendDotSize,
+	                        borderRadius: '50%',
+	                        backgroundColor: isVisible ? colors[idx] : 'transparent',
+	                        border: isVisible ? 'none' : `2px solid ${mutedDot}`,
+	                        boxShadow: isVisible
+	                          ? `0 0 0 3px ${colors[idx]}20`
+	                          : 'none',
+	                        flexShrink: 0,
+	                      }}
+	                    />
+	                    <span
+	                      className="pie-stay-legend-label"
+	                      style={{ 
+	                      fontSize: legendLabelFontSize, 
+	                      fontWeight: 600, 
+	                      color: isVisible
+	                        ? isDarkMode
+	                          ? '#e0e0e0'
+	                          : '#333'
+	                        : mutedText,
+	                      transition: 'color 0.3s ease',
+	                      whiteSpace: 'nowrap',
+	                    }}>
+	                      {displayLabel}
+	                    </span>
+	                  </div>
 	                </div>
 	              </div>
 	            );
