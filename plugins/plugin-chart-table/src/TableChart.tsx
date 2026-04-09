@@ -129,26 +129,33 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
 
 const KPIBanner = styled.div`
   display: grid;
-  grid-template-columns: repeat(4, 1fr);
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
   border-bottom: 1px solid var(--color-border);
   background: linear-gradient(135deg, var(--color-bg-muted) 0%, var(--color-bg-card) 100%);
   height: auto;
+  width: 100%;
+  box-sizing: border-box;
   
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
   }
   
   @media (max-width: 640px) {
     grid-template-columns: 1fr;
+    gap: 8px;
   }
 `;
 
 const KPITile = styled.div<{ bgColor?: string }>`
   display: flex;
+  flex-direction: column;
   align-items: center;
-  gap: 12px;
+  justify-content: center;
+  gap: 8px;
   padding: 16px 20px;
-  border-right: 1px solid var(--color-border);
+  border-right: none;
   background: ${props => props.bgColor || 'transparent'};
   transition: all var(--transition-normal);
   animation: slideIn 0.4s ease-out backwards;
@@ -157,15 +164,10 @@ const KPITile = styled.div<{ bgColor?: string }>`
   &:nth-child(1) { animation-delay: 0.1s; }
   &:nth-child(2) { animation-delay: 0.2s; }
   &:nth-child(3) { animation-delay: 0.3s; }
-  &:nth-child(4) { animation-delay: 0.4s; }
   
   &:hover {
     background: var(--color-bg-hover);
     transform: translateY(-2px);
-  }
-  
-  &:last-child {
-    border-right: none;
   }
   
   @keyframes slideIn {
@@ -197,6 +199,8 @@ const KPIIcon = styled.div<{ color?: string }>`
 const KPIContent = styled.div`
   display: flex;
   flex-direction: column;
+  align-items: center;
+  justify-content: center;
   gap: 2px;
   height: auto;
 `;
@@ -207,15 +211,16 @@ const KPIValue = styled.div`
   color: var(--color-text-primary);
   line-height: 1.2;
   height: auto;
+  text-align: center;
 `;
 
 const KPILabel = styled.div`
-  font-size: 17px;
+  font-size: 20px;
   font-weight: 500;
   color: var(--color-text-muted);
-  text-transform: uppercase;
   letter-spacing: 0.5px;
   height: auto;
+  text-align: center;
 `;
 
 const ContentArea = styled.div`
@@ -235,7 +240,8 @@ const TableSection = styled.div`
 const SectionHeader = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
+  justify-content: flex-end;
+  gap: 16px;
   padding: 12px 16px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
@@ -256,6 +262,7 @@ const HeaderControls = styled.div`
   display: inline-flex;
   align-items: center;
   gap: 10px;
+  margin-left: auto;
 `;
 
 const PageMeta = styled.span`
@@ -300,6 +307,7 @@ const Table = styled.table`
   border-collapse: collapse;
   font-size: 21px;
   height: 100%;
+  table-layout: fixed;
 `;
 
 const TableHead = styled.thead`
@@ -310,17 +318,19 @@ const TableHead = styled.thead`
   height: auto;
 `;
 
-const TableHeader = styled.th`
+const TableHeader = styled.th<{ colIndex?: number }>`
   padding: 16px 20px;
-  text-align: left;
+  text-align: center;
   font-weight: 600;
   font-size: 18px;
-  text-transform: uppercase;
+  text-transform: none;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
   border-bottom: 2px solid var(--color-border);
   background: var(--color-bg-card);
   height: auto;
+  width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
+  box-sizing: border-box;
 `;
 
 const TableBody = styled.tbody`
@@ -354,13 +364,19 @@ const TableRow = styled.tr`
   }
 `;
 
-const TableCell = styled.td`
+const TableCell = styled.td<{ colIndex?: number }>`
   padding: 16px 20px;
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
   font-size: 22px;
   height: auto;
+  width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
+  box-sizing: border-box;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: center;
 `;
 
 const LocationCell = styled.div`
@@ -445,6 +461,13 @@ const locationColors = [
 
 const ROWS_PER_PAGE = 5;
 const AUTO_PAGE_DELAY_MS = 7000;
+
+const capitalizeLabel = (str: string): string => {
+  if (str.toLowerCase() === 'location(s)') {
+    return 'Location(s)';
+  }
+  return str.replace(/\b\w/g, (char) => char.toUpperCase());
+};
 
 export default function TableChart({
   data,
@@ -563,7 +586,7 @@ export default function TableChart({
           </KPIIcon>
           <KPIContent>
             <KPIValue>{kpiValues.total.toLocaleString()}</KPIValue>
-            <KPILabel>Total</KPILabel>
+            <KPILabel>{capitalizeLabel('Total Patients')}</KPILabel>
           </KPIContent>
         </KPITile>
         
@@ -573,27 +596,17 @@ export default function TableChart({
           </KPIIcon>
           <KPIContent>
             <KPIValue>{kpiValues.count}</KPIValue>
-            <KPILabel>Records</KPILabel>
+            <KPILabel>{capitalizeLabel('location(s)')}</KPILabel>
           </KPIContent>
         </KPITile>
-        
-        <KPITile bgColor="rgba(8, 145, 178, 0.05)">
-          <KPIIcon color="#0891b2">
-            <TrendingUp size={20} />
-          </KPIIcon>
-          <KPIContent>
-            <KPIValue>{kpiValues.average}</KPIValue>
-            <KPILabel>Average</KPILabel>
-          </KPIContent>
-        </KPITile>
-        
+                
         <KPITile bgColor="rgba(16, 185, 129, 0.05)">
           <KPIIcon color="#10b981">
             <Trophy size={20} />
           </KPIIcon>
           <KPIContent>
-            <KPIValue style={{ fontSize: 16 }}>{kpiValues.topItem}</KPIValue>
-            <KPILabel>Top Item</KPILabel>
+            <KPIValue style={{ fontSize: 25 }}>{kpiValues.topItem}</KPIValue>
+            <KPILabel>{capitalizeLabel('Top Location')}</KPILabel>
           </KPIContent>
         </KPITile>
       </KPIBanner>
@@ -603,12 +616,20 @@ export default function TableChart({
         {/* Table Section */}
         <TableSection>
           <SectionHeader>
-            <SectionTitle>Data Distribution</SectionTitle>
             {totalPages > 1 && (
               <HeaderControls>
                 <PageMeta>
                   Page {currentPage + 1} / {totalPages}
                 </PageMeta>
+                <NavButton
+                  type="button"
+                  aria-label="Previous page"
+                  onClick={() =>
+                    setCurrentPage(prev => (prev - 1 + totalPages) % totalPages)
+                  }
+                >
+                  <ChevronLeft size={18} />
+                </NavButton>
                 <NavButton
                   type="button"
                   aria-label={
@@ -633,15 +654,6 @@ export default function TableChart({
                 </NavButton>
                 <NavButton
                   type="button"
-                  aria-label="Previous page"
-                  onClick={() =>
-                    setCurrentPage(prev => (prev - 1 + totalPages) % totalPages)
-                  }
-                >
-                  <ChevronLeft size={18} />
-                </NavButton>
-                <NavButton
-                  type="button"
                   aria-label="Next page"
                   onClick={() => setCurrentPage(prev => (prev + 1) % totalPages)}
                 >
@@ -655,7 +667,7 @@ export default function TableChart({
               <TableHead>
                 <tr>
                   {columns.map((col, index) => (
-                    <TableHeader key={index}>{col}</TableHeader>
+                    <TableHeader key={index} colIndex={index}>{col}</TableHeader>
                   ))}
                 </tr>
               </TableHead>
@@ -676,7 +688,7 @@ export default function TableChart({
                         const isPercent = col === percentColumn;
                         
                         return (
-                          <TableCell key={colIndex}>
+                          <TableCell key={colIndex} colIndex={colIndex}>
                             {isLabel ? (
                               <LocationCell>
                                 <LocationDot color={color} />
