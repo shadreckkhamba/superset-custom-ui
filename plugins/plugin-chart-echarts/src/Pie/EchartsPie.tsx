@@ -325,25 +325,26 @@ const PieLegendPercent = styled.span`
 `;
 
 const DonutTemplate = styled.div`
-  display: grid;
-  grid-template-columns: minmax(160px, 220px) minmax(0, 1fr);
-  gap: ${({ theme }) => theme.gridUnit * 3}px;
+  display: flex;
+  flex-direction: column;
   align-items: center;
-  justify-content: stretch;
+  justify-content: center;
   height: 100%;
   min-height: 0;
   width: 100%;
+  gap: 24px;
 
   @media (max-width: 1200px) {
-    grid-template-columns: 1fr;
-    justify-items: center;
-    align-content: start;
-    gap: ${({ theme }) => theme.gridUnit * 2}px;
+    gap: 16px;
   }
 `;
 
 const DonutChartWrap = styled.div`
-  height: 220px;
+  height: 350px;
+  width: 100%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
 `;
 
 const DonutLegend = styled.div`
