@@ -511,14 +511,15 @@ const CenterValue = styled.div`
 `;
 
 const CHART_COLORS = [
+  '#48ff00',
+  '#f8cf04',
+  '#3effeff3',
+  '#00C853',
+  '#FF4081',
   '#00E5FF',
   '#FF8A00',
   '#7C4DFF',
-  '#00C853',
-  '#FF1744',
-  '#FFD600',
-  '#2979FF',
-  '#FF4081',
+ 
 ];
 
 function getIconForCategory(name: string) {
@@ -627,24 +628,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                               } as CSSProperties
                             }
                           />
-                          <TinyIcon
-                            $color={item.color}
-                            className="pie-color-iconchip"
-                            style={
-                              {
-                                ['--dot-color' as string]: item.color,
-                              } as CSSProperties
-                            }
-                          >
-                            {(() => {
-                              const IconComponent = getIconForCategory(
-                                item.name,
-                              );
-                              return (
-                                <IconComponent size={32} strokeWidth={2.6} />
-                              );
-                            })()}
-                          </TinyIcon>
                           <CardLabel>{item.name}</CardLabel>
                         </LegendLabelWrap>
                       </DetailTop>
@@ -682,20 +665,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                           } as CSSProperties
                         }
                       />
-                      <TinyIcon
-                        $color={item.color}
-                        className="pie-color-iconchip"
-                        style={
-                          {
-                            ['--dot-color' as string]: item.color,
-                          } as CSSProperties
-                        }
-                      >
-                        {(() => {
-                          const IconComponent = getIconForCategory(item.name);
-                          return <IconComponent size={32} strokeWidth={2.6} />;
-                        })()}
-                      </TinyIcon>
                       <PieLegendLabel>{item.name}</PieLegendLabel>
                     </LegendLabelWrap>
                     <PieLegendValueStack>
@@ -787,20 +756,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                         } as CSSProperties
                       }
                     />
-                    <TinyIcon
-                      $color={item.color}
-                      className="pie-color-iconchip"
-                      style={
-                        {
-                          ['--dot-color' as string]: item.color,
-                        } as CSSProperties
-                      }
-                    >
-                      {(() => {
-                        const IconComponent = getIconForCategory(item.name);
-                        return <IconComponent size={32} strokeWidth={2.6} />;
-                      })()}
-                    </TinyIcon>
+
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
                   </DonutLegendLabelWrap>
                   <DonutLegendValueStack>
