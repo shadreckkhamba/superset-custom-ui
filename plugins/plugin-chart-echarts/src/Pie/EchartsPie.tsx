@@ -312,10 +312,10 @@ const DonutLegend = styled.div`
 const DonutLegendRow = styled.div`
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 5px;
+  justify-content: flex-start;
+  gap: 15px;
   min-width: 0;
-  padding: 2px 6px;
+  padding: 2px 4px;
   border-radius: ${({ theme }) => theme.gridUnit * 1.8}px !important;
   background: linear-gradient(
       120deg,
@@ -408,7 +408,7 @@ const DonutLegendValueStack = styled.div`
   flex-direction: column;
   align-items: flex-start;
   gap: 0;
-  min-width: 80px;
+  min-width: 75px;
   flex-shrink: 0;
 `;
 
