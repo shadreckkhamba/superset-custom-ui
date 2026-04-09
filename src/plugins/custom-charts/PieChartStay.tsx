@@ -417,16 +417,10 @@ useEffect(() => {
               ? 'rgba(120, 128, 140, 0.20)'
               : 'rgba(160, 170, 185, 0.28)'
           ),
-          borderWidth: colors.map((_, idx) =>
-            !hasSelection || selectedSliceIndexes.includes(idx) ? 3 : 1.5,
-          ),
-          borderColor: colors.map((_, idx) =>
-            !hasSelection || selectedSliceIndexes.includes(idx)
-              ? isDarkMode ? '#2d2d2d' : '#fff'
-              : isDarkMode
-              ? 'rgba(90, 95, 105, 0.35)'
-              : 'rgba(130, 140, 160, 0.35)',
-          ),
+          borderWidth: 0,
+          borderColor: 'transparent',
+          hoverBorderWidth: 0,
+          spacing: 0,
         },
       ],
     };
