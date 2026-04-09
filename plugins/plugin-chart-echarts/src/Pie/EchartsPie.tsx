@@ -52,20 +52,29 @@ const Container = styled.div`
 
 const PieTemplate = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   height: 100%;
   min-height: 0;
+  gap: 16px;
+  align-items: stretch;
+  
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
 `;
 
 const TotalCounter = styled.div`
-  text-align: center;
-  margin-bottom: ${({ theme }) => theme.gridUnit * 2}px;
-  position: relative;
+  position: absolute;
+  top: 50%;
+  left: 50%;
+  transform: translate(-50%, -50%);
   z-index: 2;
   min-height: 78px;
   display: flex;
   flex-direction: column;
+  align-items: center;
   justify-content: center;
+  pointer-events: none;
 `;
 
 const TotalLabel = styled.div`
@@ -89,19 +98,43 @@ const TotalValue = styled.div`
 `;
 
 const PieChartWrap = styled.div`
-  height: clamp(140px, 40%, 190px);
-  min-height: 130px;
-  flex-shrink: 0;
-  margin-bottom: ${({ theme }) => theme.gridUnit * 2}px;
+  flex: 0 0 55%;
+  min-height: 200px;
+  height: auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  position: relative;
 `;
 
 const DetailCardsGrid = styled.div`
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
-  gap: ${({ theme }) => theme.gridUnit * 2}px;
+  gap: 8px;
+  width: 100%;
   @media (max-width: 920px) {
     grid-template-columns: 1fr;
   }
+`;
+
+const PieLegend = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  width: 100%;
+  min-width: 0;
+  overflow-y: auto;
+  padding: 8px;
+  flex: 1;
+`;
+
+const RightPanel = styled.div`
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  gap: 16px;
+  min-width: 0;
+  overflow: hidden;
 `;
 
 const DetailCard = styled.div`
@@ -161,23 +194,6 @@ const CardPercentage = styled.div`
   font-weight: 700;
   margin-top: ${({ theme }) => theme.gridUnit * 0.4}px;
   text-align: center;
-`;
-
-const PieLegend = styled.div`
-  display: grid;
-  grid-template-columns: repeat(auto-fit, minmax(420px, 1fr));
-  gap: ${({ theme }) => theme.gridUnit * 1.4}px;
-  width: 100%;
-  max-width: 100%;
-  margin: 0 auto
-    ${({ theme }) => theme.gridUnit}px auto;
-  align-items: stretch;
-  @media (max-width: 1200px) {
-    grid-template-columns: repeat(auto-fit, minmax(360px, 1fr));
-  }
-  @media (max-width: 760px) {
-    grid-template-columns: 1fr;
-  }
 `;
 
 const PieLegendRow = styled.div`
@@ -496,12 +512,11 @@ export default function EchartsPie(props: PieChartTransformedProps) {
     <Container style={{ width, height }}>
       {!isDonut ? (
         <PieTemplate>
-          <TotalCounter>
-            <TotalLabel>Total</TotalLabel>
-            <TotalValue>{total.toLocaleString()}</TotalValue>
-          </TotalCounter>
-
           <PieChartWrap>
+            <TotalCounter>
+              <TotalLabel>Total</TotalLabel>
+              <TotalValue>{total.toLocaleString()}</TotalValue>
+            </TotalCounter>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -527,8 +542,9 @@ export default function EchartsPie(props: PieChartTransformedProps) {
             </ResponsiveContainer>
           </PieChartWrap>
 
-          {shouldShowCards && (
-            <DetailCardsGrid>
+          <RightPanel>
+            {shouldShowCards && (
+              <DetailCardsGrid>
               {chartData.map(
                 (
                   item: {
@@ -606,7 +622,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               )}
             </PieLegend>
           )}
-        </PieTemplate>
+        </RightPanel>
+      </PieTemplate>
       ) : (
         <DonutTemplate>
           <DonutChartWrap>
