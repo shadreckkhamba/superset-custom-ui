@@ -37,7 +37,7 @@ const PROPORTION = {
   // text size: proportion of the chart container sans trendline
   METRIC_NAME: 0.18,
   KICKER: 0.15,
-  HEADER: 0.43,
+  HEADER: 0.55,
   SUBHEADER: 0.18,
   // trendline size: proportion of the whole chart container
   TRENDLINE: 0.3,
@@ -540,40 +540,21 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const shouldApplyOverflow = this.shouldApplyOverflow(height);
     const metricLabelText = metricName ? String(metricName) : '';
     const subtitleText = subtitle ? String(subtitle).trim() : '';
-    const metricLabelLower = metricLabelText.toLowerCase();
-    const normalizedMetricLabel = metricLabelLower.replace(/\s+/g, '');
-    const isCountAlias =
-      normalizedMetricLabel === 'sum(count)' ||
-      normalizedMetricLabel === 'sum__count' ||
-      normalizedMetricLabel === 'count';
-    const displayMetricLabel = isCountAlias
-      ? t('Refunded rate')
-      : metricLabelText;
-    const shouldUsePercentFallback =
-      isCountAlias ||
-      metricLabelLower.includes('rate') ||
-      metricLabelLower.includes('percent') ||
-      metricLabelLower.includes('%');
-    const footerLabel = displayMetricLabel
-      ? displayMetricLabel.toUpperCase()
-      : t('Metric');
+    
+    const footerLabel = 'TOTAL';
     const fallbackFromBigNumber =
       typeof this.props.bigNumber === 'number' &&
       Number.isFinite(this.props.bigNumber)
-        ? shouldUsePercentFallback
-          ? `${this.props.bigNumber.toFixed(1)}%`
-          : defaultNumberFormatter(this.props.bigNumber)
+        ? defaultNumberFormatter(this.props.bigNumber)
         : '';
-    const footerValue = subtitleText || fallbackFromBigNumber;
+    
     const safeWidth = Number.isFinite(width) ? width : 320;
-    const kpiCircleSize = Math.max(
-      Math.min(safeWidth * 0.58, height * 0.56, 188),
-      124,
+    const fontSize = Math.max(
+      Math.min(safeWidth * 0.35, height * 0.6, 220),
+      96,
     );
-    const kpiHeaderMaxHeight = Math.floor(kpiCircleSize * 0.48);
     const noTrendlineStyle: CSSProperties = {
       height,
-      '--kpi-circle-size': `${kpiCircleSize}px`,
     } as CSSProperties;
 
     return (
@@ -581,9 +562,14 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
         className={className}
         style={{
           ...noTrendlineStyle,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '20px',
           ...(shouldApplyOverflow
             ? {
-                display: 'block',
+                display: 'flex',
                 boxSizing: 'border-box',
                 overflowX: 'hidden',
                 overflowY: 'auto',
@@ -592,32 +578,42 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
             : {}),
         }}
       >
-        <div className="text-container text-container--kpi">
-          {this.renderFallbackWarning()}
-            <div className="kpi-circle">
-              <div className="kpi-circle-cap" />
-              <div className="kpi-circle-inner">
-                <button
-                  type="button"
-                  className={`kpi-circle-icon ${
-                    this.state.isRefreshing ? 'is-refreshing' : ''
-                  } is-clickable`}
-                  onClick={this.handleRefreshClick}
-                  disabled={this.state.isRefreshing}
-                  title="Refresh data"
-                  aria-label="Refresh data"
-                >
-                  &#8635;
-                </button>
-                {this.renderHeader(kpiHeaderMaxHeight)}
-              </div>
-            </div>
-          {footerValue && (
-            <div className="kpi-footer">
-              <span className="kpi-footer-label">{footerLabel}</span>
-              <span className="kpi-footer-value">{footerValue}</span>
-            </div>
-          )}
+        <div
+          className="text-container--kpi"
+          style={{
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            justifyContent: 'center',
+            gap: '16px',
+            width: '100%',
+            height: '100%',
+          }}
+        >
+          <div
+            className="header-line"
+            style={{
+              fontSize: `${fontSize}px`,
+              fontWeight: 800,
+              color: '#15333a',
+              textAlign: 'center',
+              lineHeight: 1,
+              fontFamily: "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+            }}
+          >
+            {fallbackFromBigNumber}
+          </div>
+          <div
+            style={{
+              fontSize: 'clamp(14px, 2vw, 24px)',
+              fontWeight: 700,
+              color: '#5b7d85',
+              textTransform: 'uppercase',
+              letterSpacing: '0.1em',
+            }}
+          >
+            {footerLabel}
+          </div>
         </div>
       </div>
     );
