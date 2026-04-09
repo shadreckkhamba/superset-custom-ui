@@ -1672,8 +1672,8 @@ const Header = () => {
 	    : Math.max(1, Math.ceil(countdownTotalSeconds / 60));
 	  const countdownDisplayLabel = countdownInSecondsMode
 	    ? countdownTotalSeconds === 1
-	      ? 'SECOND'
-	      : 'SECONDS'
+	      ? 'SEC'
+	      : 'SECS'
 	    : countdownDisplayValue === 1
 	      ? 'MIN'
 	      : 'MINS';
@@ -1682,7 +1682,7 @@ const Header = () => {
 	    Math.min(1, slideshowCountdownProgress),
 	  );
   const countdownRadius = 19;
-  const countdownStrokeWidth = 4;
+  const countdownStrokeWidth = 5;
   const countdownViewBoxSize = 52;
   const countdownCenter = countdownViewBoxSize / 2;
   const countdownCircumference = 2 * Math.PI * countdownRadius;

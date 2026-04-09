@@ -583,38 +583,42 @@ const Chart = props => {
       />
 
       {/* 📅 Date range badge aligned with chart title */}
-      { isStandalone && (
-        <div 
+      {isStandalone && dateRangeLabel && (
+        <div
           className="date-range-badge"
           data-chart-id={props.id}
-        style={{
-          position: 'absolute',
-          top: '0px',
-          right: '0px',
-          transform: 'translate(10px, -12px)',
-          background: 'rgb(227, 251, 255)',
-          color: '#003366',
-          fontSize: '24px',
-          fontWeight: 500,
-          padding: '8px 12px 6px 14px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-          zIndex: 50,
-          maxWidth: 'none',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          justifyContent: 'space-between',
-          lineHeight: '1.2',
-          minHeight: '32px',
-        }}
+          style={{
+            position: 'absolute',
+            top: '8px',
+            right: '8px',
+            background: '#f2f2f2',
+            color: '#7f7f7f',
+            fontSize: '16px',
+            fontWeight: 500,
+            padding: '10px 22px',
+            borderRadius: '999px',
+            border: '1px solid #dddddd',
+            boxShadow:
+              'inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.04)',
+            zIndex: 50,
+            minWidth: '220px',
+            maxWidth: 'calc(100% - 16px)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            pointerEvents: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            lineHeight: '1.25',
+            minHeight: '42px',
+            letterSpacing: '0.01em',
+          }}
           title={dateRangeLabel}
         >
-          <span style={{ flexGrow: 1, textAlign: 'right' }}>{dateRangeLabel}</span>
+          <span style={{ flexGrow: 1, color: 'inherit', fontSize: 'inherit' }}>
+            {dateRangeLabel}
+          </span>
         </div>
       )}
 
