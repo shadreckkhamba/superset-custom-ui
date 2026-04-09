@@ -203,6 +203,7 @@ const KPIContent = styled.div`
   justify-content: center;
   gap: 2px;
   height: auto;
+  text-align: center;
 `;
 
 const KPIValue = styled.div`
@@ -248,15 +249,6 @@ const SectionHeader = styled.div`
   height: auto;
 `;
 
-const SectionTitle = styled.h3`
-  font-size: 24px;
-  font-weight: 600;
-  color: var(--color-text-primary);
-  margin: 0;
-  text-transform: uppercase;
-  letter-spacing: 0.5px;
-  height: auto;
-`;
 
 const HeaderControls = styled.div`
   display: inline-flex;
@@ -322,8 +314,8 @@ const TableHeader = styled.th<{ colIndex?: number }>`
   padding: 16px 20px;
   text-align: center;
   font-weight: 600;
-  font-size: 18px;
-  text-transform: none;
+  font-size: 22px;
+  text-transform: capitalize;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
   border-bottom: 2px solid var(--color-border);
@@ -376,7 +368,7 @@ const TableCell = styled.td<{ colIndex?: number }>`
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
-  text-align: center;
+  text-align: ${props => props.colIndex === 2 ? 'center' : 'left'};
 `;
 
 const LocationCell = styled.div`
@@ -463,7 +455,7 @@ const ROWS_PER_PAGE = 5;
 const AUTO_PAGE_DELAY_MS = 7000;
 
 const capitalizeLabel = (str: string): string => {
-  if (str.toLowerCase() === 'location(s)') {
+  if (str === 'location(s)') {
     return 'Location(s)';
   }
   return str.replace(/\b\w/g, (char) => char.toUpperCase());
