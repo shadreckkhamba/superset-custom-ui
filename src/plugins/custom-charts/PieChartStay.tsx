@@ -118,7 +118,7 @@ export default function StayTimePie({
   const [animatedPercent, setAnimatedPercent] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState<string>("Daily");
   const [showFilterMenu, setShowFilterMenu] = useState(false);
-  const [selectedSliceIndex, setSelectedSliceIndex] = useState<number | null>(null);
+  const [selectedSliceIndexes, setSelectedSliceIndexes] = useState<number[]>([]);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -265,7 +265,7 @@ const loadData = async () => {
 // Auto refresh every 60s - consistent with other charts
 useEffect(() => {
   // Clear focused slice when period changes so new period always shows labels
-  setSelectedSliceIndex(null);
+  setSelectedSliceIndexes([]);
   // Reset progress bar immediately when period changes
   setActualPercent(null);
   setAnimatedPercent(0);
@@ -284,12 +284,16 @@ useEffect(() => {
 
 // If the focused slice disappears in a new dataset, fall back to all slices
 useEffect(() => {
-  if (selectedSliceIndex === null) return;
-  const selectedValue = percentages[selectedSliceIndex] ?? 0;
-  if (selectedValue <= 0) {
-    setSelectedSliceIndex(null);
-  }
-}, [percentages, selectedSliceIndex]);
+  setSelectedSliceIndexes(previousIndexes => {
+    if (previousIndexes.length === 0) return previousIndexes;
+    const validIndexes = previousIndexes.filter(
+      index => (percentages[index] ?? 0) > 0,
+    );
+    return validIndexes.length === previousIndexes.length
+      ? previousIndexes
+      : validIndexes;
+  });
+}, [percentages]);
 
 // Force chart animation on data update
 useEffect(() => {
@@ -394,7 +398,7 @@ useEffect(() => {
   const chartData = useMemo(() => {
     const validPercentages =
       percentages.length === ranges.length ? percentages : Array(ranges.length).fill(0);
-    const hasSelection = selectedSliceIndex !== null;
+    const hasSelection = selectedSliceIndexes.length > 0;
 
     return {
       labels: ranges,
@@ -402,15 +406,17 @@ useEffect(() => {
         {
           data: validPercentages,   // raw percentages
           backgroundColor: colors.map((color, idx) => 
-            !hasSelection || selectedSliceIndex === idx
+            !hasSelection || selectedSliceIndexes.includes(idx)
               ? color 
               : isDarkMode
               ? 'rgba(120, 128, 140, 0.20)'
               : 'rgba(160, 170, 185, 0.28)'
           ),
-          borderWidth: colors.map((_, idx) => (!hasSelection || selectedSliceIndex === idx ? 3 : 1.5)),
+          borderWidth: colors.map((_, idx) =>
+            !hasSelection || selectedSliceIndexes.includes(idx) ? 3 : 1.5,
+          ),
           borderColor: colors.map((_, idx) =>
-            !hasSelection || selectedSliceIndex === idx
+            !hasSelection || selectedSliceIndexes.includes(idx)
               ? isDarkMode ? '#2d2d2d' : '#fff'
               : isDarkMode
               ? 'rgba(90, 95, 105, 0.35)'
@@ -419,7 +425,7 @@ useEffect(() => {
         },
       ],
     };
-  }, [percentages, selectedSliceIndex, isDarkMode]);
+  }, [percentages, selectedSliceIndexes, isDarkMode]);
  
   // Memoize chart options
   const options = useMemo(() => ({
@@ -510,7 +516,7 @@ useEffect(() => {
         if (!meta?.data) return;
 
         const chartRadius = Math.min(chartWidth, chartHeight) / 2;
-        const selectedIdx = selectedSliceIndex;
+        const hasSelectedSlices = selectedSliceIndexes.length > 0;
 
         // Make responsive based on chart size with tighter bounds so connectors don't get too long.
         const outerOffset = Math.min(Math.max(10, chartRadius * 0.05), 15); // 10-15px range
@@ -519,7 +525,7 @@ useEffect(() => {
         meta.data.forEach((arc: any, index: number) => {
           const value = datasetValues[index] || 0;
           if (value <= 0) return;
-          if (selectedIdx !== null && selectedIdx !== index) return;
+          if (hasSelectedSlices && !selectedSliceIndexes.includes(index)) return;
 
           const angle = (arc.startAngle + arc.endAngle) / 2;
           const cosAngle = Math.cos(angle);
@@ -586,7 +592,7 @@ useEffect(() => {
         ctx.restore();
       }
     },
-  }), [selectedSliceIndex, isDarkMode]);
+  }), [selectedSliceIndexes, isDarkMode]);
 
   // Reload handler
   const handleReload = async () => {
@@ -954,7 +960,7 @@ useEffect(() => {
                   <div
                     key={period}
                     onClick={() => {
-                      setSelectedSliceIndex(null);
+                      setSelectedSliceIndexes([]);
                       setSelectedPeriod(period);
                       setShowFilterMenu(false);
                     }}
@@ -1145,7 +1151,11 @@ useEffect(() => {
 	            {hasData ? (
 	              <Doughnut
 	                ref={chartRef}
-	                key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${selectedSliceIndex ?? 'all'}-${refreshKey ?? 0}`}
+	                key={`pie-${selectedPeriod}-${isDarkMode ? 'dark' : 'light'}-${
+                    selectedSliceIndexes.length > 0
+                      ? selectedSliceIndexes.slice().sort((a, b) => a - b).join('-')
+                      : 'all'
+                  }-${refreshKey ?? 0}`}
 	                data={chartData}
 	                options={options}
 	                plugins={[calloutLabelsPlugin]}
@@ -1214,9 +1224,20 @@ useEffect(() => {
 	          {ranges.map((label, idx) => {
 	            const percentage = percentages[idx] ?? 0;
 	            const isVisible = hasData && percentage > 0;
-	            const isSelected = selectedSliceIndex === idx;
-	            const isHighlighted = selectedSliceIndex === null || isSelected;
+	            const isSelected = selectedSliceIndexes.includes(idx);
+	            const isHighlighted = selectedSliceIndexes.length === 0 || isSelected;
+	            const isEmptyRange = !isVisible;
 	            const displayLabel = hasData ? label : '--';
+	            const mutedBackground = isDarkMode
+	              ? 'rgba(255, 255, 255, 0.03)'
+	              : 'rgba(15, 23, 42, 0.03)';
+	            const mutedBorder = isDarkMode
+	              ? 'rgba(173, 184, 201, 0.55)'
+	              : 'rgba(148, 163, 184, 0.55)';
+	            const mutedText = isDarkMode
+	              ? 'rgba(201, 209, 220, 0.70)'
+	              : 'rgba(71, 85, 105, 0.60)';
+	            const mutedDot = mutedBorder;
 
 	            return (
 	              <div
@@ -1224,7 +1245,11 @@ useEffect(() => {
 	                key={idx}
                 onClick={() => {
                   if (isVisible) {
-                    setSelectedSliceIndex(selectedSliceIndex === idx ? null : idx);
+                    setSelectedSliceIndexes(previousIndexes =>
+                      previousIndexes.includes(idx)
+                        ? previousIndexes.filter(index => index !== idx)
+                        : [...previousIndexes, idx],
+                    );
                   }
                 }}
                 style={{
@@ -1236,13 +1261,19 @@ useEffect(() => {
                     ? `${colors[idx]}25` 
                     : isVisible 
                       ? isDarkMode ? `${colors[idx]}15` : `${colors[idx]}08` 
-                      : isDarkMode ? '#2d2d2d' : '#fafafa',
-                  border: `2px solid ${isSelected 
-                    ? colors[idx] 
-                    : isVisible 
-                      ? `${colors[idx]}30` 
-                      : isDarkMode ? '#404040' : '#f0f0f0'}`,
-                  opacity: isHighlighted ? 1 : isDarkMode ? 0.22 : 0.35,
+                      : mutedBackground,
+                  border: isSelected
+                    ? `2px solid ${colors[idx]}`
+                    : isVisible
+                    ? `2px solid ${colors[idx]}30`
+                    : `2px dashed ${mutedBorder}`,
+                  opacity: isEmptyRange
+                    ? 0.78
+                    : isHighlighted
+                    ? 1
+                    : isDarkMode
+                    ? 0.22
+                    : 0.35,
                   transition: 'all 0.2s ease',
                   cursor: isVisible ? 'pointer' : 'default',
                   transform: isSelected ? 'translateX(4px)' : 'translateX(0)',
@@ -1278,12 +1309,11 @@ useEffect(() => {
 	                      width: legendDotSize,
 	                      height: legendDotSize,
 	                      borderRadius: '50%',
-	                      backgroundColor: hasData
-	                        ? colors[idx]
-	                        : isDarkMode
-	                        ? 'rgba(255, 255, 255, 0.28)'
-	                        : 'rgba(15, 23, 42, 0.22)',
-	                      boxShadow: hasData ? `0 0 0 3px ${colors[idx]}20` : 'none',
+	                      backgroundColor: isVisible ? colors[idx] : 'transparent',
+	                      border: isVisible ? 'none' : `2px solid ${mutedDot}`,
+	                      boxShadow: isVisible
+	                        ? `0 0 0 3px ${colors[idx]}20`
+	                        : 'none',
 	                      flexShrink: 0,
 	                    }}
 	                  />
@@ -1292,13 +1322,11 @@ useEffect(() => {
 	                    style={{ 
 	                    fontSize: legendLabelFontSize, 
 	                    fontWeight: 600, 
-	                    color: hasData
+	                    color: isVisible
 	                      ? isDarkMode
 	                        ? '#e0e0e0'
 	                        : '#333'
-	                      : isDarkMode
-	                      ? 'rgba(255, 255, 255, 0.40)'
-	                      : 'rgba(15, 23, 42, 0.42)',
+	                      : mutedText,
 	                    transition: 'color 0.3s ease',
 	                    whiteSpace: 'nowrap',
 	                  }}>
