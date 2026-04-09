@@ -406,10 +406,13 @@ const DonutLegendPercent = styled.span`
 const DonutLegendValueStack = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  justify-content: center;
   gap: 0;
-  min-width: 75px;
+  min-width: 80px;
   flex-shrink: 0;
+  margin-left: auto;
+  margin-right: 10px;
 `;
 
 const CenterLabel = styled.div`
