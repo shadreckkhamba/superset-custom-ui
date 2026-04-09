@@ -1124,6 +1124,8 @@ const Header = () => {
     shallowEqual,
   );
   const isLoading = useSelector(state => isDashboardLoading(state.charts));
+  const shouldRenderPatientStayOverlay =
+    !editMode && (!isStandalone || isSlideshow || isPatientStayView);
 
   // Debug: Log when isPatientStayView changes
   useEffect(() => {
@@ -1133,13 +1135,19 @@ const Header = () => {
       isSlideshow,
       isStandalone,
       editMode,
-      shouldRenderOverlay: !editMode && (!isStandalone || isSlideshow)
+      shouldRenderOverlay: shouldRenderPatientStayOverlay,
     });
-  }, [isPatientStayView, isSlideshow, isStandalone, editMode]);
+  }, [
+    isPatientStayView,
+    isSlideshow,
+    isStandalone,
+    editMode,
+    shouldRenderPatientStayOverlay,
+  ]);
 
   useEffect(() => {
     const shouldLockScroll =
-      !editMode && (!isStandalone || isSlideshow) && isPatientStayView;
+      shouldRenderPatientStayOverlay && isPatientStayView;
     const className = 'patient-stay-scroll-lock';
     const root = document.documentElement;
     const wrapperEl = document.querySelector(
@@ -1161,7 +1169,7 @@ const Header = () => {
       root.classList.remove(className);
       wrapperEl?.classList.remove(className);
     };
-  }, [editMode, isSlideshow, isStandalone, isPatientStayView]);
+  }, [isPatientStayView, shouldRenderPatientStayOverlay]);
 
   useEffect(() => {
     if (!isPatientStayView) {
@@ -1423,7 +1431,26 @@ const Header = () => {
   }, [boundActionCreators, editMode]);
 
   const handleDashboardSwitch = useCallback(checked => {
-    setIsPatientStayView(Boolean(checked));
+    const nextIsPatientStayView = Boolean(checked);
+    setIsPatientStayView(nextIsPatientStayView);
+
+    if (typeof window === 'undefined') {
+      return;
+    }
+
+    const params = new URLSearchParams(window.location.search);
+    if (nextIsPatientStayView) {
+      params.set('view', 'stay');
+    } else {
+      params.delete('view');
+    }
+
+    const nextSearch = params.toString();
+    const nextUrl = `${window.location.pathname}${
+      nextSearch ? `?${nextSearch}` : ''
+    }${window.location.hash}`;
+
+    window.history.replaceState(window.history.state, '', nextUrl);
   }, []);
 
   const overwriteDashboard = useCallback(() => {
@@ -2593,7 +2620,7 @@ const handleSaveAsImage = async () => {
               grid-column: 1 / -1;
             }
           }
-          ${!editMode && (!isStandalone || isSlideshow) &&
+          ${shouldRenderPatientStayOverlay &&
           `
             .dashboard-content,
             [data-test="dashboard-filters-panel"] {
@@ -2620,7 +2647,7 @@ const handleSaveAsImage = async () => {
         `}
       />
 
-      {!editMode && (!isStandalone || isSlideshow) && (
+      {shouldRenderPatientStayOverlay && (
         <div
           className="patient-stay-overlay"
           data-slideshow={isSlideshow ? 'true' : 'false'}
