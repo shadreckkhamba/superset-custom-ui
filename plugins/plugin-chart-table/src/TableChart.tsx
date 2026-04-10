@@ -48,7 +48,7 @@ const themeVars = css`
   
   --color-text-primary: #0f172a;
   --color-text-secondary: #475569;
-  --color-text-muted: #94a3b8;
+  --color-text-muted: #8796aa;
   
   --color-border: #e2e8f0;
   --color-border-light: #f1f5f9;
@@ -216,8 +216,8 @@ const KPIValue = styled.div`
 `;
 
 const KPILabel = styled.div`
-  font-size: 20px;
-  font-weight: 500;
+  font-size: 23px;
+  font-weight: 800;
   color: var(--color-text-muted);
   letter-spacing: 0.5px;
   height: auto;
@@ -313,8 +313,8 @@ const TableHead = styled.thead`
 const TableHeader = styled.th<{ colIndex?: number }>`
   padding: 16px 20px;
   text-align: center;
-  font-weight: 600;
-  font-size: 22px;
+  font-weight: 900;
+  font-size: 27px;
   text-transform: capitalize;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
