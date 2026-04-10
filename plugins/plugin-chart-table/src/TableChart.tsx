@@ -16,11 +16,12 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useMemo, useState, useEffect } from 'react';
+import React, { useMemo, useState, useEffect, SVGProps } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
 import {
   Hash,
+  MapPin,
   Database,
   TrendingUp,
   Trophy,
@@ -29,6 +30,22 @@ import {
   Pause,
   Play,
 } from 'lucide-react';
+
+function FluentPeopleCommunity20Filled(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" {...props}>
+      <path fill="currentColor" d="M10 2a3 3 0 1 0 0 6a3 3 0 0 0 0-6M5.053 9.996q-.051.244-.051.504V14a4.99 4.99 0 0 0 1.767 3.814l-.171.05a4 4 0 0 1-4.9-2.828l-.647-2.415a1.5 1.5 0 0 1 1.061-1.837zm8.182 7.818A4.99 4.99 0 0 0 15.002 14v-3.5q-.001-.26-.05-.504l2.94.788a1.5 1.5 0 0 1 1.06 1.837l-.647 2.415a4 4 0 0 1-5.07 2.778M16.5 4a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5m-13 0a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5m4 5A1.5 1.5 0 0 0 6 10.5V14a4 4 0 0 0 8 0v-3.5A1.5 1.5 0 0 0 12.5 9z" />
+    </svg>
+  );
+}
+
+function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
+  return (
+    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 24 24" {...props}>
+      <path fill="currentColor" d="M11.4 18.425q-.3-.1-.55-.3q-2.95-2.35-4.4-4.587T5 9.15q0-3.125 1.95-5.137T12 2t5.05 2.013T19 9.15q0 2.15-1.45 4.388t-4.4 4.587q-.25.2-.55.3t-.6.1t-.6-.1M12 11q.825 0 1.413-.587T14 9t-.587-1.412T12 7t-1.412.588T10 9t.588 1.413T12 11M6 22q-.425 0-.712-.288T5 21t.288-.712T6 20h12q.425 0 .713.288T19 21t-.288.713T18 22z" />
+    </svg>
+  );
+}
 
 // CSS Variables for teal medical/clinical palette
 const themeVars = css`
@@ -50,7 +67,7 @@ const themeVars = css`
   --color-text-secondary: #475569;
   --color-text-muted: #8796aa;
   
-  --color-border: #e2e8f0;
+  --color-border: #e2e8f0;s
   --color-border-light: #f1f5f9;
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -105,6 +122,38 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
     animation: tableThemeSkeletonShimmer 1.1s linear infinite;
     z-index: 2;
   }
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    --color-primary: #0d9488;
+    --color-primary-light: #14b8a6;
+    --color-primary-dark: #0f766e;
+    --color-secondary: #06b6d4;
+    --color-accent: #0891b2;
+    --color-success: #10b981;
+    --color-warning: #f59e0b;
+    --color-error: #ef4444;
+    --color-info: #3b82f6;
+    
+    --color-bg-card: #0a0a0a;
+    --color-bg-muted: #111111;
+    --color-bg-hover: #1a1a1a;
+    
+    --color-text-primary: #eef8fa;
+    --color-text-secondary: #94a3b8;
+    --color-text-muted: #64748b;
+    
+    --color-border: #1f3744;
+    --color-border-light: #1a1a1a;
+    
+    --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.3);
+    --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.4), 0 2px 4px -1px rgba(0, 0, 0, 0.3);
+    --shadow-lg: 0 10px 15px -3px rgba(0, 0, 0, 0.5), 0 4px 6px -2px rgba(0, 0, 0, 0.35);
+    
+    background: #0a0a0a;
+    box-shadow: var(--shadow-lg), inset 0 0 0 1px rgba(80, 140, 165, 0.15);
+    border: 1px solid #1f3744;
+  }
   
   @keyframes fadeIn {
     from {
@@ -136,6 +185,12 @@ const KPIBanner = styled.div`
   height: auto;
   width: 100%;
   box-sizing: border-box;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, #111111 0%, #0a0a0a 100%);
+    border-bottom-color: #1f3744;
+  }
   
   @media (max-width: 1024px) {
     grid-template-columns: repeat(2, 1fr);
@@ -150,16 +205,19 @@ const KPIBanner = styled.div`
 
 const KPITile = styled.div<{ bgColor?: string }>`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 8px;
+  justify-content: flex-start;
+  gap: 12px;
   padding: 16px 20px;
   border-right: none;
   background: ${props => props.bgColor || 'transparent'};
   transition: all var(--transition-normal);
   animation: slideIn 0.4s ease-out backwards;
+  min-height: 88px;
   height: auto;
+  box-sizing: border-box;
+  overflow: visible;
   
   &:nth-child(1) { animation-delay: 0.1s; }
   &:nth-child(2) { animation-delay: 0.2s; }
@@ -168,6 +226,13 @@ const KPITile = styled.div<{ bgColor?: string }>`
   &:hover {
     background: var(--color-bg-hover);
     transform: translateY(-2px);
+  }
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    &:hover {
+      background: rgba(255, 255, 255, 0.05);
+    }
   }
   
   @keyframes slideIn {
@@ -186,42 +251,61 @@ const KPIIcon = styled.div<{ color?: string }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 48px;
-  height: 48px;
+  width: 56px;
+  height: 56px;
   border-radius: var(--radius-md);
   background: ${props => props.color || 'var(--color-primary)'};
   color: white;
-  font-size: 22px;
+  font-size: 30px;
   flex-shrink: 0;
-  min-height: 48px;
+  min-width: 56px;
+  min-height: 56px;
 `;
 
 const KPIContent = styled.div`
   display: flex;
-  flex-direction: column;
+  flex-direction: row;
   align-items: center;
-  justify-content: center;
-  gap: 2px;
+  justify-content: space-between;
+  gap: 10px;
   height: auto;
-  text-align: center;
+  flex: 1;
+  min-width: 0;
 `;
 
 const KPIValue = styled.div`
-  font-size: 44px;
+  font-size: 42px;
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: 1.2;
+  line-height: 1.1;
   height: auto;
-  text-align: center;
+  text-align: right;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const KPILabel = styled.div`
-  font-size: 23px;
-  font-weight: 800;
+  font-size: 16px;
+  font-weight: 600;
   color: var(--color-text-muted);
-  letter-spacing: 0.5px;
+  letter-spacing: 0.3px;
   height: auto;
-  text-align: center;
+  text-align: left;
+  text-transform: uppercase;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const ContentArea = styled.div`
@@ -247,6 +331,12 @@ const SectionHeader = styled.div`
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
   height: auto;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #0a0a0a;
+    border-bottom-color: #1f3744;
+  }
 `;
 
 
@@ -308,6 +398,11 @@ const TableHead = styled.thead`
   z-index: 10;
   background: var(--color-bg-card);
   height: auto;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #0a0a0a;
+  }
 `;
 
 const TableHeader = styled.th<{ colIndex?: number }>`
@@ -323,6 +418,13 @@ const TableHeader = styled.th<{ colIndex?: number }>`
   height: auto;
   width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
   box-sizing: border-box;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+    border-bottom-color: #1f3744;
+    background: #0a0a0a;
+  }
 `;
 
 const TableBody = styled.tbody`
@@ -377,6 +479,11 @@ const LocationCell = styled.div`
   gap: 8px;
   font-size: 22px;
   font-weight: 600;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const LocationDot = styled.span<{ color?: string }>`
@@ -399,6 +506,11 @@ const BarContainer = styled.div`
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
   overflow: hidden;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #1f3744;
+  }
 `;
 
 const BarFill = styled.div<{ width: number; color?: string }>`
@@ -574,31 +686,31 @@ export default function TableChart({
       <KPIBanner>
         <KPITile bgColor="rgba(13, 148, 136, 0.05)">
           <KPIIcon color="#0d9488">
-            <Hash size={20} />
+            <FluentPeopleCommunity20Filled style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPIValue>{kpiValues.total.toLocaleString()}</KPIValue>
             <KPILabel>{capitalizeLabel('Total Patients')}</KPILabel>
+            <KPIValue>{kpiValues.total.toLocaleString()}</KPIValue>
           </KPIContent>
         </KPITile>
         
         <KPITile bgColor="rgba(6, 182, 212, 0.05)">
           <KPIIcon color="#06b6d4">
-            <Database size={20} />
+            <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPIValue>{kpiValues.count}</KPIValue>
             <KPILabel>{capitalizeLabel('location(s)')}</KPILabel>
+            <KPIValue>{kpiValues.count}</KPIValue>
           </KPIContent>
         </KPITile>
                 
         <KPITile bgColor="rgba(16, 185, 129, 0.05)">
           <KPIIcon color="#10b981">
-            <Trophy size={20} />
+            <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPIValue style={{ fontSize: 25 }}>{kpiValues.topItem}</KPIValue>
             <KPILabel>{capitalizeLabel('Top Location')}</KPILabel>
+            <KPIValue style={{ fontSize: 25 }}>{kpiValues.topItem}</KPIValue>
           </KPIContent>
         </KPITile>
       </KPIBanner>
