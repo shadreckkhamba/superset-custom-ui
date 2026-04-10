@@ -63,40 +63,6 @@ const PieTemplate = styled.div`
   }
 `;
 
-const TotalCounter = styled.div`
-  position: absolute;
-  top: 50%;
-  left: 50%;
-  transform: translate(-50%, -50%);
-  z-index: 2;
-  min-height: 78px;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  pointer-events: none;
-`;
-
-const TotalLabel = styled.div`
-  font-size: 25px;
-  text-transform: uppercase;
-  letter-spacing: 0.08em;
-  color: var(--pie-muted) !important;
-  font-weight: 950;
-  margin-bottom: ${({ theme }) => theme.gridUnit / 2}px;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #8fd8f2;
-  }
-`;
-
-const TotalValue = styled.div`
-  font-size: 64px;
-  line-height: 1;
-  font-weight: 900;
-  color: var(--pie-foreground) !important;
-`;
-
 const PieChartWrap = styled.div`
   flex: 0 0 55%;
   min-height: 200px;
@@ -176,6 +142,10 @@ const CardLabel = styled.span`
   text-overflow: clip;
   word-break: normal;
   text-align: center;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const CardValue = styled.div`
@@ -185,6 +155,10 @@ const CardValue = styled.div`
   color: var(--pie-foreground);
   margin-top: ${({ theme }) => theme.gridUnit * 0.5}px;
   text-align: center;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const CardPercentage = styled.div`
@@ -194,6 +168,10 @@ const CardPercentage = styled.div`
   font-weight: 700;
   margin-top: ${({ theme }) => theme.gridUnit * 0.4}px;
   text-align: center;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const PieLegendRow = styled.div`
@@ -247,6 +225,10 @@ const PieLegendLabel = styled.span`
   line-height: 1.25;
   word-break: normal;
   text-align: left;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const PieLegendValueStack = styled.div`
@@ -269,6 +251,10 @@ const PieLegendValue = styled.span`
   color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
   font-weight: 800;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const PieLegendPercent = styled.span`
@@ -280,6 +266,10 @@ const PieLegendPercent = styled.span`
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   opacity: 0.9;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const DonutTemplate = styled.div`
@@ -387,7 +377,7 @@ const Dot = styled.span<{ $color: string }>`
 
 
 const DonutLegendLabel = styled.span`
-  font-size: 24px;
+  font-size: 32px;
   color: var(--pie-foreground);
   font-weight: 700;
   white-space: nowrap;
@@ -396,6 +386,10 @@ const DonutLegendLabel = styled.span`
   line-height: 1.25;
   word-break: normal;
   text-align: left;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const DonutLegendValue = styled.span`
@@ -406,6 +400,10 @@ const DonutLegendValue = styled.span`
   color: var(--pie-muted);
   font-variant-numeric: tabular-nums;
   font-weight: 800;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const DonutLegendPercent = styled.span`
@@ -417,6 +415,10 @@ const DonutLegendPercent = styled.span`
   font-variant-numeric: tabular-nums;
   font-weight: 700;
   opacity: 0.9;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const DonutLegendValueStack = styled.div`
@@ -432,31 +434,92 @@ const DonutLegendValueStack = styled.div`
 `;
 
 const CenterLabel = styled.div`
-  font-size: 16px;
+  font-size: 32px;
   text-transform: uppercase;
-  letter-spacing: 0.08em;
+  letter-spacing: 0.1em;
   color: var(--pie-muted);
-  font-weight: 700;
+  font-weight: 900;
   line-height: 1.05;
-  margin-bottom: 4px;
+  margin-bottom: 6px;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #8fd8f2;
+  }
 `;
 
+
 const CenterValue = styled.div`
-  font-size: 52px;
-  line-height: 1.05;
+  font-size: 56px;
+  line-height: 1;
   font-weight: 900;
   color: var(--pie-foreground);
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
+`;
+
+const BottomTotalSection = styled.div`
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 20px 24px;
+  background: linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.08) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    var(--pie-row-bg-strong);
+  border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
+  border: 1px solid var(--pie-row-border);
+  margin-top: auto;
+  min-height: 110px;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: linear-gradient(
+      180deg,
+      rgba(0, 0, 0, 0.25) 0%,
+      rgba(0, 0, 0, 0.15) 100%
+    );
+    border: 1px solid rgba(255, 255, 255, 0.15);
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+  }
+`;
+
+const BottomTotalLabel = styled.div`
+  font-size: 40px;
+  text-transform: uppercase;
+  letter-spacing: 0.12em;
+  color: var(--pie-muted);
+  font-weight: 900;
+  margin-bottom: 6px;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #8fd8f2;
+  }
+`;
+
+const BottomTotalValue = styled.div`
+  font-size: 48px;
+  line-height: 1;
+  font-weight: 900;
+  color: var(--pie-foreground);
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const CHART_COLORS = [
-  '#48ff00',
-  '#f8cf04',
-  '#3effeff3',
-  '#00C853',
-  '#FF4081',
-  '#00E5FF',
-  '#FF8A00',
-  '#7C4DFF',
+  '#1565C0',   // calm blue
+  '#00897B',   // teal / clinical
+  '#43A047',   // soft green
+  '#F9A825',   // amber (not neon)
+  '#EF6C00',   // orange
+  '#5E35B1',   // violet (professional)
+  '#EC407A',   // soft pink (for e.g. alerts)
+  '#546E7A',
  
 ];
 
@@ -508,15 +571,11 @@ export default function EchartsPie(props: PieChartTransformedProps) {
 
   const shouldShowCards = chartData.length > 0 && chartData.length <= 2;
 
-  return (
+return (
     <Container style={{ width, height }}>
       {!isDonut ? (
         <PieTemplate>
           <PieChartWrap>
-            <TotalCounter>
-              <TotalLabel>Total</TotalLabel>
-              <TotalValue>{total.toLocaleString()}</TotalValue>
-            </TotalCounter>
             <ResponsiveContainer width="100%" height="100%">
               <PieChart>
                 <Pie
@@ -553,38 +612,32 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     color: string;
                     percentage: string;
                   },
-                ) => {
-                  return (
-                    <DetailCard
-                      key={item.name}
-                      className={`pie-mini-row ${
-                        isPriorityGroupName(item.name) ? 'priority-mini-row' : ''
-                      }`}
-                    >
-                      <DetailTop>
-                        <LegendLabelWrap>
-                          <Dot
-                            $color={item.color}
-                            className="pie-color-dot"
-                            style={
-                              {
-                                ['--dot-color' as string]: item.color,
-                              } as CSSProperties
-                            }
-                          />
-                          <CardLabel>{item.name}</CardLabel>
-                        </LegendLabelWrap>
-                      </DetailTop>
-                      <CardValue>{item.value.toLocaleString()}</CardValue>
-                      <CardPercentage>{item.percentage}%</CardPercentage>
-                    </DetailCard>
-                  );
-                },
+                  index: number,
+                ) => (
+                  <DetailCard
+                    key={`card-${item.name}`}
+                    className={`pie-mini-row ${
+                      isPriorityGroupName(item.name) ? 'priority-mini-row' : ''
+                    }`}
+                  >
+                    <DetailTop>
+                      {React.createElement(getIconForCategory(item.name), {
+                        size: 32,
+                        color: item.color,
+                      })}
+                    </DetailTop>
+                    <CardLabel>{item.name}</CardLabel>
+                    <CardValue>{item.value.toLocaleString()}</CardValue>
+                    <CardPercentage>{item.percentage}%</CardPercentage>
+                  </DetailCard>
+                ),
               )}
-            </DetailCardsGrid>
-          )}
-
-          {!shouldShowCards && chartData.length > 0 && (
+              </DetailCardsGrid>
+            )}
+            <BottomTotalSection>
+              <BottomTotalLabel>Total</BottomTotalLabel>
+              <BottomTotalValue>{total.toLocaleString()}</BottomTotalValue>
+            </BottomTotalSection>
             <PieLegend>
               {chartData.map(
                 (item: {
@@ -621,9 +674,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                 ),
               )}
             </PieLegend>
-          )}
-        </RightPanel>
-      </PieTemplate>
+          </RightPanel>
+        </PieTemplate>
       ) : (
         <DonutTemplate>
           <DonutChartWrap>
