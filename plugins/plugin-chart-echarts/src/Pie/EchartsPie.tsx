@@ -530,13 +530,13 @@ const BottomTotalValue = styled.div`
 `;
 
 const CHART_COLORS = [
-  '#1565C0',   // calm blue
-  '#00897B',   // teal / clinical
-  '#43A047',   // soft green
-  '#F9A825',   // amber (not neon)
-  '#EF6C00',   // orange
-  '#5E35B1',   // violet (professional)
-  '#EC407A',   // soft pink (for e.g. alerts)
+  '#1565C0',   
+  '#e03b09',  
+  '#F9A825', 
+  '#43A047',      
+  '#EF6C00',   
+  '#5E35B1',   
+  '#EC407A',   
   '#546E7A',
  
 ];
