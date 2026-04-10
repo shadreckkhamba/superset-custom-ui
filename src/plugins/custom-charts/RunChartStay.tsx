@@ -1221,6 +1221,12 @@ useEffect(() => {
   }
 
   const openInfoModal = () => {
+    if (
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('slideshow') === '1'
+    ) {
+      return;
+    }
     if (infoCloseTimeoutRef.current) {
       clearTimeout(infoCloseTimeoutRef.current);
       infoCloseTimeoutRef.current = null;
@@ -1235,6 +1241,10 @@ useEffect(() => {
       infoCloseTimeoutRef.current = null;
     }, 360);
   };
+
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
 
   return (
     <div
@@ -1476,6 +1486,7 @@ useEffect(() => {
           transition: "background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
+        {!isSlideshowMode && (
         <button
           type="button"
           aria-label="What am I seeing?"
@@ -1508,6 +1519,7 @@ useEffect(() => {
         >
           <Info size={infoIconSize} strokeWidth={2.2} />
         </button>
+        )}
         <style>{`
           .run-stay-chart-container {
             overflow: hidden !important;
@@ -1599,7 +1611,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {showInfoModal && (
+      {showInfoModal && !isSlideshowMode && (
         <div
           role="presentation"
           onClick={closeInfoModal}

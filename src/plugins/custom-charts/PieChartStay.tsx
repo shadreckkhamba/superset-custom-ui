@@ -621,6 +621,12 @@ useEffect(() => {
   };
 
   const openInfoModal = () => {
+    if (
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('slideshow') === '1'
+    ) {
+      return;
+    }
     if (infoCloseTimeoutRef.current) {
       clearTimeout(infoCloseTimeoutRef.current);
       infoCloseTimeoutRef.current = null;
@@ -635,6 +641,10 @@ useEffect(() => {
       infoCloseTimeoutRef.current = null;
     }, 360);
   };
+
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
 
   const expandedContentMinHeight = 'clamp(200px, 26vh, 300px)';
   const wrapperPadding = isExpanded ? '8px 10px' : '40px 35px';
@@ -708,6 +718,7 @@ useEffect(() => {
         transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
       }}
     >
+      {!isSlideshowMode && (
       <button
         className="pie-stay-info-button"
         type="button"
@@ -738,9 +749,10 @@ useEffect(() => {
           e.currentTarget.style.transform = 'scale(1)';
           e.currentTarget.style.color = isDarkMode ? '#d9d9d9' : '#595959';
         }}
-      >
-        <Info size={20} strokeWidth={2.2} />
-      </button>
+        >
+          <Info size={20} strokeWidth={2.2} />
+        </button>
+      )}
 
       <style>{`
         @keyframes pie-stay-legend-slide-down {
@@ -925,21 +937,56 @@ useEffect(() => {
               </div>
             </div>
 
-            {/* Filter Icon Button */}
+            {/* Filter Selector */}
             <div
               className="filter-menu-container"
-              style={{ position: "absolute", right: 0, top: 0, display: "flex", alignItems: "center", gap: isExpanded ? "8px" : "12px" }}
+              style={{
+                position: "absolute",
+                right: 0,
+                top: 0,
+                display: "flex",
+                flexDirection: "column",
+                alignItems: "flex-end",
+                gap: isExpanded ? "8px" : "10px",
+              }}
             >
-              <span
+              <button
+                type="button"
+                onClick={() => setShowFilterMenu(!showFilterMenu)}
                 style={{
+                  display: "inline-flex",
+                  alignItems: "center",
+                  gap: isExpanded ? "8px" : "10px",
+                  padding: isExpanded ? "7px 10px" : "10px 14px",
+                  borderRadius: "999px",
+                  border: isDarkMode
+                    ? "1px solid rgba(120, 144, 171, 0.42)"
+                    : "1px solid rgba(24, 144, 255, 0.26)",
+                  background: isDarkMode
+                    ? "linear-gradient(135deg, rgba(23, 34, 46, 0.95) 0%, rgba(18, 24, 33, 0.95) 100%)"
+                    : "linear-gradient(135deg, #f7fbff 0%, #eef6ff 100%)",
+                  boxShadow: isDarkMode
+                    ? "0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)"
+                    : "0 6px 14px rgba(24, 144, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9)",
+                  cursor: "pointer",
+                  color: isDarkMode ? "#d7e6f6" : "#2e5f89",
                   fontSize: filterLabelFontSize,
                   fontWeight: 700,
                   letterSpacing: "0.01em",
-                  color: isDarkMode ? "#c6d6ea" : "#4f6b88",
                   lineHeight: 1,
-                  display: "inline-flex",
-                  alignItems: "center",
-                  gap: "10px",
+                  transition: "transform 0.2s ease, box-shadow 0.25s ease, border-color 0.25s ease",
+                }}
+                onMouseEnter={(e) => {
+                  e.currentTarget.style.transform = "translateY(-1px)";
+                  e.currentTarget.style.boxShadow = isDarkMode
+                    ? "0 8px 18px rgba(0, 0, 0, 0.42), inset 0 1px 0 rgba(255, 255, 255, 0.08)"
+                    : "0 8px 18px rgba(24, 144, 255, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.92)";
+                }}
+                onMouseLeave={(e) => {
+                  e.currentTarget.style.transform = "translateY(0)";
+                  e.currentTarget.style.boxShadow = isDarkMode
+                    ? "0 6px 16px rgba(0, 0, 0, 0.35), inset 0 1px 0 rgba(255, 255, 255, 0.06)"
+                    : "0 6px 14px rgba(24, 144, 255, 0.14), inset 0 1px 0 rgba(255, 255, 255, 0.9)";
                 }}
               >
                 <span
@@ -948,55 +995,67 @@ useEffect(() => {
                     height: filterDotSize,
                     borderRadius: "50%",
                     background: "#1890ff",
-                    opacity: 0.92,
+                    boxShadow: "0 0 0 3px rgba(24, 144, 255, 0.16)",
+                    opacity: 0.95,
                   }}
                 />
-                {selectedPeriod}
-              </span>
-              <div
-                onClick={() => setShowFilterMenu(!showFilterMenu)}
-                style={{
-                  fontSize: filterIconFontSize,
-                  cursor: "pointer",
-                  display: "inline-flex",
-                  alignItems: "center",
-                  justifyContent: "center",
-                  transition: "all 0.3s ease",
-                  color: "#1890ff",
-                }}
-                onMouseEnter={(e) => {
-                  e.currentTarget.style.transform = "scale(1.15)";
-                  e.currentTarget.style.color = "#40a9ff";
-                }}
-                onMouseLeave={(e) => {
-                  e.currentTarget.style.transform = "scale(1)";
-                  e.currentTarget.style.color = "#1890ff";
-                }}
-              >
-                <FilterOutlined />
-              </div>
+                <span>{selectedPeriod}</span>
+                <span
+                  style={{
+                    width: isExpanded ? "20px" : "24px",
+                    height: isExpanded ? "20px" : "24px",
+                    borderRadius: "50%",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    background: isDarkMode ? "rgba(24, 144, 255, 0.22)" : "rgba(24, 144, 255, 0.12)",
+                    color: "#1890ff",
+                    fontSize: filterIconFontSize,
+                  }}
+                >
+                  <FilterOutlined />
+                </span>
+              </button>
 
             {/* Custom Filter Menu */}
-            {showFilterMenu && (
               <div
                 style={{
                   position: "absolute",
                   right: 0,
-                  top: isExpanded ? "38px" : "45px",
-                  background: isDarkMode ? "rgba(26, 26, 26, 0.65)" : "white",
-                  borderRadius: isExpanded ? "12px" : "16px",
-                  boxShadow: isDarkMode 
-                    ? "0 8px 32px rgba(0, 0, 0, 0.6)" 
-                    : "0 8px 32px rgba(0, 0, 0, 0.15)",
-                  overflow: "hidden",
+                  top: isExpanded ? "44px" : "52px",
+                  background: isDarkMode
+                    ? "linear-gradient(160deg, rgba(20, 28, 38, 0.76) 0%, rgba(14, 20, 30, 0.62) 100%)"
+                    : "linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(241, 248, 255, 0.64) 100%)",
+                  borderRadius: isExpanded ? "14px" : "18px",
+                  boxShadow: isDarkMode
+                    ? "0 18px 42px rgba(0, 0, 0, 0.5), inset 0 1px 0 rgba(255, 255, 255, 0.18), inset 0 -1px 0 rgba(255, 255, 255, 0.04)"
+                    : "0 16px 38px rgba(44, 88, 148, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.94), inset 0 -1px 0 rgba(255, 255, 255, 0.42)",
                   zIndex: 1000,
-                  minWidth: isExpanded ? "170px" : "200px",
-                  border: isDarkMode ? "1px solid rgba(64, 64, 64, 0.4)" : "1px solid #e8e8e8",
-                  backdropFilter: isDarkMode ? "blur(12px)" : "none",
+                  minWidth: isExpanded ? "184px" : "218px",
+                  border: isDarkMode
+                    ? "1px solid rgba(255, 255, 255, 0.16)"
+                    : "1px solid rgba(255, 255, 255, 0.72)",
+                  backdropFilter: "blur(22px) saturate(180%)",
+                  WebkitBackdropFilter: "blur(22px) saturate(180%)",
+                  padding: isExpanded ? "8px" : "10px",
+                  display: "grid",
+                  gap: isExpanded ? "6px" : "8px",
+                  transformOrigin: "top right",
+                  opacity: showFilterMenu ? 1 : 0,
+                  transform: showFilterMenu
+                    ? "translateY(0) scale(1)"
+                    : "translateY(-8px) scale(0.97)",
+                  pointerEvents: showFilterMenu ? "auto" : "none",
+                  visibility: showFilterMenu ? "visible" : "hidden",
+                  transition: showFilterMenu
+                    ? "opacity 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 0s"
+                    : "opacity 220ms ease, transform 260ms cubic-bezier(0.22, 1, 0.36, 1), visibility 0s linear 220ms",
+                  willChange: "opacity, transform",
                 }}
               >
-                {['Daily', 'Weekly', 'Monthly'].map((period, idx) => (
-                  <div
+                {['Daily', 'Weekly', 'Monthly'].map(period => (
+                  <button
+                    type="button"
                     key={period}
                     onClick={() => {
                       setSelectedSliceIndexes([]);
@@ -1004,40 +1063,72 @@ useEffect(() => {
                       setShowFilterMenu(false);
                     }}
                     style={{
-                      padding: isExpanded ? "12px 16px" : "16px 24px",
+                      width: "100%",
+                      padding: isExpanded ? "9px 12px" : "12px 16px",
                       fontSize: filterMenuOptionFontSize,
-                      fontWeight: 600,
-                      color: selectedPeriod === period ? "#1890ff" : (isDarkMode ? "#e0e0e0" : "#333"),
-                      background: isDarkMode ? "rgba(26, 26, 26, 0.65)" : "white",
+                      fontWeight: selectedPeriod === period ? 700 : 600,
+                      color:
+                        selectedPeriod === period
+                          ? isDarkMode
+                            ? "#8fc5ff"
+                            : "#1668dc"
+                          : isDarkMode
+                            ? "#d7dfe8"
+                            : "#3a4d63",
+                      background:
+                        selectedPeriod === period
+                          ? isDarkMode
+                            ? "linear-gradient(135deg, rgba(24, 144, 255, 0.24) 0%, rgba(24, 144, 255, 0.12) 100%)"
+                            : "linear-gradient(135deg, rgba(24, 144, 255, 0.16) 0%, rgba(24, 144, 255, 0.08) 100%)"
+                          : "transparent",
+                      border:
+                        selectedPeriod === period
+                          ? isDarkMode
+                            ? "1px solid rgba(110, 180, 255, 0.45)"
+                            : "1px solid rgba(24, 144, 255, 0.28)"
+                          : "1px solid transparent",
+                      borderRadius: isExpanded ? "10px" : "12px",
                       cursor: "pointer",
                       transition: "all 0.2s ease",
-                      borderBottom: idx < 2 ? (isDarkMode ? "1px solid #404040" : "1px solid #f0f0f0") : "none",
-                      borderTop: selectedPeriod === period ? "3px solid #1890ff" : "3px solid transparent",
                       display: "flex",
                       alignItems: "center",
                       justifyContent: "space-between",
                     }}
                     onMouseEnter={(e) => {
                       if (selectedPeriod !== period) {
-                        e.currentTarget.style.background = isDarkMode ? "#2d2d2d" : "#f5f5f5";
-                        e.currentTarget.style.paddingLeft = isExpanded ? "20px" : "28px";
+                        e.currentTarget.style.background = isDarkMode
+                          ? "rgba(255, 255, 255, 0.06)"
+                          : "rgba(24, 144, 255, 0.06)";
                       }
                     }}
                     onMouseLeave={(e) => {
                       if (selectedPeriod !== period) {
-                        e.currentTarget.style.background = isDarkMode ? "rgba(26, 26, 26, 0.65)" : "white";
-                        e.currentTarget.style.paddingLeft = isExpanded ? "16px" : "24px";
+                        e.currentTarget.style.background = "transparent";
                       }
                     }}
                   >
                     <span>{period}</span>
                     {selectedPeriod === period && (
-                      <span style={{ fontSize: isExpanded ? "15px" : "18px", color: "#1890ff" }}>✓</span>
+                      <span
+                        style={{
+                          width: isExpanded ? "18px" : "20px",
+                          height: isExpanded ? "18px" : "20px",
+                          borderRadius: "50%",
+                          display: "inline-flex",
+                          alignItems: "center",
+                          justifyContent: "center",
+                          fontSize: isExpanded ? "12px" : "13px",
+                          color: "#ffffff",
+                          background: "#1890ff",
+                          boxShadow: "0 4px 10px rgba(24, 144, 255, 0.35)",
+                        }}
+                      >
+                        ✓
+                      </span>
                     )}
-                  </div>
+                  </button>
                 ))}
               </div>
-            )}
             </div>
           </div>
 
@@ -1403,7 +1494,7 @@ useEffect(() => {
         </div>
       )}
 
-      {showInfoModal && (
+      {showInfoModal && !isSlideshowMode && (
         <div
           role="presentation"
           onClick={closeInfoModal}

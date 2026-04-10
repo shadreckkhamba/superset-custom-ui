@@ -526,8 +526,12 @@ useEffect(() => {
     await loadData(true); // reset to today on reload
     // Loading state is handled inside loadData
   };
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
 
   const openInfoModal = () => {
+    if (isSlideshowMode) return;
     if (infoCloseTimeoutRef.current) {
       clearTimeout(infoCloseTimeoutRef.current);
       infoCloseTimeoutRef.current = null;
@@ -586,6 +590,7 @@ useEffect(() => {
         transition: 'background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
       }}
     >
+    {!isSlideshowMode && (
     <button
       type="button"
       aria-label="What am I seeing?"
@@ -618,6 +623,7 @@ useEffect(() => {
     >
       <Info size={20} strokeWidth={2.2} />
     </button>
+    )}
     <>
       <div
         className="big-number-stay-content"
@@ -1341,7 +1347,7 @@ useEffect(() => {
         </div>
       )}
 
-      {showInfoModal && (
+      {showInfoModal && !isSlideshowMode && (
         <div
           role="presentation"
           onClick={closeInfoModal}
