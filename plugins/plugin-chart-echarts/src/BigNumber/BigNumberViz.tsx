@@ -609,12 +609,13 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           </div>
           <div
             style={{
-              fontSize: `clamp(14px, ${labelFontSize}px, 28px)`,
-              fontWeight: 700,
-              color: '#5b7d85',
+              fontSize: `clamp(18px, ${labelFontSize}px, 56px)`,
+              fontWeight: 900,
+              color: '#1565C0',
               textTransform: 'uppercase',
-              letterSpacing: '0.1em',
+              letterSpacing: '0.12em',
             }}
+            className="total-label"
           >
             {footerLabel}
           </div>
@@ -892,6 +893,13 @@ export default styled(BigNumberVis)`
     body.dark-theme &.no-trendline .kpi-footer-value,
     [data-theme='dark'] &.no-trendline .kpi-footer-value {
       color: #51f0dc;
+    }
+
+    body.dark-theme &.no-trendline .total-label,
+    [data-theme='dark'] &.no-trendline .total-label {
+      color: #ffffff;
+      font-size: 56px;
+      font-weight: 900;
     }
 
     body.dark-theme & .metric-name,
