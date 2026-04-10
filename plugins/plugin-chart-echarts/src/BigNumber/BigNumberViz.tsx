@@ -541,7 +541,6 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const metricLabelText = metricName ? String(metricName) : '';
     const subtitleText = subtitle ? String(subtitle).trim() : '';
     
-    const footerLabel = 'TOTAL';
     const fallbackFromBigNumber =
       typeof this.props.bigNumber === 'number' &&
       Number.isFinite(this.props.bigNumber)
@@ -552,10 +551,6 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const fontSize = Math.max(
       Math.min(safeWidth * 0.35, height * 0.6, 220),
       96,
-    );
-    const labelFontSize = Math.max(
-      Math.min(safeWidth * 0.08, height * 0.1, 28),
-      14,
     );
     const noTrendlineStyle: CSSProperties = {
       height,
@@ -606,18 +601,6 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
             }}
           >
             {fallbackFromBigNumber}
-          </div>
-          <div
-            style={{
-              fontSize: `clamp(18px, ${labelFontSize}px, 56px)`,
-              fontWeight: 900,
-              color: '#1565C0',
-              textTransform: 'uppercase',
-              letterSpacing: '0.12em',
-            }}
-            className="total-label"
-          >
-            {footerLabel}
           </div>
         </div>
       </div>
@@ -841,15 +824,10 @@ export default styled(BigNumberVis)`
 
     body.dark-theme &.no-trendline,
     [data-theme='dark'] &.no-trendline {
-      background: radial-gradient(
-          130% 120% at 0% 0%,
-          rgba(0, 195, 255, 0.09) 0%,
-          rgba(0, 195, 255, 0) 46%
-        ),
-        linear-gradient(180deg, #0b1820 0%, #0a141b 100%);
+      background: #0a0a0a;
       border: 1px solid #1f3744;
-      box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.22),
-        0 10px 24px rgba(0, 0, 0, 0.32);
+      box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.15),
+        0 4px 12px rgba(0, 0, 0, 0.3);
     }
 
     body.dark-theme &.no-trendline .kpi-circle,
@@ -870,7 +848,7 @@ export default styled(BigNumberVis)`
 
     body.dark-theme &.no-trendline .header-line,
     [data-theme='dark'] &.no-trendline .header-line {
-      color: #eef8fa;
+      color: #ffffff;
     }
 
     body.dark-theme &.no-trendline .kpi-footer,
@@ -893,13 +871,6 @@ export default styled(BigNumberVis)`
     body.dark-theme &.no-trendline .kpi-footer-value,
     [data-theme='dark'] &.no-trendline .kpi-footer-value {
       color: #51f0dc;
-    }
-
-    body.dark-theme &.no-trendline .total-label,
-    [data-theme='dark'] &.no-trendline .total-label {
-      color: #ffffff;
-      font-size: 56px;
-      font-weight: 900;
     }
 
     body.dark-theme & .metric-name,
