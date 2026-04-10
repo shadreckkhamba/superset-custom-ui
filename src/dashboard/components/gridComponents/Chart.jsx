@@ -537,6 +537,12 @@ const Chart = props => {
     return fallbackRange;
   }, [dateRanges, slice.slice_name]);
 
+  const isDarkTheme =
+    typeof document !== 'undefined' &&
+    (document.body?.classList.contains('dark-theme') ||
+      document.body?.getAttribute('data-theme') === 'dark' ||
+      document.documentElement?.getAttribute('data-theme') === 'dark');
+
   return (
     <SliceContainer
       className="chart-slice"
@@ -589,7 +595,7 @@ const Chart = props => {
           data-chart-id={props.id}
           style={{
             position: 'absolute',
-            top: '8px',
+            top: isDarkTheme ? '14px' : '8px',
             right: '8px',
             background: '#f2f2f2',
             color: '#7f7f7f',

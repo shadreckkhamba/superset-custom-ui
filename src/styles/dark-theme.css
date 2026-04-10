@@ -123,31 +123,37 @@ body {
   border: none !important;
 }
 
-/* Date range label */
-.dark-theme .date-range-badge {
+/* Date range label - keep pill geometry in dark mode */
+.dark-theme .date-range-badge,
+[data-theme='dark'] .date-range-badge {
   position: absolute !important;
-  top: 0px !important;
-  right: 0px !important;
-  transform: translate(10px, -12px) !important;
-  background: rgb(30, 31, 31) !important;
-  color: #b2b2b9 !important;
-  font-size: 24px !important;
+  top: 14px !important;
+  right: 8px !important;
+  transform: none !important;
+  background: rgba(44, 46, 51, 0.92) !important;
+  color: #d6d8dc !important;
+  font-size: 16px !important;
   font-weight: 500 !important;
-  padding: 8px 12px 6px 14px !important;
-  border-radius: 8px !important;
-  box-shadow: 0 2px 8px rgba(105, 105, 105, 0.15) !important;
-  z-index: 999 !important;
-  max-width: none !important;
+  padding: 10px 22px !important;
+  border-radius: 999px !important;
+  border: 1px solid rgba(255, 255, 255, 0.16) !important;
+  box-shadow:
+    inset 0 1px 0 rgba(255, 255, 255, 0.06),
+    0 1px 2px rgba(0, 0, 0, 0.28) !important;
+  z-index: 50 !important;
+  min-width: 220px !important;
+  max-width: calc(100% - 16px) !important;
   white-space: nowrap !important;
   overflow: hidden !important;
   text-overflow: ellipsis !important;
   pointer-events: none !important;
-  display: flex !important;
+  display: inline-flex !important;
   align-items: center !important;
-  gap: 6px !important;
-  justify-content: space-between !important;
-  line-height: 1.2 !important;
-  min-height: 32px !important;
+  justify-content: flex-start !important;
+  line-height: 1.25 !important;
+  min-height: 42px !important;
+  letter-spacing: 0.01em !important;
+  gap: 0 !important;
 }
 
 /* Make pie chart label text white */
