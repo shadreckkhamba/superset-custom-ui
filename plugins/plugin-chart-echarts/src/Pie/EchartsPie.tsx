@@ -48,6 +48,22 @@ const Container = styled.div`
   border: 1px solid var(--pie-border);
   box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35);
   box-sizing: border-box;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    --pie-bg: #0a0a0a;
+    --pie-border: #1f3744;
+    --pie-muted: #77cbe5;
+    --pie-foreground: #eef8fa;
+    --pie-row-bg: rgba(255, 255, 255, 0.04);
+    --pie-row-bg-strong: rgba(255, 255, 255, 0.06);
+    --pie-donut-row-bg: rgba(255, 255, 255, 0.03);
+    --pie-row-border: rgba(255, 255, 255, 0.1);
+    --pie-row-shadow: 0 1px 2px rgba(0, 0, 0, 0.3);
+    background: #0a0a0a;
+    border: 1px solid #1f3744;
+    box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.15);
+  }
 `;
 
 const PieTemplate = styled.div`
@@ -479,11 +495,13 @@ const BottomTotalSection = styled.div`
   [data-theme='dark'] & {
     background: linear-gradient(
       180deg,
-      rgba(0, 0, 0, 0.25) 0%,
-      rgba(0, 0, 0, 0.15) 100%
-    );
-    border: 1px solid rgba(255, 255, 255, 0.15);
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.08);
+      rgba(255, 255, 255, 0.06) 0%,
+      rgba(255, 255, 255, 0.02) 100%
+    ),
+    #0a0a0a;
+    border: 1px solid rgba(255, 255, 255, 0.12);
+    border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
   }
 `;
 
