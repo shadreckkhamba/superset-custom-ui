@@ -260,6 +260,14 @@ const KPIIcon = styled.div<{ color?: string }>`
   flex-shrink: 0;
   min-width: 56px;
   min-height: 56px;
+  
+  @media (max-width: 768px) {
+    width: 40px;
+    height: 40px;
+    min-width: 40px;
+    min-height: 40px;
+    font-size: 20px;
+  }
 `;
 
 const KPIContent = styled.div`
@@ -271,6 +279,12 @@ const KPIContent = styled.div`
   height: auto;
   flex: 1;
   min-width: 0;
+  flex-wrap: wrap;
+  
+  @media (max-width: 768px) {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
 `;
 
 const KPIValue = styled.div`
@@ -283,10 +297,18 @@ const KPIValue = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 0;
+  max-width: 100%;
 
   body.dark-theme &,
   [data-theme='dark'] & {
     color: #ffffff;
+  }
+  
+  @media (max-width: 768px) {
+    font-size: 32px;
+    white-space: normal;
+    word-break: break-word;
   }
 `;
 
@@ -301,10 +323,17 @@ const KPILabel = styled.div`
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  flex-shrink: 1;
+  min-width: 0;
 
   body.dark-theme &,
-  [data-theme='dark'] & {
+[data-theme='dark'] & {
     color: #ffffff;
+  }
+  
+  @media (max-width: 768px) {
+    white-space: normal;
+    word-break: break-word;
   }
 `;
 
