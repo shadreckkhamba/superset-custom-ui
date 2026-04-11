@@ -122,13 +122,43 @@ export default function StayTimePie({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const [legendRevealVersion, setLegendRevealVersion] = useState(0);
+  const [componentWidth, setComponentWidth] = useState(0);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const chartRef = useRef<ChartJS<'doughnut'> | null>(null);
   const selectedSliceIndexesRef = useRef<number[]>([]);
+  const wrapperRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
     selectedSliceIndexesRef.current = selectedSliceIndexes;
   }, [selectedSliceIndexes]);
+
+  useEffect(() => {
+    const currentWrapper = wrapperRef.current;
+    if (typeof window === 'undefined' || !currentWrapper) {
+      return undefined;
+    }
+
+    const updateComponentWidth = () => {
+      setComponentWidth(currentWrapper.getBoundingClientRect().width);
+    };
+
+    updateComponentWidth();
+
+    if (typeof ResizeObserver === 'undefined') {
+      window.addEventListener('resize', updateComponentWidth);
+      return () => window.removeEventListener('resize', updateComponentWidth);
+    }
+
+    const resizeObserver = new ResizeObserver(entries => {
+      const nextWidth = entries[0]?.contentRect.width;
+      if (typeof nextWidth === 'number') {
+        setComponentWidth(nextWidth);
+      }
+    });
+
+    resizeObserver.observe(currentWrapper);
+    return () => resizeObserver.disconnect();
+  }, []);
 
     // Handle external refresh requests
   useEffect(() => {
@@ -645,6 +675,8 @@ useEffect(() => {
   const isSlideshowMode =
     typeof window !== 'undefined' &&
     new URLSearchParams(window.location.search).get('slideshow') === '1';
+  const isNarrowCardLayout = !isExpanded && componentWidth > 0 && componentWidth <= 760;
+  const isCompactFilterLayout = !isExpanded && componentWidth > 0 && componentWidth <= 420;
 
   const expandedContentMinHeight = 'clamp(200px, 26vh, 300px)';
   const wrapperPadding = isExpanded ? '8px 10px' : '40px 35px';
@@ -654,13 +686,44 @@ useEffect(() => {
   const topHeaderMarginBottom = isExpanded ? 'clamp(6px, 0.8vh, 10px)' : '20px';
   const headerLabelFontSize = isExpanded ? 'clamp(15px, 1.1vw, 20px)' : '24px';
   const headerTitleFontSize = isExpanded ? 'clamp(20px, 1.5vw, 28px)' : '28px';
-  const totalPatientsMarginTop = isExpanded ? 'clamp(8px, 1.1vh, 16px)' : '30px';
+  const totalPatientsMarginTop = isExpanded
+    ? 'clamp(8px, 1.1vh, 16px)'
+    : isNarrowCardLayout
+      ? '14px'
+      : '30px';
   const totalPatientsFontSize = isExpanded ? 'clamp(14px, 1.02vw, 19px)' : '22px';
   const totalPatientsValueFontSize = isExpanded ? 'clamp(18px, 1.35vw, 24px)' : '26px';
-  const filterLabelFontSize = isExpanded ? 'clamp(11px, 0.8vw, 14px)' : '18px';
-  const filterIconFontSize = isExpanded ? 'clamp(16px, 1vw, 20px)' : '28px';
-  const filterMenuReserveSpace = isExpanded ? 'clamp(90px, 10vw, 150px)' : '140px';
-  const filterDotSize = isExpanded ? '10px' : '12px';
+  const filterLabelFontSize = isExpanded
+    ? 'clamp(11px, 0.8vw, 14px)'
+    : isCompactFilterLayout
+      ? '11px'
+      : '18px';
+  const filterIconFontSize = isExpanded
+    ? 'clamp(16px, 1vw, 20px)'
+    : isCompactFilterLayout
+      ? '15px'
+      : '28px';
+  const filterMenuReserveSpace = isExpanded
+    ? 'clamp(90px, 10vw, 150px)'
+    : isCompactFilterLayout
+      ? '110px'
+      : '140px';
+  const filterDotSize = isExpanded ? '10px' : isCompactFilterLayout
+      ? '6px'
+      : '12px';
+  const filterTriggerGap = isExpanded ? '8px' : isCompactFilterLayout
+      ? '4px'
+      : '10px';
+  const filterTriggerPadding = isExpanded
+    ? '7px 10px'
+    : isCompactFilterLayout
+      ? '6px 8px'
+      : '10px 14px';
+  const filterTriggerIconSize = isExpanded
+    ? '20px'
+    : isCompactFilterLayout
+      ? '16px'
+      : '24px';
   const mostCommonFontSize = isExpanded ? 'clamp(14px, 1vw, 18px)' : '22px';
   const mostCommonPadding = isExpanded ? '5px 8px' : '6px 10px';
   const mostCommonMarginBottom = isExpanded ? 'clamp(6px, 0.9vh, 10px)' : '20px';
@@ -692,9 +755,10 @@ useEffect(() => {
   const infoButtonRight = isExpanded ? '-2px' : '0px';
   
   return (
-    <div
-      className="responsive-chart-wrapper pie-stay-wrapper"
-      style={{
+      <div
+        ref={wrapperRef}
+        className="responsive-chart-wrapper pie-stay-wrapper"
+        style={{
         width: '100%',
         height: isExpanded ? 'auto' : '100%',
         maxHeight: isExpanded ? 'none' : '800px',
@@ -870,17 +934,17 @@ useEffect(() => {
         className="pie-stay-body"
         style={{ 
         display: 'flex', 
-        alignItems: isExpanded ? 'stretch' : 'center', 
-        gap: isExpanded ? '10px' : '20px', 
+        alignItems: isExpanded || isNarrowCardLayout ? 'stretch' : 'center', 
+        gap: isExpanded ? '10px' : isNarrowCardLayout ? '16px' : '20px', 
         width: '100%',
-        height: isExpanded ? 'auto' : '100%',
+        height: isExpanded || isNarrowCardLayout ? 'auto' : '100%',
         flex: isExpanded ? '0 0 auto' : '1 1 0',
-        justifyContent: isExpanded ? 'flex-start' : 'space-between',
-        flexWrap: isExpanded ? 'wrap' : 'nowrap',
-        minHeight: isExpanded ? '0' : '520px',
-        maxHeight: isExpanded ? 'none' : '640px',
+        justifyContent: isExpanded || isNarrowCardLayout ? 'flex-start' : 'space-between',
+        flexWrap: isExpanded || isNarrowCardLayout ? 'wrap' : 'nowrap',
+        minHeight: isExpanded || isNarrowCardLayout ? '0' : '520px',
+        maxHeight: isExpanded || isNarrowCardLayout ? 'none' : '640px',
         position: 'relative',
-        overflow: 'hidden'
+        overflow: isNarrowCardLayout ? 'visible' : 'hidden'
       }}>
         {/* Left - Info Box */}
         <div
@@ -892,13 +956,13 @@ useEffect(() => {
               ? '0 4px 12px rgba(0,0,0,0.4)' 
               : '0 4px 12px rgba(0,0,0,0.12)',
             border: isDarkMode ? '1px solid #404040' : '1px solid #e0e0e0',
-            flex: '1 1 0',
-            minWidth: infoBoxMinWidth,
-            maxWidth: infoBoxMaxWidth,
-            alignSelf: isExpanded ? 'stretch' : 'flex-start',
-            height: isExpanded ? '100%' : '60vh',
+            flex: isNarrowCardLayout ? '1 1 100%' : '1 1 0',
+            minWidth: isNarrowCardLayout ? '100%' : infoBoxMinWidth,
+            maxWidth: isNarrowCardLayout ? '100%' : infoBoxMaxWidth,
+            alignSelf: isExpanded || isNarrowCardLayout ? 'stretch' : 'flex-start',
+            height: isExpanded ? '100%' : isNarrowCardLayout ? 'auto' : '60vh',
             minHeight: isExpanded ? '0' : 'auto',
-            maxHeight: isExpanded ? 'none' : '100%',
+            maxHeight: isExpanded || isNarrowCardLayout ? 'none' : '100%',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'flex-start',
@@ -910,44 +974,27 @@ useEffect(() => {
           }}
         >
           {/* Top Header with Title + Menu */}
-          <div style={{ marginBottom: topHeaderMarginBottom, position: 'relative', paddingRight: filterMenuReserveSpace }}>
+          <div style={{ marginBottom: topHeaderMarginBottom, position: 'relative', paddingRight: isNarrowCardLayout ? '0' : filterMenuReserveSpace }}>
             <div style={{ fontSize: headerLabelFontSize, color: isDarkMode ? '#b0b0b0' : '#666', fontWeight: 600, transition: 'color 0.3s ease' }}>
               Performance
             </div>
             <div style={{ marginBottom: isExpanded ? 'clamp(8px, 0.9vh, 14px)' : '15px', fontSize: headerTitleFontSize, color: isDarkMode ? '#e0e0e0' : '#333', fontWeight: 700, transition: 'color 0.3s ease' }}>
               Indicators
             </div>
-            <div style={{marginTop: totalPatientsMarginTop, position: 'relative'}}>
-              <div
-                style={{
-                  fontSize: totalPatientsFontSize,
-                  color: isDarkMode ? '#a0a0a0' : '#888',
-                  fontWeight: 500,
-                  transition: 'color 0.3s ease',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '6px',
-                  whiteSpace: 'nowrap',
-                }}
-              >
-                Total Patients Counted:
-                <span style={{ fontWeight: 600, fontSize: totalPatientsValueFontSize, color: '#1890ff' }}>
-                  {totalPatientCount}
-                </span>
-              </div>
-            </div>
 
             {/* Filter Selector */}
             <div
               className="filter-menu-container"
               style={{
-                position: "absolute",
-                right: 0,
-                top: 0,
+                position: isNarrowCardLayout ? "relative" : "absolute",
+                right: isNarrowCardLayout ? "auto" : 0,
+                top: isNarrowCardLayout ? "auto" : 0,
                 display: "flex",
                 flexDirection: "column",
                 alignItems: "flex-end",
-                gap: isExpanded ? "8px" : "10px",
+                gap: filterTriggerGap,
+                width: isNarrowCardLayout ? "100%" : "auto",
+                marginTop: isNarrowCardLayout ? "2px" : 0,
               }}
             >
               <button
@@ -956,8 +1003,8 @@ useEffect(() => {
                 style={{
                   display: "inline-flex",
                   alignItems: "center",
-                  gap: isExpanded ? "8px" : "10px",
-                  padding: isExpanded ? "7px 10px" : "10px 14px",
+                  gap: filterTriggerGap,
+                  padding: filterTriggerPadding,
                   borderRadius: "999px",
                   border: isDarkMode
                     ? "1px solid rgba(120, 144, 171, 0.42)"
@@ -1002,8 +1049,8 @@ useEffect(() => {
                 <span>{selectedPeriod}</span>
                 <span
                   style={{
-                    width: isExpanded ? "20px" : "24px",
-                    height: isExpanded ? "20px" : "24px",
+                    width: filterTriggerIconSize,
+                    height: filterTriggerIconSize,
                     borderRadius: "50%",
                     display: "inline-flex",
                     alignItems: "center",
@@ -1022,7 +1069,7 @@ useEffect(() => {
                 style={{
                   position: "absolute",
                   right: 0,
-                  top: isExpanded ? "44px" : "52px",
+                  top: isExpanded ? "44px" : isNarrowCardLayout ? "36px" : "52px",
                   background: isDarkMode
                     ? "linear-gradient(160deg, rgba(20, 28, 38, 0.76) 0%, rgba(14, 20, 30, 0.62) 100%)"
                     : "linear-gradient(160deg, rgba(255, 255, 255, 0.78) 0%, rgba(241, 248, 255, 0.64) 100%)",
@@ -1128,6 +1175,26 @@ useEffect(() => {
                     )}
                   </button>
                 ))}
+              </div>
+            </div>
+
+            <div style={{marginTop: totalPatientsMarginTop, position: 'relative'}}>
+              <div
+                style={{
+                  fontSize: totalPatientsFontSize,
+                  color: isDarkMode ? '#a0a0a0' : '#888',
+                  fontWeight: 500,
+                  transition: 'color 0.3s ease',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '6px',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                Total Patients Counted:
+                <span style={{ fontWeight: 600, fontSize: totalPatientsValueFontSize, color: '#1890ff' }}>
+                  {totalPatientCount}
+                </span>
               </div>
             </div>
           </div>
