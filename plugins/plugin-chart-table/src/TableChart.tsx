@@ -313,13 +313,13 @@ const KPIValue = styled.div`
 `;
 
 const KPILabel = styled.div`
-  font-size: 16px;
+  font-size: 20px;
   font-weight: 600;
   color: var(--color-text-muted);
   letter-spacing: 0.3px;
   height: auto;
   text-align: left;
-  text-transform: uppercase;
+  text-transform: none;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -332,6 +332,7 @@ const KPILabel = styled.div`
   }
   
   @media (max-width: 768px) {
+    font-size: 18px;
     white-space: normal;
     word-break: break-word;
   }
@@ -436,7 +437,7 @@ const TableHead = styled.thead`
 
 const TableHeader = styled.th<{ colIndex?: number }>`
   padding: 16px 20px;
-  text-align: center;
+  text-align: ${props => props.colIndex === 2 ? 'center' : 'left'};
   font-weight: 900;
   font-size: 27px;
   text-transform: capitalize;
@@ -595,13 +596,6 @@ const locationColors = [
 const ROWS_PER_PAGE = 5;
 const AUTO_PAGE_DELAY_MS = 7000;
 
-const capitalizeLabel = (str: string): string => {
-  if (str === 'location(s)') {
-    return 'Location(s)';
-  }
-  return str.replace(/\b\w/g, (char) => char.toUpperCase());
-};
-
 export default function TableChart({
   data,
   height,
@@ -718,8 +712,8 @@ export default function TableChart({
             <FluentPeopleCommunity20Filled style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>{capitalizeLabel('Total Patients')}</KPILabel>
-            <KPIValue>{kpiValues.total.toLocaleString()}</KPIValue>
+            <KPILabel>Total Patients</KPILabel>
+            <KPIValue style={{ marginRight: 12 }}>{kpiValues.total.toLocaleString()}</KPIValue>
           </KPIContent>
         </KPITile>
         
@@ -728,8 +722,8 @@ export default function TableChart({
             <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>{capitalizeLabel('location(s)')}</KPILabel>
-            <KPIValue>{kpiValues.count}</KPIValue>
+            <KPILabel>Location(s)</KPILabel>
+            <KPIValue style={{ marginRight: 12 }}>{kpiValues.count}</KPIValue>
           </KPIContent>
         </KPITile>
                 
@@ -738,7 +732,7 @@ export default function TableChart({
             <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>{capitalizeLabel('Top Location')}</KPILabel>
+            <KPILabel>Top Location</KPILabel>
             <KPIValue style={{ fontSize: 25 }}>{kpiValues.topItem}</KPIValue>
           </KPIContent>
         </KPITile>
