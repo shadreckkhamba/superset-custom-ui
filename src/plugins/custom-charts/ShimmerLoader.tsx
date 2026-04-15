@@ -156,8 +156,8 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
         {/* Left - Info card shimmer */}
         <div style={{ 
           flex: '1 1 0',
-          minWidth: 'clamp(120px, 12vw, 180px)',
-          maxWidth: 'clamp(160px, 16vw, 220px)',
+          minWidth: 'clamp(180px, 18vw, 240px)',
+          maxWidth: 'clamp(220px, 22vw, 280px)',
           display: 'flex', 
           flexDirection: 'column', 
           gap: 'clamp(8px, 1vh, 14px)',
