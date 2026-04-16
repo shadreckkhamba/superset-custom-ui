@@ -35,7 +35,7 @@
   </style>
 </head>
 <body>
-  <div class="message" id="status">Trying to reconnect<span id="dots">...</span></div>
+  <div class="message" id="status">Reconnecting<span id="dots">...</span></div>
 
   <script>
     // Animate dots
@@ -43,8 +43,8 @@
     const dotsElement = document.getElementById('dots');
 
     setInterval(() => {
+      dotsElement.textContent = '.'.repeat(dotCount);
       dotCount = (dotCount + 1) % 4;
-      dotsElement.textContent = '.'.repeat(dotCount || 1);
     }, 500);
 
     // Reload when back online

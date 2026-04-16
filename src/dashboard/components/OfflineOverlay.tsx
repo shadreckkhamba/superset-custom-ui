@@ -188,42 +188,6 @@ const OfflineOverlay: React.FC = () => {
           transition: 'opacity 0.4s ease',
         }}
       />
-
-      {/* Status badge */}
-      <div
-        style={{
-          position: 'absolute',
-          bottom: '32px',
-          left: '50%',
-          transform: 'translateX(-50%)',
-          background: 'rgba(24, 144, 255, 0.92)',
-          color: '#fff',
-          padding: '10px 24px',
-          borderRadius: '999px',
-          fontSize: '14px',
-          fontWeight: 600,
-          fontFamily: 'sans-serif',
-          boxShadow: '0 4px 20px rgba(24,144,255,0.4)',
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '10px',
-          whiteSpace: 'nowrap',
-        }}
-      >
-        <span
-          style={{
-            width: '10px',
-            height: '10px',
-            borderRadius: '50%',
-            background: '#ff4d4f',
-            flexShrink: 0,
-            animation: 'offlinePulse 1.4s ease-in-out infinite',
-          }}
-        />
-        No internet connection - waiting to reconnect...
-      </div>
-
       <style>{`
         @keyframes offlinePulse {
           0%, 100% { opacity: 1; transform: scale(1); }
