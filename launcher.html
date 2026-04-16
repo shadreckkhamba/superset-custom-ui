@@ -27,26 +27,43 @@
       text-shadow: 0 0 5px rgba(0,0,0,0.7);
       user-select: none;
     }
-    #dots {
-      display: inline-block;
-      width: 1.5em;
-      text-align: left;
+    /* HTML: <div class="loader"></div> */
+    .loader {
+      width: 22px;
+      aspect-ratio: 1;
+      display: inline-grid;
+      margin-left: 10px;
+      vertical-align: middle;
+      animation: l14 4s infinite;
+    }
+    
+    .loader::before,
+    .loader::after {
+      content: "";
+      grid-area: 1/1;
+      border: 4px solid;
+      border-radius: 50%;
+      border-color: rgb(3, 224, 198) rgb(3, 224, 198) #07e0b800 #0000;
+      mix-blend-mode: darken;
+      animation: l14 1s infinite linear;
+    }
+    
+    .loader::after {
+      border-color: #0000 #0000 blue blue;
+      animation-direction: reverse;
+    }
+    
+    @keyframes l14 {
+      100% {
+        transform: rotate(1turn);
+      }
     }
   </style>
 </head>
 <body>
-  <div class="message" id="status">Reconnecting<span id="dots">...</span></div>
+  <div class="message" id="status">Reconnecting<div class="loader"></div></div>
 
   <script>
-    // Animate dots
-    let dotCount = 0;
-    const dotsElement = document.getElementById('dots');
-
-    setInterval(() => {
-      dotsElement.textContent = '.'.repeat(dotCount);
-      dotCount = (dotCount + 1) % 4;
-    }, 500);
-
     // Reload when back online
     window.addEventListener('online', () => {
       location.reload();
