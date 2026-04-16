@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -227,12 +228,14 @@ export default function RunChartStay({
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const [loading, setLoading] = useState(true);
   const [chartContainerWidth, setChartContainerWidth] = useState(0);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const chartRef = useRef<ChartJS<"bar" | "line"> | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const nextWeekBtnRef = useRef<HTMLButtonElement | null>(null);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAnimatedOnViewRef = useRef(false);
   const noDataPlugin = useMemo(() => createNoDataPlugin(isDarkMode), [isDarkMode]);
@@ -1385,11 +1388,18 @@ useEffect(() => {
         {/* Right Button with hover tooltip and click effect */}
         <div style={{ position: "relative" }}>
           <button
+            ref={nextWeekBtnRef}
             onClick={() => {
               if (!isNextWeekFuture) setWeekOffset((w) => w + 1);
             }}
-            onMouseEnter={() => isNextWeekFuture && setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={() => {
+              if (isNextWeekFuture && nextWeekBtnRef.current) {
+                const rect = nextWeekBtnRef.current.getBoundingClientRect();
+                setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+                setShowTooltip(true);
+              }
+            }}
+            onMouseLeave={() => { setShowTooltip(false); setTooltipPos(null); }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -1439,25 +1449,40 @@ useEffect(() => {
           </button>
 
           {/* Tooltip */}
-          {showTooltip && isNextWeekFuture && (
+          {showTooltip && isNextWeekFuture && tooltipPos && typeof document !== 'undefined' && createPortal(
             <div
               style={{
-                position: "absolute",
-                top: tooltipOffsetTop,
-                right: tooltipOffsetRight,
-                backgroundColor: "#242323ff",
+                position: "fixed",
+                left: `${tooltipPos.x}px`,
+                top: `${tooltipPos.y - 10}px`,
+                transform: "translate(-70%, -100%)",
+                backgroundColor: isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)",
                 color: "#fff",
-                padding: "8px 12px",
+                padding: "7px 14px",
                 borderRadius: "8px",
-                fontSize: "14px",
+                fontSize: compact ? "12px" : "13px",
+                fontWeight: 500,
                 whiteSpace: "nowrap",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                opacity: 1,
-                transition: "opacity 0.3s ease",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                zIndex: 99999,
+                pointerEvents: "none",
+                border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              No patient data available
-            </div>
+              Can't go beyond current week
+              <div style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "6px solid transparent",
+                borderRight: "6px solid transparent",
+                borderTop: `6px solid ${isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)"}`,
+              }} />
+            </div>,
+            document.body
           )}
         </div>
       </div>
