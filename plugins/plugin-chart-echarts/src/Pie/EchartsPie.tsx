@@ -16,8 +16,8 @@
  * specific language governing permissions and limitations
  * under the License.
  */
+import React from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
-import { Baby, ShieldPlus, User, UserCheck, Users, Venus } from 'lucide-react';
 import { styled } from '@superset-ui/core';
 import type { CSSProperties } from 'react';
 import { PieChartTransformedProps } from './types';
@@ -139,37 +139,42 @@ const DetailCard = styled.div`
   }
 `;
 
-const DetailTop = styled.div`
+const CardLabelWrapper = styled.div`
   display: flex;
   align-items: center;
-  justify-content: flex-start;
-  gap: ${({ theme }) => theme.gridUnit}px;
+  justify-content: center;
+  gap: ${({ theme }) => theme.gridUnit * 0.8}px;
+`;
+
+const CardDot = styled.span<{ $color: string }>`
+  width: 14px;
+  height: 14px;
+  min-width: 14px;
+  min-height: 14px;
+  border-radius: 50%;
+  background: ${({ $color }) => $color};
+  border: 2px solid var(--pie-swatch-ring);
+  box-shadow: 0 0 6px ${({ $color }) => $color}aa;
+  display: inline-block;
+  flex-shrink: 0;
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    border-color: rgba(232, 248, 252, 0.95);
+    box-shadow: 0 0 0 1px rgba(23, 44, 54, 0.9);
+  }
 `;
 
 const CardLabel = styled.span`
-  font-size: 24px;
+  font-size: 18px;
   text-transform: uppercase;
-  letter-spacing: 0.06em;
-  color: var(--pie-muted);
-  font-weight: 800;
+  letter-spacing: 0.04em;
+  color: var(--pie-foreground);
+  font-weight: 700;
   line-height: 1.2;
   white-space: nowrap;
   overflow: visible;
   text-overflow: clip;
   word-break: normal;
-  text-align: center;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #ffffff;
-  }
-`;
-
-const CardValue = styled.div`
-  font-size: 56px;
-  line-height: 1.05;
-  font-weight: 900;
-  color: var(--pie-foreground);
-  margin-top: ${({ theme }) => theme.gridUnit * 0.5}px;
   text-align: center;
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -257,20 +262,6 @@ const PieLegendValueStack = styled.div`
   margin-left: auto;
   padding-right: 0;
   transform: translateX(-14px);
-`;
-
-const PieLegendValue = styled.span`
-  font-size: 30px;
-  line-height: 1.2;
-  text-align: right;
-  white-space: nowrap;
-  color: var(--pie-muted);
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #ffffff;
-  }
 `;
 
 const PieLegendPercent = styled.span`
@@ -408,20 +399,6 @@ const DonutLegendLabel = styled.span`
   }
 `;
 
-const DonutLegendValue = styled.span`
-  font-size: 30px;
-  line-height: 1.2;
-  text-align: left;
-  white-space: nowrap;
-  color: var(--pie-muted);
-  font-variant-numeric: tabular-nums;
-  font-weight: 800;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #ffffff;
-  }
-`;
-
 const DonutLegendPercent = styled.span`
   font-size: 28px;
   line-height: 1.2;
@@ -475,60 +452,6 @@ const CenterValue = styled.div`
   }
 `;
 
-const BottomTotalSection = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  justify-content: center;
-  padding: 20px 24px;
-  background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.08) 0%,
-      rgba(255, 255, 255, 0.02) 100%
-    ),
-    var(--pie-row-bg-strong);
-  border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
-  border: 1px solid var(--pie-row-border);
-  margin-top: auto;
-  min-height: 110px;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    background: linear-gradient(
-      180deg,
-      rgba(255, 255, 255, 0.06) 0%,
-      rgba(255, 255, 255, 0.02) 100%
-    ),
-    #0a0a0a;
-    border: 1px solid rgba(255, 255, 255, 0.12);
-    border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
-    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.06);
-  }
-`;
-
-const BottomTotalLabel = styled.div`
-  font-size: 40px;
-  text-transform: uppercase;
-  letter-spacing: 0.12em;
-  color: var(--pie-muted);
-  font-weight: 900;
-  margin-bottom: 6px;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #8fd8f2;
-  }
-`;
-
-const BottomTotalValue = styled.div`
-  font-size: 48px;
-  line-height: 1;
-  font-weight: 900;
-  color: var(--pie-foreground);
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #ffffff;
-  }
-`;
-
 const CHART_COLORS = [
   '#1565C0',   
   '#e03b09',  
@@ -540,16 +463,6 @@ const CHART_COLORS = [
   '#546E7A',
  
 ];
-
-function getIconForCategory(name: string) {
-  const normalized = name.toLowerCase();
-  if (normalized.includes('male')) return User;
-  if (normalized.includes('female')) return Venus;
-  if (normalized.includes('adolescent')) return UserCheck;
-  if (normalized.includes('under')) return Baby;
-  if (normalized.includes('pregnant')) return ShieldPlus;
-  return Users;
-}
 
 function isPriorityGroupName(name: string) {
   const normalized = name.toLowerCase();
@@ -585,11 +498,11 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       color: CHART_COLORS[index % CHART_COLORS.length],
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
-  );
+);
 
-  const shouldShowCards = chartData.length > 0 && chartData.length <= 2;
+  const shouldShowCards = chartData.length > 0 && chartData.length <= 4;
 
-return (
+  return (
     <Container style={{ width, height }}>
       {!isDonut ? (
         <PieTemplate>
@@ -605,6 +518,57 @@ return (
                   dataKey="value"
                   animationBegin={120}
                   animationDuration={720}
+                  labelLine={true}
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    value,
+                    index,
+                  }: {
+                    cx: number;
+                    cy: number;
+                    midAngle: number;
+                    innerRadius: number;
+                    outerRadius: number;
+                    value: number;
+                    index: number;
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = outerRadius + 15;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const color = chartData[index]?.color || '#000';
+                    return (
+                      <g key={`label-${index}`}>
+                        <line
+                          x1={cx + innerRadius * Math.cos(-midAngle * RADIAN)}
+                          y1={cy + innerRadius * Math.sin(-midAngle * RADIAN)}
+                          x2={x}
+                          y2={y}
+                          stroke={color}
+                          strokeWidth={1.5}
+                          opacity={0.7}
+                        />
+                        <text
+                          x={x}
+                          y={y}
+                          fill="var(--pie-foreground)"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          style={{
+                            fontSize: '16px',
+                            fontWeight: 700,
+                            textShadow: '0 0 3px rgba(0,0,0,0.3)',
+                          }}
+                        >
+                          {value.toLocaleString()}
+                        </text>
+                      </g>
+                    );
+                  }}
                 >
                   {chartData.map(
                     (
@@ -622,7 +586,14 @@ return (
           <RightPanel>
             {shouldShowCards && (
               <DetailCardsGrid>
-              {chartData.map(
+                <DetailCard key="card-total" className="pie-mini-row priority-mini-row">
+                  <CardLabelWrapper>
+                    <CardDot $color="#1565C0" />
+                    <CardLabel>Total</CardLabel>
+                  </CardLabelWrapper>
+                  <CardPercentage>{total.toLocaleString()}</CardPercentage>
+                </DetailCard>
+                {chartData.map(
                 (
                   item: {
                     name: string;
@@ -638,24 +609,16 @@ return (
                       isPriorityGroupName(item.name) ? 'priority-mini-row' : ''
                     }`}
                   >
-                    <DetailTop>
-                      {React.createElement(getIconForCategory(item.name), {
-                        size: 32,
-                        color: item.color,
-                      })}
-                    </DetailTop>
-                    <CardLabel>{item.name}</CardLabel>
-                    <CardValue>{item.value.toLocaleString()}</CardValue>
+                    <CardLabelWrapper>
+                      <CardDot $color={item.color} />
+                      <CardLabel>{item.name}</CardLabel>
+                    </CardLabelWrapper>
                     <CardPercentage>{item.percentage}%</CardPercentage>
                   </DetailCard>
                 ),
               )}
               </DetailCardsGrid>
             )}
-            <BottomTotalSection>
-              <BottomTotalLabel>Total</BottomTotalLabel>
-              <BottomTotalValue>{total.toLocaleString()}</BottomTotalValue>
-            </BottomTotalSection>
             <PieLegend>
               {chartData.map(
                 (item: {
@@ -683,9 +646,6 @@ return (
                       <PieLegendLabel>{item.name}</PieLegendLabel>
                     </LegendLabelWrap>
                     <PieLegendValueStack>
-                      <PieLegendValue>
-                        {item.value.toLocaleString()}
-                      </PieLegendValue>
                       <PieLegendPercent>{item.percentage}%</PieLegendPercent>
                     </PieLegendValueStack>
                   </PieLegendRow>
@@ -710,6 +670,57 @@ return (
                   dataKey="value"
                   animationBegin={120}
                   animationDuration={760}
+                  labelLine={true}
+                  label={({
+                    cx,
+                    cy,
+                    midAngle,
+                    innerRadius,
+                    outerRadius,
+                    value,
+                    index,
+                  }: {
+                    cx: number;
+                    cy: number;
+                    midAngle: number;
+                    innerRadius: number;
+                    outerRadius: number;
+                    value: number;
+                    index: number;
+                  }) => {
+                    const RADIAN = Math.PI / 180;
+                    const radius = outerRadius + 12;
+                    const x = cx + radius * Math.cos(-midAngle * RADIAN);
+                    const y = cy + radius * Math.sin(-midAngle * RADIAN);
+                    const color = chartData[index]?.color || '#000';
+                    return (
+                      <g key={`donut-label-${index}`}>
+                        <line
+                          x1={cx + innerRadius * Math.cos(-midAngle * RADIAN)}
+                          y1={cy + innerRadius * Math.sin(-midAngle * RADIAN)}
+                          x2={x}
+                          y2={y}
+                          stroke={color}
+                          strokeWidth={1.5}
+                          opacity={0.7}
+                        />
+                        <text
+                          x={x}
+                          y={y}
+                          fill="var(--pie-foreground)"
+                          textAnchor="middle"
+                          dominantBaseline="central"
+                          style={{
+                            fontSize: '14px',
+                            fontWeight: 700,
+                            textShadow: '0 0 3px rgba(0,0,0,0.3)',
+                          }}
+                        >
+                          {value.toLocaleString()}
+                        </text>
+                      </g>
+                    );
+                  }}
                 >
                   {chartData.map(
                     (
@@ -773,9 +784,6 @@ return (
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
                   </DonutLegendLabelWrap>
                   <DonutLegendValueStack>
-                    <DonutLegendValue>
-                      {item.value.toLocaleString()}
-                    </DonutLegendValue>
                     <DonutLegendPercent>{item.percentage}%</DonutLegendPercent>
                   </DonutLegendValueStack>
                 </DonutLegendRow>
