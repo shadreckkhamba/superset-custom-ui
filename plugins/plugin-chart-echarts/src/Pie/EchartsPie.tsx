@@ -104,6 +104,9 @@ const PieLegendPercent = styled.span`
   font-size: 14px;
   color: #5d7079;
   font-weight: 700;
+  flex-shrink: 0;
+  justify-self: end;
+  transform: translateX(-18px);
 
   body.dark-theme &,
   [data-theme='dark'] & {
