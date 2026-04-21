@@ -29,16 +29,85 @@ const Container = styled.div`
   height: 100%;
   padding: 0;
   background: #f7fafb;
-  border-radius: ${({ theme }) => theme.gridUnit * 2.5}px;
+  border-radius: 10px;
   border: 1px solid #d8e3e8;
-  box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.35), 0 1px 2px rgba(22, 41, 50, 0.08);
+  box-shadow: 0 1px 2px rgba(22, 41, 50, 0.08);
   box-sizing: border-box;
   overflow: visible;
+
   body.dark-theme &,
   [data-theme='dark'] & {
     background: #1a1a2e;
     border: 1px solid #2d3a4a;
-    box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.15), 0 1px 2px rgba(0, 0, 0, 0.3);
+  }
+`;
+
+const PieLegendItem = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const PieLegendRow = styled.div`
+  display: flex;
+  flex-direction: row;
+  align-items: center;
+  justify-content: space-between;
+  padding: 4px 8px;
+  border-radius: 4px;
+  background: #edf3f6;
+  border: 1px solid #d4dfe4;
+  margin-bottom: 3px;
+  width: 100%;
+  box-sizing: border-box;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #252540;
+    border: 1px solid #3d4a5a;
+  }
+`;
+
+const Dot = styled.span<{ $color: string }>`
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color} !important;
+  background-image: none !important;
+  border: 2px solid white;
+  box-shadow: 0 0 3px rgba(0,0,0,0.3);
+  flex-shrink: 0;
+  display: inline-block;
+
+  /* Override global dark-theme pie reset that forces * to transparent */
+  .dark-theme [data-test-viz-type='pie'] &,
+  [data-theme='dark'] [data-test-viz-type='pie'] & {
+    background-color: ${({ $color }) => $color} !important;
+    background-image: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3) !important;
+  }
+`;
+
+const PieLegendLabel = styled.span`
+  font-size: 14px;
+  color: #1d2d33;
+  font-weight: 700;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
+`;
+
+const PieLegendPercent = styled.span`
+  font-size: 14px;
+  color: #5d7079;
+  font-weight: 700;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #b0bec5;
   }
 `;
 
@@ -86,87 +155,6 @@ const RightPanel = styled.div`
   overflow: hidden;
 `;
 
-const PieLegendRow = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  align-items: center;
-  gap: 2px;
-  padding: 1px 3px;
-  border-radius: 4px;
-  background: #edf3f6;
-  border: 1px solid #d4dfe4;
-  box-shadow: 0 1px 1px rgba(17, 42, 56, 0.04);
-  transition: background 0.2s ease, border-color 0.2s ease;
-  overflow: hidden;
-  width: 100%;
-  min-width: 0;
-  box-sizing: border-box;
-  min-height: 38px;
-  &.priority-mini-row {
-    min-height: 40px;
-    padding-top: 1px;
-    padding-bottom: 1px;
-  }
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    background: #252540;
-    border: 1px solid #3d4a5a;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
-  }
-`;
-
-const LegendLabelWrap = styled.div`
-  display: grid;
-  grid-template-columns: auto auto minmax(0, 1fr);
-  align-items: center;
-  gap: 2px;
-  min-width: 0;
-  justify-items: start;
-`;
-
-const PieLegendLabel = styled.span`
-  font-size: 16px;
-  color: #1d2d33;
-  font-weight: 700;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  line-height: 1.2;
-  word-break: normal;
-  text-align: left;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #ffffff;
-  }
-`;
-
-const PieLegendValueStack = styled.div`
-  display: flex;
-  flex-direction: column;
-  align-items: flex-end;
-  gap: 1px;
-  justify-self: end;
-  width: auto;
-  min-width: 74px;
-  margin-left: auto;
-  padding-right: 1px;
-  transform: none;
-`;
-
-const PieLegendPercent = styled.span`
-  font-size: 15px;
-  line-height: 1.2;
-  text-align: right;
-  white-space: nowrap;
-  color: #5d7079;
-  font-variant-numeric: tabular-nums;
-  font-weight: 700;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    color: #b0bec5;
-  }
-`;
-
 const DonutTemplate = styled.div`
   display: flex;
   flex-direction: column;
@@ -202,7 +190,7 @@ const DonutLegend = styled.div`
   width: 100%;
   min-width: 0;
   padding: 4px;
-  overflow: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 
   @media (max-width: 1200px) {
@@ -217,10 +205,15 @@ const DonutLegendRow = styled.div`
   justify-content: flex-start;
   gap: 10px;
   min-width: 0;
-  padding: 1px 3px;
-  border-radius: 4px;
-  background: #ebf2f5;
-  border: 1px solid #d4dfe4;
+  padding: 2px 6px;
+  border-radius: 7px !important;
+  background: linear-gradient(
+      120deg,
+      rgba(255, 255, 255, 0.12) 0%,
+      rgba(255, 255, 255, 0.03) 48%
+    ),
+    rgba(20, 60, 80, 0.04);
+  border: 1px solid rgba(24, 72, 96, 0.12);
   box-shadow: 0 1px 1px rgba(17, 42, 56, 0.04);
   transition: all 0.2s ease;
   overflow: visible;
@@ -230,16 +223,10 @@ const DonutLegendRow = styled.div`
   min-height: 28px;
   &.priority-mini-row {
     min-height: 30px;
-    padding: 1px 4px;
+    padding: 2px 8px;
   }
   &:hover {
     transform: translateY(-1px);
-  }
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    background: #252540;
-    border: 1px solid #3d4a5a;
-    box-shadow: 0 1px 1px rgba(0, 0, 0, 0.2);
   }
 `;
 
@@ -251,28 +238,29 @@ const DonutLegendLabelWrap = styled.div`
   min-width: 0;
 `;
 
-const Dot = styled.span<{ $color: string }>`
-  width: 20px !important;
-  height: 20px !important;
-  min-width: 20px !important;
-  min-height: 20px !important;
-  border-radius: 50% !important;
-  background: ${({ $color }) => $color} !important;
-  border: 2px solid #ffffff !important;
-  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35), 0 0 12px ${({ $color }) => $color}aa !important;
-  display: inline-block !important;
+const DonutDot = styled.span<{ $color: string }>`
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  background-color: ${({ $color }) => $color} !important;
+  background-image: none !important;
+  border: 2px solid white;
+  box-shadow: 0 0 3px rgba(0,0,0,0.3);
+  display: inline-block;
   flex-shrink: 0;
-  body.dark-theme &,
-  [data-theme='dark'] & {
-    border: 2px solid #1a1a2e !important;
-    box-shadow: 0 0 0 1px #555a6a !important;
+
+  /* Override global dark-theme pie reset that forces * to transparent */
+  .dark-theme [data-test-viz-type='pie'] &,
+  [data-theme='dark'] [data-test-viz-type='pie'] & {
+    background-color: ${({ $color }) => $color} !important;
+    background-image: none !important;
+    border-radius: 50% !important;
+    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3) !important;
   }
 `;
 
-
-
 const DonutLegendLabel = styled.span`
-  font-size: 20px;
+  font-size: 24px;
   color: #1d2d33;
   font-weight: 700;
   white-space: nowrap;
@@ -281,6 +269,7 @@ const DonutLegendLabel = styled.span`
   line-height: 1.25;
   word-break: normal;
   text-align: left;
+
   body.dark-theme &,
   [data-theme='dark'] & {
     color: #ffffff;
@@ -295,6 +284,7 @@ const DonutLegendPercent = styled.span`
   color: #5d7079;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+
   body.dark-theme &,
   [data-theme='dark'] & {
     color: #b0bec5;
@@ -321,9 +311,10 @@ const CenterLabel = styled.div`
   font-weight: 900;
   line-height: 1.05;
   margin-bottom: 6px;
+
   body.dark-theme &,
   [data-theme='dark'] & {
-    color: #b0bec5;
+    color: #ffffff;
   }
 `;
 
@@ -332,6 +323,7 @@ const CenterValue = styled.div`
   line-height: 1;
   font-weight: 900;
   color: #1d2d33;
+
   body.dark-theme &,
   [data-theme='dark'] & {
     color: #ffffff;
@@ -347,7 +339,6 @@ const CHART_COLORS = [
   '#5E35B1',   
   '#EC407A',   
   '#546E7A',
- 
 ];
 
 function isPriorityGroupName(name: string) {
@@ -366,13 +357,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
     : undefined;
   const data = series?.data || [];
   const isDonut = Boolean(formData?.donut);
-
-  const isDarkTheme = typeof document !== 'undefined' && 
-    (document.body.classList.contains('dark-theme') || 
-     document.body.getAttribute('data-theme') === 'dark');
-
-  const labelColor = isDarkTheme ? '#ffffff' : '#1d2d33';
-  const connectorColor = isDarkTheme ? '#90a4ae' : '#455a64';
 
   const total = data.reduce(
     (sum: number, item: { value: number }) => sum + (item.value || 0),
@@ -414,7 +398,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     cx,
                     cy,
                     midAngle,
-                    innerRadius,
                     outerRadius,
                     value,
                     index,
@@ -429,46 +412,55 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   }) => {
                     const RADIAN = Math.PI / 180;
                     const startRadius = outerRadius;
-                    const endRadius = outerRadius + 14;
+                    const endRadius = outerRadius + 28;
+                    const cornerRadius = outerRadius + 18;
                     const startX = cx + startRadius * Math.cos(-midAngle * RADIAN);
                     const startY = cy + startRadius * Math.sin(-midAngle * RADIAN);
+                    const cornerX = cx + cornerRadius * Math.cos(-midAngle * RADIAN);
+                    const cornerY = cy + cornerRadius * Math.sin(-midAngle * RADIAN);
                     const endX = cx + endRadius * Math.cos(-midAngle * RADIAN);
                     const endY = cy + endRadius * Math.sin(-midAngle * RADIAN);
                     const isRightSide = endX >= cx;
-                    const chartWidth = cx * 2;
-                    const labelX = Math.max(
-                      12,
-                      Math.min(chartWidth - 12, endX + (isRightSide ? -4 : 4)),
-                    );
-                    const valueFontSize = Math.max(
-                      14,
-                      Math.min(24, outerRadius * 0.19),
-                    );
-                    const connectorWidth = Math.max(
-                      3,
-                      Math.min(5, outerRadius * 0.04),
+                    const labelOffset = isRightSide ? -8 : 8;
+                    const labelX = endX + labelOffset;
+                    const fontSize = Math.max(
+                      9,
+                      Math.min(13, outerRadius * 0.11),
                     );
                     return (
                       <g key={`label-${index}`}>
                         <line
                           x1={startX}
                           y1={startY}
+                          x2={cornerX}
+                          y2={cornerY}
+                          stroke="#546e7a"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        />
+                        <line
+                          x1={cornerX}
+                          y1={cornerY}
                           x2={endX}
                           y2={endY}
-                          stroke={connectorColor}
-                          strokeWidth={connectorWidth}
+                          stroke="#546e7a"
+                          strokeWidth={2}
                           strokeLinecap="round"
                         />
                         <text
                           x={labelX}
                           y={endY}
-                          fill={labelColor}
+                          fill="#1d2d33"
                           textAnchor={isRightSide ? 'end' : 'start'}
                           dominantBaseline="central"
                           style={{
-                            fontSize: `${valueFontSize}px`,
+                            fontSize: `${fontSize}px`,
                             fontWeight: 700,
                             fontFamily: 'sans-serif',
+                            fill: '#ffffff',
+                            stroke: '#1d2d33',
+                            strokeWidth: '3px',
+                            paintOrder: 'stroke fill',
                           }}
                         >
                           {value.toLocaleString()}
@@ -492,14 +484,11 @@ export default function EchartsPie(props: PieChartTransformedProps) {
 
           <RightPanel>
             <PieLegend>
-              <PieLegendRow key="pie-legend-total" className="pie-mini-row">
-                <LegendLabelWrap>
-                  <Dot $color="#1565C0" className="pie-color-dot" />
+              <PieLegendRow key="pie-legend-total">
+                <PieLegendItem>
                   <PieLegendLabel>Total</PieLegendLabel>
-                </LegendLabelWrap>
-                <PieLegendValueStack>
-                  <PieLegendPercent>{total.toLocaleString()}</PieLegendPercent>
-                </PieLegendValueStack>
+                </PieLegendItem>
+                <PieLegendPercent>{total.toLocaleString()}</PieLegendPercent>
               </PieLegendRow>
               {chartData.map(
                 (item: {
@@ -508,13 +497,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   color: string;
                   percentage: string;
                 }) => (
-                  <PieLegendRow
-                    key={`pie-legend-${item.name}`}
-                    className={`pie-mini-row ${
-                      isPriorityGroupName(item.name) ? 'priority-mini-row' : ''
-                    }`}
-                  >
-                    <LegendLabelWrap>
+                  <PieLegendRow key={`pie-legend-${item.name}`}>
+                    <PieLegendItem>
                       <Dot
                         $color={item.color}
                         className="pie-color-dot"
@@ -525,10 +509,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                         }
                       />
                       <PieLegendLabel>{item.name}</PieLegendLabel>
-                    </LegendLabelWrap>
-                    <PieLegendValueStack>
-                      <PieLegendPercent>{item.percentage}%</PieLegendPercent>
-                    </PieLegendValueStack>
+                    </PieLegendItem>
+                    <PieLegendPercent>{item.percentage}%</PieLegendPercent>
                   </PieLegendRow>
                 ),
               )}
@@ -556,7 +538,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     cx,
                     cy,
                     midAngle,
-                    innerRadius,
                     outerRadius,
                     value,
                     index,
@@ -571,40 +552,52 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   }) => {
                     const RADIAN = Math.PI / 180;
                     const startRadius = outerRadius;
-                    const endRadius = outerRadius + 24;
+                    const endRadius = outerRadius + 35;
+                    const cornerRadius = outerRadius + 22;
                     const startX = cx + startRadius * Math.cos(-midAngle * RADIAN);
                     const startY = cy + startRadius * Math.sin(-midAngle * RADIAN);
+                    const cornerX = cx + cornerRadius * Math.cos(-midAngle * RADIAN);
+                    const cornerY = cy + cornerRadius * Math.sin(-midAngle * RADIAN);
                     const endX = cx + endRadius * Math.cos(-midAngle * RADIAN);
                     const endY = cy + endRadius * Math.sin(-midAngle * RADIAN);
-                    const valueFontSize = Math.max(
-                      16,
-                      Math.min(30, outerRadius * 0.23),
-                    );
-                    const connectorWidth = Math.max(
-                      3,
-                      Math.min(5, outerRadius * 0.04),
+                    const fontSize = Math.max(
+                      11,
+                      Math.min(16, outerRadius * 0.12),
                     );
                     return (
                       <g key={`donut-label-${index}`}>
                         <line
                           x1={startX}
                           y1={startY}
+                          x2={cornerX}
+                          y2={cornerY}
+                          stroke="#546e7a"
+                          strokeWidth={2}
+                          strokeLinecap="round"
+                        />
+                        <line
+                          x1={cornerX}
+                          y1={cornerY}
                           x2={endX}
                           y2={endY}
-                          stroke={connectorColor}
-                          strokeWidth={connectorWidth}
+                          stroke="#546e7a"
+                          strokeWidth={2}
                           strokeLinecap="round"
                         />
                         <text
                           x={endX}
                           y={endY}
-                          fill={labelColor}
+                          fill="#1d2d33"
                           textAnchor="middle"
                           dominantBaseline="central"
                           style={{
-                            fontSize: `${valueFontSize}px`,
+                            fontSize: `${fontSize}px`,
                             fontWeight: 700,
                             fontFamily: 'sans-serif',
+                            fill: '#ffffff',
+                            stroke: '#1d2d33',
+                            strokeWidth: '3px',
+                            paintOrder: 'stroke fill',
                           }}
                         >
                           {value.toLocaleString()}
@@ -662,7 +655,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   }`}
                 >
                   <DonutLegendLabelWrap>
-                    <Dot
+                    <DonutDot
                       $color={item.color}
                       className="pie-color-dot"
                       style={
@@ -671,7 +664,6 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                         } as CSSProperties
                       }
                     />
-
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
                   </DonutLegendLabelWrap>
                   <DonutLegendValueStack>
