@@ -679,7 +679,7 @@ export default styled(BigNumberVis)`
       box-sizing: border-box;
       padding: ${theme.gridUnit * 4}px ${theme.gridUnit * 4}px
         ${theme.gridUnit * 2}px;
-      background: #eef0f1;
+      background: #F6F8FA;
       border-radius: var(--kpi-panel-radius);
       overflow: hidden;
     }
@@ -691,7 +691,7 @@ export default styled(BigNumberVis)`
       gap: ${theme.gridUnit * 4}px;
       width: 100%;
       height: 100%;
-      background: #eef0f1;
+      background: #F6F8FA;
       border-top-left-radius: var(--kpi-panel-radius);
       border-top-right-radius: var(--kpi-panel-radius);
       border-bottom-left-radius: var(--kpi-panel-radius);
@@ -825,7 +825,7 @@ export default styled(BigNumberVis)`
     body.dark-theme &.no-trendline,
     [data-theme='dark'] &.no-trendline {
       background: #0a0a0a;
-      border: 1px solid #1f3744;
+      border: none;
       box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.15),
         0 4px 12px rgba(0, 0, 0, 0.3);
     }
