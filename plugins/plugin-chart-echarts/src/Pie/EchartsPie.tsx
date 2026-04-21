@@ -121,6 +121,14 @@ const PieLegendPercent = styled.span`
   }
 `;
 
+const PieLegendTotalLabel = styled(PieLegendLabel)`
+  font-size: 24px;
+`;
+
+const PieLegendTotalValue = styled(PieLegendPercent)`
+  font-size: 22px;
+`;
+
 const PieTemplate = styled.div`
   display: flex;
   flex-direction: row;
@@ -513,9 +521,9 @@ export default function EchartsPie(props: PieChartTransformedProps) {
             <PieLegend>
               <PieLegendRow key="pie-legend-total">
                 <PieLegendItem>
-                  <PieLegendLabel>Total</PieLegendLabel>
+                  <PieLegendTotalLabel>Total</PieLegendTotalLabel>
                 </PieLegendItem>
-                <PieLegendPercent>{total.toLocaleString()}</PieLegendPercent>
+                <PieLegendTotalValue>{total.toLocaleString()}</PieLegendTotalValue>
               </PieLegendRow>
               {chartData.map(
                 (item: {
