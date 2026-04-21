@@ -28,17 +28,16 @@ const Container = styled.div`
   width: 100%;
   height: 100%;
   padding: 0;
-  background: #f7fafb;
-  border-radius: 10px;
-  border: 1px solid #d8e3e8;
-  box-shadow: 0 1px 2px rgba(22, 41, 50, 0.08);
+  background: #F6F8FA;
+  border-radius: 28px;
+  box-shadow: 0 14px 30px rgba(22, 41, 50, 0.18);
   box-sizing: border-box;
   overflow: visible;
-
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: #1a1a2e;
-    border: 1px solid #2d3a4a;
+    background: #2F2F2F;
+    box-shadow: 0 16px 34px rgba(0, 0, 0, 0.52),
+      0 0 0 1px rgba(124, 164, 185, 0.16);
   }
 `;
 
