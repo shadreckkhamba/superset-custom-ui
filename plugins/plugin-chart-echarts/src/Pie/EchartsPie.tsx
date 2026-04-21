@@ -355,6 +355,15 @@ const CHART_COLORS = [
   '#546E7A',
 ];
 
+type SliceLabelProps = {
+  cx: number;
+  cy: number;
+  midAngle: number;
+  outerRadius: number;
+  value: number;
+  index: number;
+};
+
 function isPriorityGroupName(name: string) {
   const normalized = name.toLowerCase();
   return (
@@ -391,6 +400,83 @@ export default function EchartsPie(props: PieChartTransformedProps) {
     }),
   );
 
+  const renderSliceLabel =
+    (mode: 'pie' | 'donut') =>
+    ({ cx, cy, midAngle, outerRadius, value, index }: SliceLabelProps) => {
+      const RADIAN = Math.PI / 180;
+      const angle = -midAngle * RADIAN;
+      const cos = Math.cos(angle);
+      const sin = Math.sin(angle);
+      const isRightSide = cos >= 0;
+      const color = chartData[index]?.color || '#546E7A';
+
+      const radialStart = outerRadius;
+      const radialBend = outerRadius + (mode === 'pie' ? 12 : 14);
+      const horizontalLen = mode === 'pie' ? 22 : 24;
+      const labelPad = 7;
+      const fontSize = Math.max(
+        mode === 'pie' ? 18 : 19,
+        Math.min(mode === 'pie' ? 30 : 31, outerRadius * 0.27),
+      );
+
+      const chartWidth = cx * 2;
+      const chartHeight = cy * 2;
+      const safeX = 8;
+      const safeY = 10;
+
+      const startX = cx + radialStart * cos;
+      const startY = cy + radialStart * sin;
+      const bendX = cx + radialBend * cos;
+      const bendY = cy + radialBend * sin;
+
+      const rawEndX = bendX + (isRightSide ? horizontalLen : -horizontalLen);
+      const endX = Math.max(safeX, Math.min(chartWidth - safeX, rawEndX));
+      const endY = Math.max(safeY, Math.min(chartHeight - safeY, bendY));
+
+      const rawTextX = endX + (isRightSide ? labelPad : -labelPad);
+      const textX = Math.max(safeX, Math.min(chartWidth - safeX, rawTextX));
+      const textY = Math.max(safeY, Math.min(chartHeight - safeY, endY));
+
+      const keyPrefix = mode === 'pie' ? 'label' : 'donut-label';
+
+      return (
+        <g key={`${keyPrefix}-${index}`}>
+          <line
+            x1={startX}
+            y1={startY}
+            x2={bendX}
+            y2={bendY}
+            stroke={color}
+            strokeWidth={7}
+            strokeLinecap="round"
+          />
+          <line
+            x1={bendX}
+            y1={bendY}
+            x2={endX}
+            y2={endY}
+            stroke={color}
+            strokeWidth={7}
+            strokeLinecap="round"
+          />
+          <text
+            x={textX}
+            y={textY}
+            fill="var(--pie-foreground)"
+            textAnchor={isRightSide ? 'start' : 'end'}
+            dominantBaseline="central"
+            style={{
+              fontSize: `${fontSize}px`,
+              fontWeight: 700,
+              textShadow: '0 1px 2px rgba(0,0,0,0.45)',
+            }}
+          >
+            {value.toLocaleString()}
+          </text>
+        </g>
+      );
+    };
+
   return (
     <Container style={{ width, height }}>
       {!isDonut ? (
@@ -402,86 +488,13 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  outerRadius="88%"
+                  outerRadius="82%"
                   strokeWidth={0}
                   dataKey="value"
                   animationBegin={120}
                   animationDuration={720}
-                  labelLine={true}
-                  label={({
-                    cx,
-                    cy,
-                    midAngle,
-                    outerRadius,
-                    value,
-                    index,
-                  }: {
-                    cx: number;
-                    cy: number;
-                    midAngle: number;
-                    innerRadius: number;
-                    outerRadius: number;
-                    value: number;
-                    index: number;
-                  }) => {
-                    const RADIAN = Math.PI / 180;
-                    const startRadius = outerRadius;
-                    const endRadius = outerRadius + 28;
-                    const cornerRadius = outerRadius + 18;
-                    const startX = cx + startRadius * Math.cos(-midAngle * RADIAN);
-                    const startY = cy + startRadius * Math.sin(-midAngle * RADIAN);
-                    const cornerX = cx + cornerRadius * Math.cos(-midAngle * RADIAN);
-                    const cornerY = cy + cornerRadius * Math.sin(-midAngle * RADIAN);
-                    const endX = cx + endRadius * Math.cos(-midAngle * RADIAN);
-                    const endY = cy + endRadius * Math.sin(-midAngle * RADIAN);
-                    const isRightSide = endX >= cx;
-                    const labelOffset = isRightSide ? -8 : 8;
-                    const labelX = endX + labelOffset;
-                    const fontSize = Math.max(
-                      9,
-                      Math.min(13, outerRadius * 0.11),
-                    );
-                    return (
-                      <g key={`label-${index}`}>
-                        <line
-                          x1={startX}
-                          y1={startY}
-                          x2={cornerX}
-                          y2={cornerY}
-                          stroke="#546e7a"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                        />
-                        <line
-                          x1={cornerX}
-                          y1={cornerY}
-                          x2={endX}
-                          y2={endY}
-                          stroke="#546e7a"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                        />
-                        <text
-                          x={labelX}
-                          y={endY}
-                          fill="#1d2d33"
-                          textAnchor={isRightSide ? 'end' : 'start'}
-                          dominantBaseline="central"
-                          style={{
-                            fontSize: `${fontSize}px`,
-                            fontWeight: 700,
-                            fontFamily: 'sans-serif',
-                            fill: '#ffffff',
-                            stroke: '#1d2d33',
-                            strokeWidth: '3px',
-                            paintOrder: 'stroke fill',
-                          }}
-                        >
-                          {value.toLocaleString()}
-                        </text>
-                      </g>
-                    );
-                  }}
+                  labelLine={false}
+                  label={renderSliceLabel('pie')}
                 >
                   {chartData.map(
                     (
@@ -541,84 +554,14 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   cx="50%"
                   cy="50%"
                   innerRadius="56%"
-                  outerRadius="84%"
+                  outerRadius="78%"
                   paddingAngle={1}
                   strokeWidth={0}
                   dataKey="value"
                   animationBegin={120}
                   animationDuration={760}
-                  labelLine={true}
-                  label={({
-                    cx,
-                    cy,
-                    midAngle,
-                    outerRadius,
-                    value,
-                    index,
-                  }: {
-                    cx: number;
-                    cy: number;
-                    midAngle: number;
-                    innerRadius: number;
-                    outerRadius: number;
-                    value: number;
-                    index: number;
-                  }) => {
-                    const RADIAN = Math.PI / 180;
-                    const startRadius = outerRadius;
-                    const endRadius = outerRadius + 35;
-                    const cornerRadius = outerRadius + 22;
-                    const startX = cx + startRadius * Math.cos(-midAngle * RADIAN);
-                    const startY = cy + startRadius * Math.sin(-midAngle * RADIAN);
-                    const cornerX = cx + cornerRadius * Math.cos(-midAngle * RADIAN);
-                    const cornerY = cy + cornerRadius * Math.sin(-midAngle * RADIAN);
-                    const endX = cx + endRadius * Math.cos(-midAngle * RADIAN);
-                    const endY = cy + endRadius * Math.sin(-midAngle * RADIAN);
-                    const fontSize = Math.max(
-                      11,
-                      Math.min(16, outerRadius * 0.12),
-                    );
-                    return (
-                      <g key={`donut-label-${index}`}>
-                        <line
-                          x1={startX}
-                          y1={startY}
-                          x2={cornerX}
-                          y2={cornerY}
-                          stroke="#546e7a"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                        />
-                        <line
-                          x1={cornerX}
-                          y1={cornerY}
-                          x2={endX}
-                          y2={endY}
-                          stroke="#546e7a"
-                          strokeWidth={2}
-                          strokeLinecap="round"
-                        />
-                        <text
-                          x={endX}
-                          y={endY}
-                          fill="#1d2d33"
-                          textAnchor="middle"
-                          dominantBaseline="central"
-                          style={{
-                            fontSize: `${fontSize}px`,
-                            fontWeight: 700,
-                            fontFamily: 'sans-serif',
-                            fill: '#ffffff',
-                            stroke: '#1d2d33',
-                            strokeWidth: '3px',
-                            paintOrder: 'stroke fill',
-                          }}
-                        >
-                          {value.toLocaleString()}
-                        </text>
-                      </g>
-                    );
-                  }}
+                  labelLine={false}
+                  label={renderSliceLabel('donut')}
                 >
                   {chartData.map(
                     (
