@@ -45,14 +45,15 @@ const Container = styled.div`
 const PieLegendItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 8px;
+  gap: 4px;
+  min-width: 0;
 `;
 
 const PieLegendRow = styled.div`
-  display: flex;
-  flex-direction: row;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: space-between;
+  column-gap: 2px;
   padding: 4px 8px;
   border-radius: 4px;
   background: #edf3f6;
@@ -69,8 +70,10 @@ const PieLegendRow = styled.div`
 `;
 
 const Dot = styled.span<{ $color: string }>`
-  width: 16px;
-  height: 16px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   border-radius: 50%;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
@@ -90,9 +93,12 @@ const Dot = styled.span<{ $color: string }>`
 `;
 
 const PieLegendLabel = styled.span`
-  font-size: 14px;
+  font-size: 20px;
   color: #1d2d33;
   font-weight: 700;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -101,7 +107,8 @@ const PieLegendLabel = styled.span`
 `;
 
 const PieLegendPercent = styled.span`
-  font-size: 14px;
+  display: inline-block;
+  font-size: 18px;
   color: #5d7079;
   font-weight: 700;
   flex-shrink: 0;
@@ -242,8 +249,10 @@ const DonutLegendLabelWrap = styled.div`
 `;
 
 const DonutDot = styled.span<{ $color: string }>`
-  width: 20px;
-  height: 20px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   border-radius: 50%;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
@@ -280,6 +289,7 @@ const DonutLegendLabel = styled.span`
 `;
 
 const DonutLegendPercent = styled.span`
+  display: inline-block;
   font-size: 18px;
   line-height: 1.2;
   text-align: left;
@@ -287,6 +297,7 @@ const DonutLegendPercent = styled.span`
   color: #5d7079;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
+  transform: translateX(-18px);
 
   body.dark-theme &,
   [data-theme='dark'] & {
