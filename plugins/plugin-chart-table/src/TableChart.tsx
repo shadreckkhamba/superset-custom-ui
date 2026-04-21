@@ -312,6 +312,20 @@ const KPIValue = styled.div`
   }
 `;
 
+const TopLocationsValue = styled(KPIValue)`
+  font-size: 25px;
+  text-align: left;
+  white-space: normal;
+  overflow: visible;
+  text-overflow: unset;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  line-height: 1.25;
+  max-width: 100%;
+  flex: 1 1 100%;
+  flex-shrink: 1;
+`;
+
 const KPILabel = styled.div`
   font-size: 20px;
   font-weight: 600;
@@ -676,7 +690,7 @@ export default function TableChart({
   // Calculate KPI values
   const kpiValues = useMemo(() => {
     if (!data || data.length === 0) {
-      return { total: 0, count: 0, average: 0, topItem: 'N/A' };
+      return { total: 0, count: 0, average: 0, topItems: 'N/A' };
     }
     
     const total = data.reduce((sum, row) => {
@@ -687,14 +701,22 @@ export default function TableChart({
     const count = data.length;
     const average = count > 0 ? Math.round(total / count) : 0;
 
-    const topRow = data.reduce((best, row) => {
+    const maxValue = data.reduce((max, row) => {
       const currentValue = Number(row[valueColumn]) || 0;
-      const bestValue = Number(best[valueColumn]) || 0;
-      return currentValue > bestValue ? row : best;
-    }, data[0]);
-    const topItem = topRow ? String(topRow[labelColumn] || 'N/A') : 'N/A';
+      return Math.max(max, currentValue);
+    }, Number.NEGATIVE_INFINITY);
+
+    const tiedTopItems = Array.from(
+      new Set(
+        data
+          .filter(row => (Number(row[valueColumn]) || 0) === maxValue)
+          .map(row => String(row[labelColumn] || 'N/A')),
+      ),
+    );
+
+    const topItems = tiedTopItems.length > 0 ? tiedTopItems.join(', ') : 'N/A';
     
-    return { total, count, average, topItem };
+    return { total, count, average, topItems };
   }, [data, valueColumn, labelColumn]);
 
   // Calculate max value for bar chart
@@ -712,7 +734,7 @@ export default function TableChart({
             <FluentPeopleCommunity20Filled style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>Total Patients</KPILabel>
+            <KPILabel>Total Patients:</KPILabel>
             <KPIValue style={{ marginRight: 12 }}>{kpiValues.total.toLocaleString()}</KPIValue>
           </KPIContent>
         </KPITile>
@@ -722,7 +744,7 @@ export default function TableChart({
             <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>Location(s)</KPILabel>
+            <KPILabel>Location(s):</KPILabel>
             <KPIValue style={{ marginRight: 12 }}>{kpiValues.count}</KPIValue>
           </KPIContent>
         </KPITile>
@@ -732,8 +754,8 @@ export default function TableChart({
             <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
           </KPIIcon>
           <KPIContent>
-            <KPILabel>Top Location</KPILabel>
-            <KPIValue style={{ fontSize: 25 }}>{kpiValues.topItem}</KPIValue>
+            <KPILabel>Top Location:</KPILabel>
+            <TopLocationsValue>{kpiValues.topItems}</TopLocationsValue>
           </KPIContent>
         </KPITile>
       </KPIBanner>
