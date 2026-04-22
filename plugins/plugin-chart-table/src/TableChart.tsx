@@ -178,7 +178,7 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
 
 const KPIBanner = styled.div`
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: minmax(0, 0.82fr) minmax(0, 0.82fr) minmax(0, 1.36fr);
   gap: 16px;
   border-bottom: 1px solid var(--color-border);
   background: linear-gradient(135deg, var(--color-bg-muted) 0%, var(--color-bg-card) 100%);
@@ -247,25 +247,47 @@ const KPITile = styled.div<{ bgColor?: string }>`
   }
 `;
 
-const KPIIcon = styled.div<{ color?: string }>`
+const CompactKPITile = styled(KPITile)`
+  padding: 12px 14px;
+  min-height: 72px;
+`;
+
+const TopLocationTile = styled(KPITile)`
+  padding: 10px 16px;
+  min-height: 72px;
+
+  @media (max-width: 1024px) {
+    grid-column: 1 / -1;
+  }
+`;
+
+const KPIIcon = styled.div<{ color?: string; $size?: number }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 56px;
-  height: 56px;
+  width: ${props => `${props.$size ?? 60}px`};
+  height: ${props => `${props.$size ?? 60}px`};
   border-radius: var(--radius-md);
-  background: ${props => props.color || 'var(--color-primary)'};
-  color: white;
+  background: #cbd5e1;
+  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
+  color: #111827;
   font-size: 30px;
   flex-shrink: 0;
-  min-width: 56px;
-  min-height: 56px;
-  
+  min-width: ${props => `${props.$size ?? 60}px`};
+  min-height: ${props => `${props.$size ?? 60}px`};
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: ${props => props.color || 'var(--color-primary)'};
+    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
+    color: #ffffff;
+  }
+
   @media (max-width: 768px) {
-    width: 40px;
-    height: 40px;
-    min-width: 40px;
-    min-height: 40px;
+    width: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
+    height: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
+    min-width: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
+    min-height: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
     font-size: 20px;
   }
 `;
@@ -285,6 +307,10 @@ const KPIContent = styled.div`
     flex-wrap: wrap;
     gap: 8px;
   }
+`;
+
+const KPIContentLeft = styled(KPIContent)`
+  justify-content: flex-start;
 `;
 
 const KPIValue = styled.div`
@@ -310,6 +336,10 @@ const KPIValue = styled.div`
     white-space: normal;
     word-break: break-word;
   }
+`;
+
+const KPIValueLeft = styled(KPIValue)`
+  text-align: left;
 `;
 
 const TopLocationsValue = styled(KPIValue)`
@@ -371,10 +401,10 @@ const SectionHeader = styled.div`
   align-items: center;
   justify-content: flex-end;
   gap: 16px;
-  padding: 12px 16px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
-  height: auto;
+  min-height: 44px;
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -443,6 +473,11 @@ const TableHead = styled.thead`
   background: var(--color-bg-card);
   height: auto;
 
+  & th {
+    padding-top: 8px;
+    padding-bottom: 8px;
+  }
+
   body.dark-theme &,
   [data-theme='dark'] & {
     background: #0a0a0a;
@@ -450,7 +485,7 @@ const TableHead = styled.thead`
 `;
 
 const TableHeader = styled.th<{ colIndex?: number }>`
-  padding: 16px 20px;
+  padding: 8px 12px;
   text-align: ${props => props.colIndex === 2 ? 'center' : 'left'};
   font-weight: 900;
   font-size: 27px;
@@ -459,7 +494,7 @@ const TableHeader = styled.th<{ colIndex?: number }>`
   color: var(--color-text-muted);
   border-bottom: 2px solid var(--color-border);
   background: var(--color-bg-card);
-  height: auto;
+  min-height: 40px;
   width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
   box-sizing: border-box;
 
@@ -478,7 +513,12 @@ const TableBody = styled.tbody`
 const TableRow = styled.tr`
   transition: all var(--transition-fast);
   animation: fadeInRow 0.3s ease-out backwards;
-  height: auto;
+  min-height: 36px;
+
+  & > td {
+    padding-top: 4px;
+    padding-bottom: 4px;
+  }
   
   &:nth-child(1) { animation-delay: 0.1s; }
   &:nth-child(2) { animation-delay: 0.15s; }
@@ -503,12 +543,12 @@ const TableRow = styled.tr`
 `;
 
 const TableCell = styled.td<{ colIndex?: number }>`
-  padding: 16px 20px;
+  padding: 6px 10px;
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 22px;
-  height: auto;
+  font-size: 30px;
+  min-height: 36px;
   width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
   box-sizing: border-box;
   overflow: hidden;
@@ -729,35 +769,35 @@ export default function TableChart({
     <Container $dynamicHeight={containerHeight} style={{ width: '100%' }}>
       {/* KPI Banner */}
       <KPIBanner>
-        <KPITile bgColor="rgba(13, 148, 136, 0.05)">
-          <KPIIcon color="#0d9488">
-            <FluentPeopleCommunity20Filled style={{ fontSize: 20 }} />
+        <CompactKPITile bgColor="rgba(13, 148, 136, 0.05)">
+          <KPIIcon color="rgba(13, 148, 136, 0.05)" $size={74}>
+            <FluentPeopleCommunity20Filled style={{ fontSize: 26 }} />
           </KPIIcon>
           <KPIContent>
             <KPILabel>Total Patients:</KPILabel>
             <KPIValue style={{ marginRight: 12 }}>{kpiValues.total.toLocaleString()}</KPIValue>
           </KPIContent>
-        </KPITile>
+        </CompactKPITile>
         
-        <KPITile bgColor="rgba(6, 182, 212, 0.05)">
-          <KPIIcon color="#06b6d4">
-            <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
+        <CompactKPITile bgColor="rgba(6, 182, 212, 0.05)">
+          <KPIIcon color="rgba(6, 182, 212, 0.05)" $size={74}>
+            <MaterialSymbolsPinDropRounded style={{ fontSize: 26 }} />
           </KPIIcon>
-          <KPIContent>
+          <KPIContentLeft>
             <KPILabel>Location(s):</KPILabel>
-            <KPIValue style={{ marginRight: 12 }}>{kpiValues.count}</KPIValue>
-          </KPIContent>
-        </KPITile>
+            <KPIValueLeft>{kpiValues.count}</KPIValueLeft>
+          </KPIContentLeft>
+        </CompactKPITile>
                 
-        <KPITile bgColor="rgba(16, 185, 129, 0.05)">
-          <KPIIcon color="#10b981">
-            <MaterialSymbolsPinDropRounded style={{ fontSize: 20 }} />
+        <TopLocationTile bgColor="rgba(16, 185, 129, 0.05)">
+          <KPIIcon color="rgba(16, 185, 129, 0.05)" $size={74}>
+            <MaterialSymbolsPinDropRounded style={{ fontSize: 26 }} />
           </KPIIcon>
-          <KPIContent>
-            <KPILabel>Top Location:</KPILabel>
+          <KPIContentLeft>
+            <KPILabel>Top Location(s):</KPILabel>
             <TopLocationsValue>{kpiValues.topItems}</TopLocationsValue>
-          </KPIContent>
-        </KPITile>
+          </KPIContentLeft>
+        </TopLocationTile>
       </KPIBanner>
 
       {/* Content Area */}
