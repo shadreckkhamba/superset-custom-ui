@@ -33,11 +33,13 @@ const Container = styled.div`
   box-shadow: 0 14px 30px rgba(22, 41, 50, 0.18);
   box-sizing: border-box;
   overflow: visible;
+  --pie-connector-color: #14181d;
   body.dark-theme &,
   [data-theme='dark'] & {
     background: #2F2F2F;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.52),
       0 0 0 1px rgba(124, 164, 185, 0.16);
+    --pie-connector-color: #ffffff;
   }
 `;
 
@@ -92,9 +94,10 @@ const Dot = styled.span<{ $color: string }>`
 `;
 
 const PieLegendLabel = styled.span`
-  font-size: 20px;
+  font-size: 24px;
   color: #1d2d33;
   font-weight: 700;
+  line-height: 1.15;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -107,7 +110,7 @@ const PieLegendLabel = styled.span`
 
 const PieLegendPercent = styled.span`
   display: inline-block;
-  font-size: 18px;
+  font-size: 28px;
   color: #5d7079;
   font-weight: 700;
   flex-shrink: 0;
@@ -125,7 +128,7 @@ const PieLegendTotalLabel = styled(PieLegendLabel)`
 `;
 
 const PieLegendTotalValue = styled(PieLegendPercent)`
-  font-size: 22px;
+  font-size: 28px;
 `;
 
 const PieTemplate = styled.div`
@@ -142,7 +145,7 @@ const PieTemplate = styled.div`
 `;
 
 const PieChartWrap = styled.div`
-  flex: 0 0 58%;
+  flex: 0 0 60%;
   min-height: 200px;
   height: auto;
   display: flex;
@@ -203,11 +206,13 @@ const DonutLegend = styled.div`
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr;
-  gap: 1px;
+  grid-auto-rows: max-content;
+  align-content: start;
+  gap: 0;
   width: 100%;
   min-width: 0;
-  padding: 4px;
-  overflow-y: auto;
+  padding: 0 2px;
+  overflow-y: hidden;
   box-sizing: border-box;
 
   @media (max-width: 1200px) {
@@ -220,10 +225,10 @@ const DonutLegendRow = styled.div`
   display: flex;
   align-items: center;
   justify-content: flex-start;
-  gap: 10px;
+  gap: 8px;
   min-width: 0;
-  padding: 2px 6px;
-  border-radius: 7px !important;
+  padding: 0 3px;
+  border-radius: 6px !important;
   background: linear-gradient(
       120deg,
       rgba(255, 255, 255, 0.12) 0%,
@@ -233,14 +238,14 @@ const DonutLegendRow = styled.div`
   border: 1px solid rgba(24, 72, 96, 0.12);
   box-shadow: 0 1px 1px rgba(17, 42, 56, 0.04);
   transition: all 0.2s ease;
-  overflow: visible;
+  overflow: hidden;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  min-height: 28px;
+  height: 30px;
   &.priority-mini-row {
-    min-height: 30px;
-    padding: 2px 8px;
+    height: 30px;
+    padding: 0 4px;
   }
   &:hover {
     transform: translateY(-1px);
@@ -256,10 +261,10 @@ const DonutLegendLabelWrap = styled.div`
 `;
 
 const DonutDot = styled.span<{ $color: string }>`
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
+  width: 24px;
+  height: 24px;
+  min-width: 24px;
+  min-height: 24px;
   border-radius: 50%;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
@@ -279,13 +284,13 @@ const DonutDot = styled.span<{ $color: string }>`
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: 24px;
+  font-size: 26px;
   color: #1d2d33;
   font-weight: 700;
   white-space: nowrap;
-  overflow: visible;
-  text-overflow: clip;
-  line-height: 1.25;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  line-height: 1.1;
   word-break: normal;
   text-align: left;
 
@@ -297,8 +302,8 @@ const DonutLegendLabel = styled.span`
 
 const DonutLegendPercent = styled.span`
   display: inline-block;
-  font-size: 18px;
-  line-height: 1.2;
+  font-size: 28px;
+  line-height: 1;
   text-align: left;
   white-space: nowrap;
   color: #5d7079;
@@ -318,7 +323,7 @@ const DonutLegendValueStack = styled.div`
   align-items: center;
   justify-content: center;
   gap: 0;
-  min-width: 68px;
+  min-width: 76px;
   flex-shrink: 0;
   margin-left: auto;
   margin-right: 4px;
@@ -415,21 +420,25 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       const isRightSide = cos >= 0;
-      const color = chartData[index]?.color || '#546E7A';
-
+      const slicePercentage =
+        chartData[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
+      const labelText = `${slicePercentage}%`;
       const radialStart = outerRadius;
-      const radialBend = outerRadius + (mode === 'pie' ? 12 : 14);
-      const horizontalLen = mode === 'pie' ? 22 : 24;
+      const radialBend = outerRadius + 14;
       const labelPad = 7;
+      const connectorStroke = mode === 'pie' ? 3 : 2;
+      const connectorColor = 'var(--pie-connector-color)';
       const fontSize = Math.max(
-        mode === 'pie' ? 18 : 19,
-        Math.min(mode === 'pie' ? 30 : 31, outerRadius * 0.27),
+        mode === 'pie' ? 22 : 22,
+        Math.min(mode === 'pie' ? 36 : 34, outerRadius * 0.32),
       );
 
       const chartWidth = cx * 2;
       const chartHeight = cy * 2;
-      const safeX = 8;
+      const safeX = 14;
       const safeY = 10;
+      const estimatedLabelWidth = Math.max(36, fontSize * 0.58 * labelText.length);
+      const horizontalLen = Math.max(24, Math.min(50, chartWidth * 0.13));
 
       const startX = cx + radialStart * cos;
       const startY = cy + radialStart * sin;
@@ -437,11 +446,18 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const bendY = cy + radialBend * sin;
 
       const rawEndX = bendX + (isRightSide ? horizontalLen : -horizontalLen);
-      const endX = Math.max(safeX, Math.min(chartWidth - safeX, rawEndX));
+      const edgeInset = estimatedLabelWidth + labelPad + safeX;
+      const endMinX = isRightSide ? safeX : edgeInset;
+      const endMaxX = isRightSide ? chartWidth - edgeInset : chartWidth - safeX;
+      const endX = Math.max(endMinX, Math.min(endMaxX, rawEndX));
       const endY = Math.max(safeY, Math.min(chartHeight - safeY, bendY));
 
       const rawTextX = endX + (isRightSide ? labelPad : -labelPad);
-      const textX = Math.max(safeX, Math.min(chartWidth - safeX, rawTextX));
+      const textMinX = isRightSide ? safeX : safeX + estimatedLabelWidth;
+      const textMaxX = isRightSide
+        ? chartWidth - safeX - estimatedLabelWidth
+        : chartWidth - safeX;
+      const textX = Math.max(textMinX, Math.min(textMaxX, rawTextX));
       const textY = Math.max(safeY, Math.min(chartHeight - safeY, endY));
 
       const keyPrefix = mode === 'pie' ? 'label' : 'donut-label';
@@ -453,8 +469,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
             y1={startY}
             x2={bendX}
             y2={bendY}
-            stroke={color}
-            strokeWidth={7}
+            stroke={connectorColor}
+            strokeWidth={connectorStroke}
             strokeLinecap="round"
           />
           <line
@@ -462,8 +478,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
             y1={bendY}
             x2={endX}
             y2={endY}
-            stroke={color}
-            strokeWidth={7}
+            stroke={connectorColor}
+            strokeWidth={connectorStroke}
             strokeLinecap="round"
           />
           <text
@@ -478,7 +494,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               textShadow: '0 1px 2px rgba(0,0,0,0.45)',
             }}
           >
-            {value.toLocaleString()}
+            {labelText}
           </text>
         </g>
       );
@@ -490,12 +506,12 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         <PieTemplate>
           <PieChartWrap>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 8, right: 36, bottom: 8, left: 36 }}>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  outerRadius="82%"
+                  outerRadius="76%"
                   strokeWidth={0}
                   dataKey="value"
                   animationBegin={120}
@@ -544,7 +560,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                       />
                       <PieLegendLabel>{item.name}</PieLegendLabel>
                     </PieLegendItem>
-                    <PieLegendPercent>{item.percentage}%</PieLegendPercent>
+                    <PieLegendPercent>{item.value.toLocaleString()}</PieLegendPercent>
                   </PieLegendRow>
                 ),
               )}
@@ -555,7 +571,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         <DonutTemplate>
           <DonutChartWrap>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart>
+              <PieChart margin={{ top: 8, right: 30, bottom: 8, left: 30 }}>
                 <Pie
                   data={chartData}
                   cx="50%"
@@ -631,7 +647,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     <DonutLegendLabel>{item.name}</DonutLegendLabel>
                   </DonutLegendLabelWrap>
                   <DonutLegendValueStack>
-                    <DonutLegendPercent>{item.percentage}%</DonutLegendPercent>
+                    <DonutLegendPercent>{item.value.toLocaleString()}</DonutLegendPercent>
                   </DonutLegendValueStack>
                 </DonutLegendRow>
               ),
