@@ -67,7 +67,7 @@ const themeVars = css`
   --color-text-secondary: #475569;
   --color-text-muted: #8796aa;
   
-  --color-border: #e2e8f0;s
+  --color-border: #e2e8f0;
   --color-border-light: #f1f5f9;
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
@@ -84,7 +84,7 @@ const themeVars = css`
 `;
 
 // Styled components
-const Container = styled.div<{ $dynamicHeight?: number }>`
+const Container = styled.div<{ $dynamicHeight?: number; $showSkeleton?: boolean }>`
   ${themeVars}
   background: var(--color-bg-card);
   border-radius: var(--radius-lg);
@@ -95,8 +95,36 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
   flex-direction: column;
   height: ${props => props.$dynamicHeight ? `${props.$dynamicHeight}px` : 'auto'};
   min-height: 300px;
-  max-height: 80vh;
+  max-height: none;
   transition: height 0.3s ease-in-out;
+
+  ${({ $showSkeleton }) =>
+    $showSkeleton &&
+    `
+    position: relative;
+    overflow: hidden;
+
+    & > * {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        90deg,
+        rgba(130, 152, 164, 0.16) 0%,
+        rgba(130, 152, 164, 0.32) 45%,
+        rgba(130, 152, 164, 0.16) 100%
+      );
+      background-size: 220% 100%;
+      animation: tableThemeSkeletonShimmer 1.1s linear infinite;
+      z-index: 2;
+    }
+  `}
 
   body.theme-transitioning & {
     position: relative;
@@ -176,6 +204,65 @@ const Container = styled.div<{ $dynamicHeight?: number }>`
   }
 `;
 
+const SkeletonLayout = styled.div`
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  width: 100%;
+  height: 100%;
+  padding: 10px;
+  box-sizing: border-box;
+`;
+
+const SkeletonKpiRow = styled.div`
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  gap: 10px;
+
+  @media (max-width: 900px) {
+    grid-template-columns: 1fr;
+  }
+`;
+
+const SkeletonTile = styled.div`
+  height: 74px;
+  border-radius: 10px;
+  background: linear-gradient(
+    90deg,
+    rgba(130, 152, 164, 0.14) 0%,
+    rgba(130, 152, 164, 0.26) 45%,
+    rgba(130, 152, 164, 0.14) 100%
+  );
+  background-size: 220% 100%;
+  animation: tableThemeSkeletonShimmer 1.1s linear infinite;
+`;
+
+const SkeletonHeaderRow = styled.div`
+  height: 34px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(130, 152, 164, 0.14) 0%,
+    rgba(130, 152, 164, 0.26) 45%,
+    rgba(130, 152, 164, 0.14) 100%
+  );
+  background-size: 220% 100%;
+  animation: tableThemeSkeletonShimmer 1.1s linear infinite;
+`;
+
+const SkeletonTableRow = styled.div`
+  height: 48px;
+  border-radius: 8px;
+  background: linear-gradient(
+    90deg,
+    rgba(130, 152, 164, 0.14) 0%,
+    rgba(130, 152, 164, 0.26) 45%,
+    rgba(130, 152, 164, 0.14) 100%
+  );
+  background-size: 220% 100%;
+  animation: tableThemeSkeletonShimmer 1.1s linear infinite;
+`;
+
 const KPIBanner = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 0.82fr) minmax(0, 0.82fr) minmax(0, 1.36fr);
@@ -185,6 +272,7 @@ const KPIBanner = styled.div`
   height: auto;
   width: 100%;
   box-sizing: border-box;
+  min-width: 0;
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -218,6 +306,7 @@ const KPITile = styled.div<{ bgColor?: string }>`
   height: auto;
   box-sizing: border-box;
   overflow: visible;
+  min-width: 0;
   
   &:nth-child(1) { animation-delay: 0.1s; }
   &:nth-child(2) { animation-delay: 0.2s; }
@@ -284,7 +373,7 @@ const KPIIcon = styled.div<{ color?: string; $size?: number; $iconSize?: number 
   }
 
   body.dark-theme &,
-  [data-theme='dark'] & {light version of this;#d9e1eb
+  [data-theme='dark'] & {
     background: ${props => props.color || 'var(--color-primary)'};
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     color: #ffffff;
@@ -330,7 +419,7 @@ const KPIContentLeft = styled(KPIContent)`
 `;
 
 const KPIValue = styled.div`
-  font-size: 42px;
+  font-size: clamp(22px, 4vw, 42px);
   font-weight: 700;
   color: var(--color-text-primary);
   line-height: 1.1;
@@ -359,7 +448,7 @@ const KPIValueLeft = styled(KPIValue)`
 `;
 
 const TopLocationsValue = styled(KPIValue)`
-  font-size: 25px;
+  font-size: clamp(18px, 2.8vw, 25px);
   text-align: left;
   white-space: normal;
   overflow: visible;
@@ -373,8 +462,8 @@ const TopLocationsValue = styled(KPIValue)`
 `;
 
 const KPILabel = styled.div`
-  font-size: 20px;
-  font-weight: 600;
+  font-size: clamp(14px, 2.1vw, 20px);
+  font-weight: 700;
   color: var(--color-text-muted);
   letter-spacing: 0.3px;
   height: auto;
@@ -433,12 +522,13 @@ const SectionHeader = styled.div`
 const HeaderControls = styled.div`
   display: inline-flex;
   align-items: center;
+  flex-wrap: wrap;
   gap: 10px;
   margin-left: auto;
 `;
 
 const PageMeta = styled.span`
-  font-size: 18px;
+  font-size: clamp(14px, 1.8vw, 18px);
   font-weight: 600;
   color: var(--color-text-secondary);
 `;
@@ -455,6 +545,12 @@ const NavButton = styled.button`
   justify-content: center;
   cursor: pointer;
   transition: all var(--transition-fast);
+  line-height: 0;
+
+  & > svg {
+    display: block;
+    flex-shrink: 0;
+  }
 
   &:hover:not(:disabled) {
     background: var(--color-bg-hover);
@@ -470,14 +566,20 @@ const NavButton = styled.button`
 const DataTable = styled.div`
   flex: 1;
   overflow: hidden;
-  max-height: 100%;
+  max-height: none;
   transition: max-height 0.3s ease-in-out;
+  min-width: 0;
+  scrollbar-width: none;
+
+  &::-webkit-scrollbar {
+    display: none;
+  }
 `;
 
 const Table = styled.table`
   width: 100%;
   border-collapse: collapse;
-  font-size: 21px;
+  font-size: clamp(14px, 2.2vw, 21px);
   height: 100%;
   table-layout: fixed;
 `;
@@ -504,7 +606,7 @@ const TableHeader = styled.th<{ colIndex?: number }>`
   padding: 8px 12px;
   text-align: ${props => props.colIndex === 2 ? 'center' : 'left'};
   font-weight: 900;
-  font-size: 27px;
+  font-size: clamp(15px, 2.3vw, 27px);
   text-transform: capitalize;
   letter-spacing: 0.5px;
   color: var(--color-text-muted);
@@ -523,7 +625,7 @@ const TableHeader = styled.th<{ colIndex?: number }>`
 `;
 
 const TableBody = styled.tbody`
-  height: 100%;
+  height: auto;
 `;
 
 const TableRow = styled.tr`
@@ -563,7 +665,7 @@ const TableCell = styled.td<{ colIndex?: number }>`
   border-bottom: 1px solid var(--color-border-light);
   color: var(--color-text-primary);
   vertical-align: middle;
-  font-size: 30px;
+  font-size: clamp(14px, 2.8vw, 30px);
   min-height: 36px;
   width: ${props => props.colIndex === 0 ? '25%' : props.colIndex === 1 ? '50%' : '25%'};
   box-sizing: border-box;
@@ -577,7 +679,7 @@ const LocationCell = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 22px;
+  font-size: clamp(14px, 2.1vw, 22px);
   font-weight: 600;
 
   body.dark-theme &,
@@ -673,6 +775,7 @@ export default function TableChart({
 }: TableChartProps) {
   const [currentPage, setCurrentPage] = useState(0);
   const [isAutoRotatePaused, setIsAutoRotatePaused] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(!data || data.length === 0);
 
   const totalPages = useMemo(() => {
     if (!data || data.length === 0) return 1;
@@ -698,11 +801,10 @@ export default function TableChart({
     if (!data || data.length === 0) return 400;
     const baseHeight = 200; // KPI banner + header
     const rowHeight = 60; // Approximate height per row
-    const maxRows = 50; // Max rows before scrolling
-    const rowCount = Math.min(data.length, maxRows);
+    // Pagination renders a fixed row window, so height should not scale with total dataset size.
+    const rowCount = Math.min(data.length, ROWS_PER_PAGE);
     const calculatedHeight = baseHeight + (rowCount * rowHeight);
-    // Ensure minimum height and respect max-height
-    return Math.max(300, Math.min(calculatedHeight, window.innerHeight * 0.8));
+    return Math.max(300, calculatedHeight);
   }, [data]);
 
   // Use provided height if available, otherwise use dynamic height
@@ -781,8 +883,45 @@ export default function TableChart({
     return Math.max(...data.map(row => Number(row[valueColumn]) || 0));
   }, [data, valueColumn]);
 
+  useEffect(() => {
+    let timeoutId: number;
+    const hasData = Boolean(data && data.length > 0);
+
+    if (hasData) {
+      timeoutId = window.setTimeout(() => setShowSkeleton(false), 180);
+    } else {
+      setShowSkeleton(true);
+      timeoutId = window.setTimeout(() => setShowSkeleton(false), 1400);
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [data]);
+
+  if (showSkeleton) {
+    return (
+      <Container $dynamicHeight={containerHeight} style={{ width: '100%' }}>
+        <SkeletonLayout>
+          <SkeletonKpiRow>
+            <SkeletonTile />
+            <SkeletonTile />
+            <SkeletonTile />
+          </SkeletonKpiRow>
+          <SkeletonHeaderRow />
+          <SkeletonTableRow />
+          <SkeletonTableRow />
+          <SkeletonTableRow />
+          <SkeletonTableRow />
+          <SkeletonTableRow />
+        </SkeletonLayout>
+      </Container>
+    );
+  }
+
   return (
-    <Container $dynamicHeight={containerHeight} style={{ width: '100%' }}>
+    <Container
+      $dynamicHeight={containerHeight}
+      style={{ width: '100%' }}
+    >
       {/* KPI Banner */}
       <KPIBanner>
         <CompactKPITile bgColor="rgba(13, 148, 136, 0.05)">
