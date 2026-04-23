@@ -207,11 +207,11 @@ const DonutLegend = styled.div`
   display: grid;
   grid-template-columns: 1fr;
   grid-auto-rows: max-content;
-  align-content: start;
+  align-content: end;
   gap: 0;
   width: 100%;
   min-width: 0;
-  padding: 0 2px;
+  padding: 0 2px 6px;
   overflow-y: hidden;
   box-sizing: border-box;
 
@@ -222,33 +222,24 @@ const DonutLegend = styled.div`
 `;
 
 const DonutLegendRow = styled.div`
-  display: flex;
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  justify-content: flex-start;
-  gap: 8px;
+  column-gap: 2px;
   min-width: 0;
-  padding: 0 3px;
-  border-radius: 6px !important;
-  background: linear-gradient(
-      120deg,
-      rgba(255, 255, 255, 0.12) 0%,
-      rgba(255, 255, 255, 0.03) 48%
-    ),
-    rgba(20, 60, 80, 0.04);
-  border: 1px solid rgba(24, 72, 96, 0.12);
-  box-shadow: 0 1px 1px rgba(17, 42, 56, 0.04);
-  transition: all 0.2s ease;
+  padding: 4px 14px 4px 8px;
+  border-radius: 4px;
+  background: #edf3f6;
+  border: 1px solid #d4dfe4;
+  margin-bottom: 6px;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
-  min-width: 0;
-  height: 30px;
-  &.priority-mini-row {
-    height: 30px;
-    padding: 0 4px;
-  }
-  &:hover {
-    transform: translateY(-1px);
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #252540;
+    border: 1px solid #3d4a5a;
   }
 `;
 
@@ -261,10 +252,10 @@ const DonutLegendLabelWrap = styled.div`
 `;
 
 const DonutDot = styled.span<{ $color: string }>`
-  width: 24px;
-  height: 24px;
-  min-width: 24px;
-  min-height: 24px;
+  width: 28px;
+  height: 28px;
+  min-width: 28px;
+  min-height: 28px;
   border-radius: 50%;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
@@ -284,13 +275,13 @@ const DonutDot = styled.span<{ $color: string }>`
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: 26px;
+  font-size: 24px;
   color: #1d2d33;
   font-weight: 700;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.1;
+  line-height: 1.15;
   word-break: normal;
   text-align: left;
 
@@ -303,13 +294,13 @@ const DonutLegendLabel = styled.span`
 const DonutLegendPercent = styled.span`
   display: inline-block;
   font-size: 28px;
-  line-height: 1;
-  text-align: left;
+  line-height: 1.15;
+  text-align: right;
   white-space: nowrap;
   color: #5d7079;
   font-variant-numeric: tabular-nums;
   font-weight: 700;
-  transform: translateX(-18px);
+  justify-self: end;
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -320,13 +311,13 @@ const DonutLegendPercent = styled.span`
 const DonutLegendValueStack = styled.div`
   display: flex;
   flex-direction: column;
-  align-items: center;
+  align-items: flex-end;
   justify-content: center;
   gap: 0;
-  min-width: 76px;
+  min-width: 0;
   flex-shrink: 0;
   margin-left: auto;
-  margin-right: 4px;
+  margin-right: 24px;
 `;
 
 const CenterLabel = styled.div`
@@ -375,15 +366,6 @@ type SliceLabelProps = {
   value: number;
   index: number;
 };
-
-function isPriorityGroupName(name: string) {
-  const normalized = name.toLowerCase();
-  return (
-    normalized.includes('adolescent') ||
-    normalized.includes('pregnant') ||
-    normalized.includes('under')
-  );
-}
 
 export default function EchartsPie(props: PieChartTransformedProps) {
   const { height, width, echartOptions, formData } = props;
@@ -630,9 +612,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               }) => (
                 <DonutLegendRow
                   key={`legend-${item.name}`}
-                  className={`pie-mini-row donut-mini-row ${
-                    isPriorityGroupName(item.name) ? 'priority-mini-row' : ''
-                  }`}
+                  className="donut-mini-row"
                 >
                   <DonutLegendLabelWrap>
                     <DonutDot
