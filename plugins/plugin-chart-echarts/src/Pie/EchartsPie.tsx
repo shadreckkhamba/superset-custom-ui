@@ -583,7 +583,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         chartData[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
       const labelText = `${slicePercentage}%`;
       const radialStart = outerRadius;
-      const radialBend = outerRadius + (mode === 'pie' ? 10 : 14);
+      const radialBend = outerRadius + (mode === 'pie' ? 10 : 12);
       const labelPad = 7;
       const connectorStroke = mode === 'pie' ? 3 : 2;
       const connectorColor = 'var(--pie-connector-color)';
@@ -600,7 +600,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const horizontalLen =
         mode === 'pie'
           ? Math.max(18, Math.min(34, chartWidth * 0.1))
-          : Math.max(24, Math.min(50, chartWidth * 0.13));
+          : Math.max(22, Math.min(46, chartWidth * 0.12));
 
       const startX = cx + radialStart * cos;
       const startY = cy + radialStart * sin;
