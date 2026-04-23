@@ -451,14 +451,20 @@ const TopLocationsValue = styled(KPIValue)`
   font-size: clamp(18px, 2.8vw, 25px);
   text-align: left;
   white-space: normal;
-  overflow: visible;
-  text-overflow: unset;
+  overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
   line-height: 1.25;
   max-width: 100%;
   flex: 1 1 100%;
   flex-shrink: 1;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  -webkit-box-orient: vertical;
+
+  @media (max-width: 768px) {
+    -webkit-line-clamp: 3;
+  }
 `;
 
 const KPILabel = styled.div`
@@ -767,6 +773,7 @@ const locationColors = [
 
 const ROWS_PER_PAGE = 5;
 const AUTO_PAGE_DELAY_MS = 7000;
+const MAX_TOP_ITEMS_IN_TILE = 3;
 
 export default function TableChart({
   data,
@@ -848,7 +855,7 @@ export default function TableChart({
   // Calculate KPI values
   const kpiValues = useMemo(() => {
     if (!data || data.length === 0) {
-      return { total: 0, count: 0, average: 0, topItems: 'N/A' };
+      return { total: 0, count: 0, average: 0, topItems: 'N/A', topItemsDisplay: 'N/A' };
     }
     
     const total = data.reduce((sum, row) => {
@@ -873,8 +880,14 @@ export default function TableChart({
     );
 
     const topItems = tiedTopItems.length > 0 ? tiedTopItems.join(', ') : 'N/A';
-    
-    return { total, count, average, topItems };
+    const hasOverflow = tiedTopItems.length > MAX_TOP_ITEMS_IN_TILE;
+    const topItemsDisplay = hasOverflow
+      ? `${tiedTopItems.slice(0, MAX_TOP_ITEMS_IN_TILE).join(', ')} +${
+          tiedTopItems.length - MAX_TOP_ITEMS_IN_TILE
+        } more`
+      : topItems;
+
+    return { total, count, average, topItems, topItemsDisplay };
   }, [data, valueColumn, labelColumn]);
 
   // Calculate max value for bar chart
@@ -950,7 +963,9 @@ export default function TableChart({
           </KPIIcon>
           <KPIContentLeft>
             <KPILabel>Top Location(s):</KPILabel>
-            <TopLocationsValue>{kpiValues.topItems}</TopLocationsValue>
+            <TopLocationsValue title={kpiValues.topItems}>
+              {kpiValues.topItemsDisplay}
+            </TopLocationsValue>
           </KPIContentLeft>
         </TopLocationTile>
       </KPIBanner>
