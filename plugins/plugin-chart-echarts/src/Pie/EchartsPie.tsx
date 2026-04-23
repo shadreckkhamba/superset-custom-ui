@@ -34,12 +34,14 @@ const Container = styled.div`
   box-sizing: border-box;
   overflow: visible;
   --pie-connector-color: #14181d;
+  --pie-foreground: #14181d;
   body.dark-theme &,
   [data-theme='dark'] & {
     background: #2F2F2F;
     box-shadow: 0 16px 34px rgba(0, 0, 0, 0.52),
       0 0 0 1px rgba(124, 164, 185, 0.16);
     --pie-connector-color: #ffffff;
+    --pie-foreground: #ffffff;
   }
 `;
 
@@ -406,21 +408,24 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         chartData[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
       const labelText = `${slicePercentage}%`;
       const radialStart = outerRadius;
-      const radialBend = outerRadius + 14;
+      const radialBend = outerRadius + (mode === 'pie' ? 10 : 14);
       const labelPad = 7;
       const connectorStroke = mode === 'pie' ? 3 : 2;
       const connectorColor = 'var(--pie-connector-color)';
       const fontSize = Math.max(
-        mode === 'pie' ? 22 : 22,
+        mode === 'pie' ? 20 : 22,
         Math.min(mode === 'pie' ? 36 : 34, outerRadius * 0.32),
       );
 
       const chartWidth = cx * 2;
       const chartHeight = cy * 2;
-      const safeX = 14;
-      const safeY = 10;
-      const estimatedLabelWidth = Math.max(36, fontSize * 0.58 * labelText.length);
-      const horizontalLen = Math.max(24, Math.min(50, chartWidth * 0.13));
+      const safeX = mode === 'pie' ? 24 : 14;
+      const safeY = mode === 'pie' ? 12 : 10;
+      const estimatedLabelWidth = Math.max(36, fontSize * 0.62 * labelText.length);
+      const horizontalLen =
+        mode === 'pie'
+          ? Math.max(18, Math.min(34, chartWidth * 0.1))
+          : Math.max(24, Math.min(50, chartWidth * 0.13));
 
       const startX = cx + radialStart * cos;
       const startY = cy + radialStart * sin;
@@ -488,7 +493,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         <PieTemplate>
           <PieChartWrap>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 8, right: 36, bottom: 8, left: 36 }}>
+              <PieChart margin={{ top: 10, right: 52, bottom: 10, left: 52 }}>
                 <Pie
                   data={chartData}
                   cx="50%"
