@@ -261,23 +261,30 @@ const TopLocationTile = styled(KPITile)`
   }
 `;
 
-const KPIIcon = styled.div<{ color?: string; $size?: number }>`
+const KPIIcon = styled.div<{ color?: string; $size?: number; $iconSize?: number }>`
   display: flex;
   align-items: center;
   justify-content: center;
   width: ${props => `${props.$size ?? 60}px`};
   height: ${props => `${props.$size ?? 60}px`};
   border-radius: var(--radius-md);
-  background: #cbd5e1;
+  background: #e3e8f0;
   box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
   color: #111827;
   font-size: 30px;
   flex-shrink: 0;
   min-width: ${props => `${props.$size ?? 60}px`};
   min-height: ${props => `${props.$size ?? 60}px`};
+  
+  & > svg {
+    width: ${props => `${props.$iconSize ?? 26}px`};
+    height: ${props => `${props.$iconSize ?? 26}px`};
+    font-size: ${props => `${props.$iconSize ?? 26}px`};
+    flex-shrink: 0;
+  }
 
   body.dark-theme &,
-  [data-theme='dark'] & {
+  [data-theme='dark'] & {light version of this;#d9e1eb
     background: ${props => props.color || 'var(--color-primary)'};
     box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
     color: #ffffff;
@@ -289,6 +296,15 @@ const KPIIcon = styled.div<{ color?: string; $size?: number }>`
     min-width: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
     min-height: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
     font-size: 20px;
+
+    & > svg {
+      width: ${props =>
+        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+      height: ${props =>
+        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+      font-size: ${props =>
+        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+    }
   }
 `;
 
@@ -422,7 +438,7 @@ const HeaderControls = styled.div`
 `;
 
 const PageMeta = styled.span`
-  font-size: 16px;
+  font-size: 18px;
   font-weight: 600;
   color: var(--color-text-secondary);
 `;
@@ -770,8 +786,8 @@ export default function TableChart({
       {/* KPI Banner */}
       <KPIBanner>
         <CompactKPITile bgColor="rgba(13, 148, 136, 0.05)">
-          <KPIIcon color="rgba(13, 148, 136, 0.05)" $size={74}>
-            <FluentPeopleCommunity20Filled style={{ fontSize: 26 }} />
+          <KPIIcon color="rgba(13, 148, 136, 0.05)" $size={74} $iconSize={34}>
+            <FluentPeopleCommunity20Filled />
           </KPIIcon>
           <KPIContent>
             <KPILabel>Total Patients:</KPILabel>
@@ -780,8 +796,8 @@ export default function TableChart({
         </CompactKPITile>
         
         <CompactKPITile bgColor="rgba(6, 182, 212, 0.05)">
-          <KPIIcon color="rgba(6, 182, 212, 0.05)" $size={74}>
-            <MaterialSymbolsPinDropRounded style={{ fontSize: 26 }} />
+          <KPIIcon color="rgba(6, 182, 212, 0.05)" $size={74} $iconSize={34}>
+            <MaterialSymbolsPinDropRounded />
           </KPIIcon>
           <KPIContentLeft>
             <KPILabel>Location(s):</KPILabel>
@@ -790,8 +806,8 @@ export default function TableChart({
         </CompactKPITile>
                 
         <TopLocationTile bgColor="rgba(16, 185, 129, 0.05)">
-          <KPIIcon color="rgba(16, 185, 129, 0.05)" $size={74}>
-            <MaterialSymbolsPinDropRounded style={{ fontSize: 26 }} />
+          <KPIIcon color="rgba(16, 185, 129, 0.05)" $size={74} $iconSize={34}>
+            <MaterialSymbolsPinDropRounded />
           </KPIIcon>
           <KPIContentLeft>
             <KPILabel>Top Location(s):</KPILabel>
