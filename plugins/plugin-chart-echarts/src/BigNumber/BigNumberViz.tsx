@@ -485,8 +485,15 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       subheaderFontSize,
       metricName,
       subtitle,
+      bigNumber,
+      trendLineData,
+      bigNumberFallback,
     } = this.props;
-    const className = this.getClassName();
+    const isLoading =
+      bigNumber === undefined &&
+      !bigNumberFallback &&
+      !(trendLineData && trendLineData.length > 0);
+    const className = `${this.getClassName()}${isLoading ? ' is-loading' : ''}`;
 
     if (showTrendLine) {
       const chartHeight = Math.floor(PROPORTION.TRENDLINE * height);
@@ -542,15 +549,15 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const subtitleText = subtitle ? String(subtitle).trim() : '';
     
     const fallbackFromBigNumber =
-      typeof this.props.bigNumber === 'number' &&
-      Number.isFinite(this.props.bigNumber)
-        ? defaultNumberFormatter(this.props.bigNumber)
+      typeof bigNumber === 'number' &&
+      Number.isFinite(bigNumber)
+        ? defaultNumberFormatter(bigNumber)
         : '';
     
     const safeWidth = Number.isFinite(width) ? width : 320;
     const fontSize = Math.max(
-      Math.min(safeWidth * 0.35, height * 0.6, 220),
-      96,
+      Math.min(safeWidth * 0.3, height * 0.5, 180),
+      42,
     );
     const noTrendlineStyle: CSSProperties = {
       height,
@@ -596,8 +603,10 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
               fontWeight: 800,
               color: '#15333a',
               textAlign: 'center',
-              lineHeight: 1,
+              lineHeight: 1.05,
               fontFamily: "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
+              maxWidth: '100%',
+              overflowWrap: 'anywhere',
             }}
           >
             {fallbackFromBigNumber}
@@ -627,6 +636,32 @@ export default styled(BigNumberVis)`
     }
 
     body.theme-transitioning &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: ${theme.gridUnit * 3}px;
+      background: linear-gradient(
+        90deg,
+        rgba(130, 152, 164, 0.16) 0%,
+        rgba(130, 152, 164, 0.32) 45%,
+        rgba(130, 152, 164, 0.16) 100%
+      );
+      background-size: 220% 100%;
+      animation: bigNumberThemeSkeletonShimmer 1.1s linear infinite;
+      z-index: 3;
+    }
+
+    &.is-loading {
+      position: relative;
+      overflow: hidden;
+    }
+
+    &.is-loading > * {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &.is-loading::after {
       content: '';
       position: absolute;
       inset: 0;
@@ -682,6 +717,16 @@ export default styled(BigNumberVis)`
       background: #F6F8FA;
       border-radius: var(--kpi-panel-radius);
       overflow: hidden;
+    }
+
+    @media (max-width: 768px) {
+      &.no-trendline {
+        padding: ${theme.gridUnit * 2}px ${theme.gridUnit * 2}px;
+      }
+
+      &.no-trendline .text-container--kpi {
+        gap: ${theme.gridUnit * 2}px;
+      }
     }
 
     &.no-trendline .text-container--kpi {
