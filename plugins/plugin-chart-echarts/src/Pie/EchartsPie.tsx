@@ -16,13 +16,13 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React from 'react';
+import React, { useEffect, useState } from 'react';
 import { PieChart, Pie, Cell, ResponsiveContainer } from 'recharts';
 import { styled } from '@superset-ui/core';
 import type { CSSProperties } from 'react';
 import { PieChartTransformedProps } from './types';
 
-const Container = styled.div`
+const Container = styled.div<{ $showSkeleton?: boolean }>`
   display: flex;
   flex-direction: column;
   width: 100%;
@@ -35,6 +35,68 @@ const Container = styled.div`
   overflow: visible;
   --pie-connector-color: #14181d;
   --pie-foreground: #14181d;
+  position: relative;
+
+  ${({ $showSkeleton }) =>
+    $showSkeleton &&
+    `
+    overflow: hidden;
+    & > * {
+      opacity: 0;
+      pointer-events: none;
+    }
+
+    &::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: linear-gradient(
+        90deg,
+        rgba(130, 152, 164, 0.16) 0%,
+        rgba(130, 152, 164, 0.32) 45%,
+        rgba(130, 152, 164, 0.16) 100%
+      );
+      background-size: 220% 100%;
+      animation: pieChartSkeletonShimmer 1.1s linear infinite;
+      z-index: 3;
+    }
+  `}
+
+  body.theme-transitioning & {
+    overflow: hidden;
+  }
+
+  body.theme-transitioning & > * {
+    opacity: 0 !important;
+    pointer-events: none;
+  }
+
+  body.theme-transitioning &::after {
+    content: '';
+    position: absolute;
+    inset: 0;
+    border-radius: inherit;
+    background: linear-gradient(
+      90deg,
+      rgba(130, 152, 164, 0.16) 0%,
+      rgba(130, 152, 164, 0.32) 45%,
+      rgba(130, 152, 164, 0.16) 100%
+    );
+    background-size: 220% 100%;
+    animation: pieChartSkeletonShimmer 1.1s linear infinite;
+    z-index: 3;
+  }
+
+  @keyframes pieChartSkeletonShimmer {
+    0% {
+      background-position: 100% 0;
+    }
+    100% {
+      background-position: -100% 0;
+    }
+  }
+
   body.dark-theme &,
   [data-theme='dark'] & {
     background: #2F2F2F;
@@ -43,6 +105,74 @@ const Container = styled.div`
     --pie-connector-color: #ffffff;
     --pie-foreground: #ffffff;
   }
+`;
+
+const SkeletonWrap = styled.div`
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  width: 100%;
+  height: 100%;
+  padding: 12px;
+  box-sizing: border-box;
+
+  @media (max-width: 768px) {
+    flex-direction: column;
+  }
+`;
+
+const SkeletonChartArea = styled.div`
+  flex: 0 0 58%;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+`;
+
+const SkeletonRing = styled.div`
+  width: min(72%, 240px);
+  aspect-ratio: 1 / 1;
+  border-radius: 50%;
+  border: 22px solid rgba(130, 152, 164, 0.18);
+  position: relative;
+  background: transparent;
+
+  &::after {
+    content: '';
+    position: absolute;
+    inset: -22px;
+    border-radius: 50%;
+    background: linear-gradient(
+      90deg,
+      rgba(130, 152, 164, 0.14) 0%,
+      rgba(130, 152, 164, 0.28) 45%,
+      rgba(130, 152, 164, 0.14) 100%
+    );
+    background-size: 220% 100%;
+    animation: pieChartSkeletonShimmer 1.1s linear infinite;
+    -webkit-mask: radial-gradient(circle, transparent 56%, #000 57%);
+    mask: radial-gradient(circle, transparent 56%, #000 57%);
+  }
+`;
+
+const SkeletonLegend = styled.div`
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+`;
+
+const SkeletonLegendRow = styled.div`
+  height: 34px;
+  border-radius: 7px;
+  background: linear-gradient(
+    90deg,
+    rgba(130, 152, 164, 0.14) 0%,
+    rgba(130, 152, 164, 0.28) 45%,
+    rgba(130, 152, 164, 0.14) 100%
+  );
+  background-size: 220% 100%;
+  animation: pieChartSkeletonShimmer 1.1s linear infinite;
 `;
 
 const PieLegendItem = styled.div`
@@ -96,7 +226,7 @@ const Dot = styled.span<{ $color: string }>`
 `;
 
 const PieLegendLabel = styled.span`
-  font-size: 24px;
+  font-size: clamp(15px, 2vw, 24px);
   color: #1d2d33;
   font-weight: 700;
   line-height: 1.15;
@@ -112,7 +242,7 @@ const PieLegendLabel = styled.span`
 
 const PieLegendPercent = styled.span`
   display: inline-block;
-  font-size: 28px;
+  font-size: clamp(16px, 2.3vw, 28px);
   color: #5d7079;
   font-weight: 700;
   flex-shrink: 0;
@@ -126,11 +256,11 @@ const PieLegendPercent = styled.span`
 `;
 
 const PieLegendTotalLabel = styled(PieLegendLabel)`
-  font-size: 24px;
+  font-size: clamp(15px, 2vw, 24px);
 `;
 
 const PieLegendTotalValue = styled(PieLegendPercent)`
-  font-size: 28px;
+  font-size: clamp(16px, 2.3vw, 28px);
 `;
 
 const PieTemplate = styled.div`
@@ -155,6 +285,14 @@ const PieChartWrap = styled.div`
   justify-content: center;
   position: relative;
   overflow: visible;
+
+  @media (max-width: 1024px) {
+    min-height: 180px;
+  }
+
+  @media (max-width: 768px) {
+    min-height: 160px;
+  }
 `;
 
 const PieLegend = styled.div`
@@ -202,6 +340,10 @@ const DonutChartWrap = styled.div`
   align-items: center;
   justify-content: center;
   overflow: visible;
+
+  @media (max-width: 768px) {
+    min-height: 160px;
+  }
 `;
 
 const DonutLegend = styled.div`
@@ -277,7 +419,7 @@ const DonutDot = styled.span<{ $color: string }>`
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: 24px;
+  font-size: clamp(15px, 2vw, 24px);
   color: #1d2d33;
   font-weight: 700;
   white-space: nowrap;
@@ -295,7 +437,7 @@ const DonutLegendLabel = styled.span`
 
 const DonutLegendPercent = styled.span`
   display: inline-block;
-  font-size: 28px;
+  font-size: clamp(16px, 2.3vw, 28px);
   line-height: 1.15;
   text-align: right;
   white-space: nowrap;
@@ -323,7 +465,7 @@ const DonutLegendValueStack = styled.div`
 `;
 
 const CenterLabel = styled.div`
-  font-size: 32px;
+  font-size: clamp(18px, 2.8vw, 32px);
   text-transform: uppercase;
   letter-spacing: 0.1em;
   color: #5d7079;
@@ -338,7 +480,7 @@ const CenterLabel = styled.div`
 `;
 
 const CenterValue = styled.div`
-  font-size: 56px;
+  font-size: clamp(28px, 5vw, 56px);
   line-height: 1;
   font-weight: 900;
   color: #1d2d33;
@@ -395,6 +537,39 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
   );
+
+  const [showSkeleton, setShowSkeleton] = useState(chartData.length === 0);
+
+  useEffect(() => {
+    let timeoutId: number;
+
+    if (chartData.length > 0) {
+      timeoutId = window.setTimeout(() => setShowSkeleton(false), 180);
+    } else {
+      setShowSkeleton(true);
+      timeoutId = window.setTimeout(() => setShowSkeleton(false), 1400);
+    }
+
+    return () => window.clearTimeout(timeoutId);
+  }, [chartData.length]);
+
+  if (showSkeleton) {
+    return (
+      <Container style={{ width, height }}>
+        <SkeletonWrap>
+          <SkeletonChartArea>
+            <SkeletonRing />
+          </SkeletonChartArea>
+          <SkeletonLegend>
+            <SkeletonLegendRow />
+            <SkeletonLegendRow />
+            <SkeletonLegendRow />
+            <SkeletonLegendRow />
+          </SkeletonLegend>
+        </SkeletonWrap>
+      </Container>
+    );
+  }
 
   const renderSliceLabel =
     (mode: 'pie' | 'donut') =>
