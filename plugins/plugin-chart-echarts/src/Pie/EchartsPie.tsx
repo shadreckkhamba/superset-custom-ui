@@ -333,7 +333,7 @@ const DonutTemplate = styled.div`
 
 const DonutChartWrap = styled.div`
   flex: 0 0 auto;
-  height: 60%;
+  height: 70%;
   min-height: 180px;
   width: 100%;
   display: flex;
@@ -583,7 +583,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         chartData[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
       const labelText = `${slicePercentage}%`;
       const radialStart = outerRadius;
-      const radialBend = outerRadius + (mode === 'pie' ? 10 : 12);
+      const radialBend = outerRadius + (mode === 'pie' ? 10 : 8);
       const labelPad = 7;
       const connectorStroke = mode === 'pie' ? 3 : 2;
       const connectorColor = 'var(--pie-connector-color)';
@@ -595,12 +595,13 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const chartWidth = cx * 2;
       const chartHeight = cy * 2;
       const safeX = mode === 'pie' ? 24 : 14;
-      const safeY = mode === 'pie' ? 12 : 10;
+      const safeY = mode === 'pie' ? 18 : 12;
       const estimatedLabelWidth = Math.max(36, fontSize * 0.62 * labelText.length);
+      const textHalfHeight = Math.max(9, fontSize * 0.52);
       const horizontalLen =
         mode === 'pie'
-          ? Math.max(18, Math.min(34, chartWidth * 0.1))
-          : Math.max(22, Math.min(46, chartWidth * 0.12));
+          ? Math.max(14, Math.min(28, chartWidth * 0.08))
+          : Math.max(12, Math.min(24, chartWidth * 0.08));
 
       const startX = cx + radialStart * cos;
       const startY = cy + radialStart * sin;
@@ -612,7 +613,9 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const endMinX = isRightSide ? safeX : edgeInset;
       const endMaxX = isRightSide ? chartWidth - edgeInset : chartWidth - safeX;
       const endX = Math.max(endMinX, Math.min(endMaxX, rawEndX));
-      const endY = Math.max(safeY, Math.min(chartHeight - safeY, bendY));
+      const yMin = safeY + textHalfHeight;
+      const yMax = chartHeight - safeY - textHalfHeight;
+      const endY = Math.max(yMin, Math.min(yMax, bendY));
 
       const rawTextX = endX + (isRightSide ? labelPad : -labelPad);
       const textMinX = isRightSide ? safeX : safeX + estimatedLabelWidth;
@@ -620,7 +623,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         ? chartWidth - safeX - estimatedLabelWidth
         : chartWidth - safeX;
       const textX = Math.max(textMinX, Math.min(textMaxX, rawTextX));
-      const textY = Math.max(safeY, Math.min(chartHeight - safeY, endY));
+      const textY = Math.max(yMin, Math.min(yMax, endY));
 
       const keyPrefix = mode === 'pie' ? 'label' : 'donut-label';
 
@@ -668,12 +671,12 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         <PieTemplate>
           <PieChartWrap>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 10, right: 52, bottom: 10, left: 52 }}>
+              <PieChart margin={{ top: 14, right: 64, bottom: 18, left: 30 }}>
                 <Pie
                   data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  outerRadius="76%"
+                  cx="46%"
+                  cy="48%"
+                  outerRadius="80%"
                   strokeWidth={0}
                   dataKey="value"
                   animationBegin={120}
@@ -733,13 +736,13 @@ export default function EchartsPie(props: PieChartTransformedProps) {
         <DonutTemplate>
           <DonutChartWrap>
             <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 8, right: 30, bottom: 8, left: 30 }}>
+              <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
                 <Pie
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius="56%"
-                  outerRadius="78%"
+                  innerRadius="62%"
+                  outerRadius="89%"
                   paddingAngle={1}
                   strokeWidth={0}
                   dataKey="value"
