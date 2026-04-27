@@ -135,15 +135,19 @@ export default function StayTimePie({
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const [legendRevealVersion, setLegendRevealVersion] = useState(0);
   const [componentWidth, setComponentWidth] = useState(0);
+  const [viewportWidth, setViewportWidth] = useState(0);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(
     null,
   );
   const chartRef = useRef<ChartJS<'doughnut'> | null>(null);
   const selectedSliceIndexesRef = useRef<number[]>([]);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
+  const filterMenuButtonRef = useRef<HTMLButtonElement | null>(null);
   const datePickerShellRef = useRef<HTMLDivElement | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [datePickerPopupStyle, setDatePickerPopupStyle] =
+    useState<React.CSSProperties>({});
+  const [filterMenuPopupStyle, setFilterMenuPopupStyle] =
     useState<React.CSSProperties>({});
   const todayKey = toDateKey(new Date());
   const selectedDateLabel = extendedDayjs(selectedDate).format('MMM D, YYYY');
@@ -183,10 +187,35 @@ export default function StayTimePie({
   }, []);
 
   useEffect(() => {
+    if (typeof window === 'undefined') {
+      return undefined;
+    }
+
+    const updateViewportWidth = () => {
+      setViewportWidth(window.innerWidth);
+    };
+
+    updateViewportWidth();
+    window.addEventListener('resize', updateViewportWidth);
+    return () => window.removeEventListener('resize', updateViewportWidth);
+  }, []);
+
+  useEffect(() => {
     if (!showFilterMenu) {
       setIsDatePickerOpen(false);
     }
   }, [showFilterMenu]);
+
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
+  const isViewportCompact = viewportWidth > 0 && viewportWidth <= 1100;
+  const isNarrowCardLayout =
+    !isExpanded && componentWidth > 0 && componentWidth <= 760;
+  const isCompactFilterLayout =
+    !isExpanded && componentWidth > 0 && componentWidth <= 420;
+  const shouldFloatFilterMenu =
+    isViewportCompact || isNarrowCardLayout || isCompactFilterLayout;
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined' || !showFilterMenu || !isDatePickerOpen) {
@@ -200,21 +229,27 @@ export default function StayTimePie({
       }
 
       const rect = shell.getBoundingClientRect();
+      const isCompactViewport = window.innerWidth < 1100;
       const gap = 12;
       const popupWidth = Math.min(
-        isExpanded ? 360 : 340,
+        isCompactViewport ? 300 : isExpanded ? 360 : 340,
         window.innerWidth - 24,
       );
-      const targetLeft = rect.right + gap;
       const maxLeft = window.innerWidth - popupWidth - 12;
-      const left = Math.max(12, Math.min(targetLeft, maxLeft));
-      const top = Math.max(12, rect.top);
+      const preferredLeft = isCompactViewport ? rect.left : rect.right + gap;
+      const left = Math.max(12, Math.min(preferredLeft, maxLeft));
+      const popupHeight = isCompactViewport ? 380 : 420;
+      const preferredTop = isCompactViewport ? rect.bottom + gap : rect.top;
+      const maxTop = window.innerHeight - popupHeight - 12;
+      const top = Math.max(12, Math.min(preferredTop, maxTop));
 
       setDatePickerPopupStyle({
         position: 'fixed',
         left: `${left}px`,
         top: `${top}px`,
         width: `${popupWidth}px`,
+        maxHeight: `calc(100vh - 24px)`,
+        overflowY: 'auto',
         margin: 0,
         transform: 'none',
         zIndex: 2000,
@@ -230,6 +265,49 @@ export default function StayTimePie({
       window.removeEventListener('scroll', updateDatePickerPosition, true);
     };
   }, [showFilterMenu, isDatePickerOpen, isExpanded]);
+
+  useLayoutEffect(() => {
+    if (
+      typeof window === 'undefined' ||
+      !showFilterMenu ||
+      !shouldFloatFilterMenu
+    ) {
+      setFilterMenuPopupStyle({});
+      return undefined;
+    }
+
+    const updateFilterMenuPosition = () => {
+      const button = filterMenuButtonRef.current;
+      if (!button) {
+        return;
+      }
+
+      const rect = button.getBoundingClientRect();
+      const left = Math.max(12, Math.min(rect.left, window.innerWidth - 230));
+      const top = Math.max(
+        12,
+        Math.min(rect.bottom + 10, window.innerHeight - 24),
+      );
+
+      setFilterMenuPopupStyle({
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        margin: 0,
+        transform: 'none',
+        zIndex: 1900,
+      });
+    };
+
+    updateFilterMenuPosition();
+    window.addEventListener('resize', updateFilterMenuPosition);
+    window.addEventListener('scroll', updateFilterMenuPosition, true);
+
+    return () => {
+      window.removeEventListener('resize', updateFilterMenuPosition);
+      window.removeEventListener('scroll', updateFilterMenuPosition, true);
+    };
+  }, [showFilterMenu, shouldFloatFilterMenu]);
 
   // Handle external refresh requests
   useEffect(() => {
@@ -825,14 +903,6 @@ export default function StayTimePie({
     }, 360);
   };
 
-  const isSlideshowMode =
-    typeof window !== 'undefined' &&
-    new URLSearchParams(window.location.search).get('slideshow') === '1';
-  const isNarrowCardLayout =
-    !isExpanded && componentWidth > 0 && componentWidth <= 760;
-  const isCompactFilterLayout =
-    !isExpanded && componentWidth > 0 && componentWidth <= 420;
-
   const expandedContentMinHeight = 'clamp(200px, 26vh, 300px)';
   const wrapperPadding = isExpanded ? '8px 10px' : '40px 35px';
   const infoBoxPadding = isExpanded ? '8px' : '25px';
@@ -1329,7 +1399,8 @@ export default function StayTimePie({
           minHeight: isExpanded || isNarrowCardLayout ? '0' : '520px',
           maxHeight: isExpanded || isNarrowCardLayout ? 'none' : '640px',
           position: 'relative',
-          overflow: isNarrowCardLayout ? 'visible' : 'hidden',
+          overflow:
+            isNarrowCardLayout || isViewportCompact ? 'visible' : 'hidden',
         }}
       >
         {/* Left - Info Box */}
@@ -1356,7 +1427,8 @@ export default function StayTimePie({
             gap: infoBoxContentGap,
             marginTop: '0',
             position: 'relative',
-            overflow: 'hidden',
+            overflow:
+              isNarrowCardLayout || isViewportCompact ? 'visible' : 'hidden',
             transition:
               'background-color 0.3s ease, box-shadow 0.3s ease, border-color 0.3s ease',
           }}
@@ -1408,6 +1480,7 @@ export default function StayTimePie({
             >
               <button
                 type="button"
+                ref={filterMenuButtonRef}
                 onClick={() => setShowFilterMenu(!showFilterMenu)}
                 style={{
                   display: 'inline-flex',
@@ -1478,12 +1551,12 @@ export default function StayTimePie({
               {/* Custom Filter Menu */}
               <div
                 style={{
-                  position: 'absolute',
-                  right: 0,
-                  top: isExpanded
-                    ? '44px'
-                    : isNarrowCardLayout
-                      ? '36px'
+                  position: shouldFloatFilterMenu ? 'fixed' : 'absolute',
+                  right: shouldFloatFilterMenu ? 'auto' : 0,
+                  top: shouldFloatFilterMenu
+                    ? 'auto'
+                    : isExpanded
+                      ? '44px'
                       : '52px',
                   background: isDarkMode
                     ? 'linear-gradient(160deg, rgba(20, 28, 38, 0.76) 0%, rgba(14, 20, 30, 0.62) 100%)'
@@ -1503,6 +1576,9 @@ export default function StayTimePie({
                   display: 'grid',
                   gap: isExpanded ? '6px' : '8px',
                   transformOrigin: 'top right',
+                  ...(shouldFloatFilterMenu && filterMenuPopupStyle
+                    ? filterMenuPopupStyle
+                    : {}),
                   opacity: showFilterMenu ? 1 : 0,
                   transform: showFilterMenu
                     ? 'translateY(0) scale(1)'
@@ -1664,7 +1740,9 @@ export default function StayTimePie({
                         return;
                       }
                       setSelectedSliceIndexes([]);
+                      setSelectedPeriod('Daily');
                       setSelectedDate(date.format('YYYY-MM-DD'));
+                      setIsDatePickerOpen(false);
                       setShowFilterMenu(false);
                     }}
                     placeholder="Pick a day"
@@ -1672,15 +1750,6 @@ export default function StayTimePie({
                       width: '100%',
                     }}
                   />
-                  <div
-                    style={{
-                      fontSize: isExpanded ? '10px' : '11px',
-                      lineHeight: 1.35,
-                      color: isDarkMode ? '#8fa5ba' : '#6f8096',
-                    }}
-                  >
-                    The chosen day anchors the daily, weekly, and monthly views.
-                  </div>
                 </div>
               </div>
             </div>
