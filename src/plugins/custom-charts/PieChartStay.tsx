@@ -1475,21 +1475,6 @@ export default function StayTimePie({
                   <FilterOutlined />
                 </span>
               </button>
-              <span
-                style={{
-                  fontSize: isExpanded ? '11px' : '12px',
-                  fontWeight: 600,
-                  color: isDarkMode ? '#9fb3c8' : '#61748a',
-                  textAlign: 'right',
-                  lineHeight: 1.2,
-                  maxWidth: isNarrowCardLayout ? '100%' : '240px',
-                }}
-              >
-                {isSelectedDateToday
-                  ? 'Reference day: today'
-                  : `Reference day: ${selectedDateLabel}`}
-              </span>
-
               {/* Custom Filter Menu */}
               <div
                 style={{
@@ -1638,7 +1623,7 @@ export default function StayTimePie({
                       color: isDarkMode ? '#a9bfd5' : '#5f7289',
                     }}
                   >
-                    Reference day
+                    Select date
                   </div>
                   <DatePicker
                     allowClear={false}
@@ -1660,7 +1645,7 @@ export default function StayTimePie({
                     panelRender={originPanel => (
                       <div className="pie-stay-reference-date-picker-popup-shell">
                         <div className="pie-stay-reference-date-picker-popup-header">
-                          <span>Reference day</span>
+                          <span>Select date</span>
                           <button
                             type="button"
                             aria-label="Close calendar"
@@ -2333,7 +2318,7 @@ export default function StayTimePie({
                   }}
                 >
                   Use the filter menu to switch between daily, weekly, and
-                  monthly views, and pick a reference day to anchor the data.
+                  monthly views, and pick a date to anchor the data.
                 </div>
               </div>
               <div style={{ display: 'grid', gap: '4px' }}>
