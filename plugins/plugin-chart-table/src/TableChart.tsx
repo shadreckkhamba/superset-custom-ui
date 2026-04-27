@@ -29,7 +29,6 @@ import {
   ChevronRight,
   Pause,
   Play,
-  X,
 } from 'lucide-react';
 
 function FluentPeopleCommunity20Filled(props: SVGProps<SVGSVGElement>) {
@@ -825,7 +824,6 @@ const AUTO_PAGE_DELAY_MS = 7000;
 const MAX_TOP_ITEMS_IN_TILE = 3;
 const TOP_LOCATIONS_LIMIT = 10;
 type OthersSortMode = 'visits_desc' | 'visits_asc' | 'name_asc' | 'name_desc';
-type OthersBandMode = 'all' | 'high' | 'medium' | 'low';
 
 export default function TableChart({
   data,
@@ -838,7 +836,6 @@ export default function TableChart({
   const [activeView, setActiveView] = useState<'top10' | 'others'>('top10');
   const [othersPage, setOthersPage] = useState(0);
   const [othersSortMode, setOthersSortMode] = useState<OthersSortMode>('visits_desc');
-  const [othersBandMode, setOthersBandMode] = useState<OthersBandMode>('all');
   // Get column names from data
   const columns = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -920,36 +917,14 @@ export default function TableChart({
     [aggregatedByLocation],
   );
 
-  const othersBandThresholds = useMemo(() => {
-    if (othersRows.length === 0) {
-      return { highMin: 0, mediumMin: 0 };
-    }
-    const valuesDesc = othersRows.map(item => item.visits).sort((a, b) => b - a);
-    const highCutIndex = Math.floor((valuesDesc.length - 1) / 3);
-    const mediumCutIndex = Math.floor((2 * (valuesDesc.length - 1)) / 3);
-    return {
-      highMin: valuesDesc[highCutIndex] ?? 0,
-      mediumMin: valuesDesc[mediumCutIndex] ?? 0,
-    };
-  }, [othersRows]);
-
   const filteredOthersRows = useMemo(() => {
-    const { highMin, mediumMin } = othersBandThresholds;
-    const bandFiltered = othersRows.filter(item => {
-      if (othersBandMode === 'high') return item.visits >= highMin;
-      if (othersBandMode === 'medium')
-        return item.visits < highMin && item.visits >= mediumMin;
-      if (othersBandMode === 'low') return item.visits < mediumMin;
-      return true;
-    });
-
-    return [...bandFiltered].sort((a, b) => {
+    return [...othersRows].sort((a, b) => {
       if (othersSortMode === 'visits_asc') return a.visits - b.visits;
       if (othersSortMode === 'name_asc') return a.location.localeCompare(b.location);
       if (othersSortMode === 'name_desc') return b.location.localeCompare(a.location);
       return b.visits - a.visits;
     });
-  }, [othersRows, othersBandThresholds, othersBandMode, othersSortMode]);
+  }, [othersRows, othersSortMode]);
 
   const othersTableRows = useMemo(() => {
     if (!labelColumn || !valueColumn) return [];
@@ -1011,7 +986,7 @@ export default function TableChart({
 
   useEffect(() => {
     setOthersPage(0);
-  }, [othersSortMode, othersBandMode]);
+  }, [othersSortMode]);
 
   const paginatedOthersData = useMemo(() => {
     if (othersTableRows.length === 0) return [];
@@ -1185,28 +1160,14 @@ export default function TableChart({
                         <option value="name_desc">Z-A</option>
                       </OthersFilterSelect>
                     </OthersFilterGroup>
-                    <OthersFilterGroup>
-                      <OthersFilterLabel htmlFor="others-band-inline">Visit band</OthersFilterLabel>
-                      <OthersFilterSelect
-                        id="others-band-inline"
-                        value={othersBandMode}
-                        onChange={event =>
-                          setOthersBandMode(event.target.value as OthersBandMode)
-                        }
-                      >
-                        <option value="all">All</option>
-                        <option value="high">High</option>
-                        <option value="medium">Medium</option>
-                        <option value="low">Low</option>
-                      </OthersFilterSelect>
-                    </OthersFilterGroup>
-                    <NavButton
+                    <OthersButton
                       type="button"
-                      aria-label="Back to Top 10 view"
+                      aria-label="Back to Top 10"
+                      title="Back to Top 10"
                       onClick={() => setActiveView('top10')}
                     >
-                      <X size={18} />
-                    </NavButton>
+                      Back to Top 10
+                    </OthersButton>
                   </>
                 )}
                 {(activeView === 'others' || activeTotalPages > 1) && (
