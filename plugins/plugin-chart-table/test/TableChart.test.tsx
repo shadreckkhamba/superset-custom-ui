@@ -17,13 +17,20 @@
  * under the License.
  */
 import '@testing-library/jest-dom';
-import { render, screen } from '@testing-library/react';
+import { fireEvent, render, screen } from '@testing-library/react';
 import { ThemeProvider, supersetTheme } from '@superset-ui/core';
 import TableChart from '../src/TableChart';
 import transformProps from '../src/transformProps';
 import DateWithFormatter from '../src/utils/DateWithFormatter';
 import testData from './testData';
 import { ProviderWrapper } from './testHelpers';
+
+const buildLocationRows = (names: string[]) =>
+  names.map((name, index) => ({
+    location: name,
+    patients: (names.length - index) * 10,
+    percentage: 0,
+  }));
 
 describe('plugin-chart-table', () => {
   describe('transformProps', () => {
@@ -266,6 +273,59 @@ describe('plugin-chart-table', () => {
     });
 
     describe('TableChart', () => {
+      it('splits data into Top 10 and Others bucket with expected count', () => {
+        const names = Array.from({ length: 12 }, (_, i) => `Loc ${i + 1}`);
+        render(
+          <ThemeProvider theme={supersetTheme}>
+            <TableChart data={buildLocationRows(names)} />
+          </ThemeProvider>,
+        );
+
+        expect(screen.getByText('Others (2)')).toBeInTheDocument();
+        expect(screen.getByText('Viewing: Top 10')).toBeInTheDocument();
+      });
+
+      it('renders Others in the same table with pagination and returns to Top 10', () => {
+        const names = Array.from({ length: 16 }, (_, i) => `Loc ${i + 1}`);
+        render(
+          <ThemeProvider theme={supersetTheme}>
+            <TableChart data={buildLocationRows(names)} />
+          </ThemeProvider>,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Show 6 locations in Others' }));
+        expect(screen.getByText('Viewing: Others')).toBeInTheDocument();
+        expect(screen.getByText('Page 1 / 2')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Next page' }));
+        expect(screen.getByText('Page 2 / 2')).toBeInTheDocument();
+
+        fireEvent.click(screen.getByRole('button', { name: 'Back to Top 10' }));
+        expect(screen.getByText('Viewing: Top 10')).toBeInTheDocument();
+      });
+
+      it('applies sort-by in Others view in real time', () => {
+        const topTen = Array.from({ length: 10 }, (_, i) => `Top ${i + 1}`);
+        const others = ['Zulu', 'Alpha', 'Mike', 'Bravo', 'Echo'];
+        const { container } = render(
+          <ThemeProvider theme={supersetTheme}>
+            <TableChart data={buildLocationRows([...topTen, ...others])} />
+          </ThemeProvider>,
+        );
+
+        fireEvent.click(screen.getByRole('button', { name: 'Show 5 locations in Others' }));
+
+        const firstCellText = () =>
+          container.querySelector('tbody tr td')?.textContent || '';
+
+        expect(firstCellText()).toContain('Zulu');
+
+        fireEvent.change(screen.getByLabelText('Sort by'), {
+          target: { value: 'name_asc' },
+        });
+        expect(firstCellText()).toContain('Alpha');
+      });
+
       it('render basic data', () => {
         render(
           <ThemeProvider theme={supersetTheme}>
