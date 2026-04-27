@@ -498,6 +498,7 @@ const ContentArea = styled.div`
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 `;
 
 const TableSection = styled.div`
@@ -505,6 +506,7 @@ const TableSection = styled.div`
   flex-direction: column;
   flex: 1;
   overflow: hidden;
+  min-width: 0;
 `;
 
 const SectionHeader = styled.div`
@@ -619,14 +621,22 @@ const OthersFilterSelect = styled.select`
 
 const DataTable = styled.div`
   flex: 1;
-  overflow: hidden;
+  overflow-x: hidden;
+  overflow-y: auto;
   max-height: none;
   transition: max-height 0.3s ease-in-out;
   min-width: 0;
-  scrollbar-width: none;
+  max-width: 100%;
+  scrollbar-width: thin;
 
   &::-webkit-scrollbar {
-    display: none;
+    width: 8px;
+    height: 8px;
+  }
+
+  &::-webkit-scrollbar-thumb {
+    background: var(--color-border);
+    border-radius: 8px;
   }
 `;
 
@@ -636,6 +646,7 @@ const Table = styled.table`
   font-size: clamp(14px, 2.2vw, 21px);
   height: 100%;
   table-layout: fixed;
+  max-width: 100%;
 `;
 
 const TableHead = styled.thead`
@@ -735,11 +746,20 @@ const LocationCell = styled.div`
   gap: 8px;
   font-size: clamp(14px, 2.1vw, 22px);
   font-weight: 600;
+  min-width: 0;
+  overflow: hidden;
 
   body.dark-theme &,
   [data-theme='dark'] & {
     color: #ffffff;
   }
+`;
+
+const LocationText = styled.span`
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const LocationDot = styled.span<{ color?: string }>`
@@ -754,11 +774,13 @@ const BarCell = styled.div`
   display: flex;
   align-items: center;
   gap: 8px;
+  min-width: 0;
 `;
 
 const BarContainer = styled.div`
   flex: 1;
   height: 10px;
+  min-width: 0;
   background: var(--color-border-light);
   border-radius: var(--radius-sm);
   overflow: hidden;
@@ -767,6 +789,28 @@ const BarContainer = styled.div`
   [data-theme='dark'] & {
     background: #1f3744;
   }
+`;
+
+const BarValue = styled.span`
+  font-weight: 700;
+  font-size: clamp(16px, 2vw, 22px);
+  min-width: 0;
+  max-width: 42%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  text-align: right;
+`;
+
+const PercentValue = styled.span`
+  display: inline-block;
+  max-width: 100%;
+  font-weight: 700;
+  font-size: clamp(16px, 2vw, 22px);
+  color: #0d9488;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
 `;
 
 const BarFill = styled.div<{ width: number; color?: string }>`
@@ -1003,8 +1047,8 @@ export default function TableChart({
   const dynamicHeight = useMemo(() => {
     const totalRows = activeView === 'others' ? othersTableRows.length : tableData.length;
     if (totalRows === 0) return 400;
-    const baseHeight = 200; // KPI banner + header
-    const rowHeight = 60; // Approximate height per row
+    const baseHeight = 220; // KPI banner + controls/header
+    const rowHeight = 70; // Slightly higher to prevent row clipping at larger font sizes
     const rowCount = Math.min(totalRows, ROWS_PER_PAGE);
     const calculatedHeight = baseHeight + (rowCount * rowHeight);
     return Math.max(300, calculatedHeight);
@@ -1270,21 +1314,21 @@ export default function TableChart({
                               {isLabel ? (
                                 <LocationCell>
                                   <LocationDot color={color} />
-                                  {String(value)}
+                                  <LocationText>{String(value)}</LocationText>
                                 </LocationCell>
                               ) : isNumeric && col === valueColumn ? (
                                 <BarCell>
                                   <BarContainer>
                                     <BarFill width={barWidth} color={color} />
                                   </BarContainer>
-                                  <span style={{ fontWeight: 700, fontSize: 22, minWidth: 70, textAlign: 'right' }}>
+                                  <BarValue title={Number(value).toLocaleString()}>
                                     {Number(value).toLocaleString()}
-                                  </span>
+                                  </BarValue>
                                 </BarCell>
                               ) : isPercent ? (
-                                <span style={{ fontWeight: 700, fontSize: 22, color: '#0d9488' }}>
+                                <PercentValue title={`${value}%`}>
                                   {value}%
-                                </span>
+                                </PercentValue>
                               ) : (
                                 String(value)
                               )}
