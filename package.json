@@ -120,7 +120,7 @@
     "@visx/responsive": "^3.0.0",
     "@visx/scale": "^3.5.0",
     "@visx/tooltip": "^3.0.0",
-    "@deck.gl/widgets": "^9.0.16",
+    "@deck.gl/widgets": "9.1.4",
     "@react-spring/web": "^9.7.4",
     "@visx/xychart": "^3.5.1",
     "abortcontroller-polyfill": "^1.7.8",
