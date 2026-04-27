@@ -587,7 +587,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const radialStart = outerRadius;
       const radialBend = outerRadius + (mode === 'pie' ? 10 : 8);
       const labelPad = 7;
-      const connectorStroke = mode === 'pie' ? 3 : 2;
+      const connectorStroke = mode === 'pie' ? 1.5 : 2;
       const connectorColor = 'var(--pie-connector-color)';
       const fontSize = Math.max(
         mode === 'pie' ? 20 : 22,
