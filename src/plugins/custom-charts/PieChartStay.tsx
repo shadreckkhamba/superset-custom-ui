@@ -1159,13 +1159,22 @@ export default function StayTimePie({
         .pie-stay-reference-date-picker.antd5-picker {
           width: 100% !important;
           min-width: 0 !important;
-          border-radius: 18px !important;
-          border: 1px solid rgba(24, 144, 255, 0.18) !important;
-          background: linear-gradient(135deg, rgba(255, 255, 255, 0.88) 0%, rgba(242, 249, 255, 0.76) 100%) !important;
-          box-shadow: 0 10px 24px rgba(24, 144, 255, 0.08), inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
-          backdrop-filter: blur(12px) saturate(160%) !important;
-          -webkit-backdrop-filter: blur(12px) saturate(160%) !important;
-          transition: transform 180ms ease, box-shadow 220ms ease, border-color 220ms ease, background 220ms ease !important;
+          height: 42px !important;
+          border-radius: 999px !important;
+          border: 1px solid rgba(24, 144, 255, 0.16) !important;
+          background:
+            linear-gradient(180deg, rgba(255, 255, 255, 0.98) 0%, rgba(246, 250, 255, 0.9) 100%) !important;
+          box-shadow:
+            0 8px 20px rgba(24, 144, 255, 0.08),
+            inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+          backdrop-filter: blur(14px) saturate(170%) !important;
+          -webkit-backdrop-filter: blur(14px) saturate(170%) !important;
+          transition:
+            transform 180ms ease,
+            box-shadow 220ms ease,
+            border-color 220ms ease,
+            background 220ms ease,
+            filter 220ms ease !important;
         }
 
         [data-theme='dark'] .pie-stay-reference-date-picker.ant-picker,
@@ -1178,30 +1187,60 @@ export default function StayTimePie({
         .pie-stay-reference-date-picker.ant-picker:hover,
         .pie-stay-reference-date-picker.antd5-picker:hover {
           transform: translateY(-1px);
-          border-color: rgba(24, 144, 255, 0.34) !important;
-          box-shadow: 0 14px 30px rgba(24, 144, 255, 0.12), inset 0 1px 0 rgba(255, 255, 255, 0.95) !important;
+          border-color: rgba(24, 144, 255, 0.3) !important;
+          box-shadow:
+            0 12px 26px rgba(24, 144, 255, 0.12),
+            inset 0 1px 0 rgba(255, 255, 255, 0.96) !important;
+          filter: saturate(1.04);
         }
 
         .pie-stay-reference-date-picker.ant-picker-focused,
         .pie-stay-reference-date-picker.antd5-picker-focused,
         .pie-stay-reference-date-picker.ant-picker.ant-picker-focused {
-          border-color: rgba(24, 144, 255, 0.55) !important;
-          box-shadow: 0 0 0 4px rgba(24, 144, 255, 0.14), 0 16px 32px rgba(24, 144, 255, 0.18) !important;
+          border-color: rgba(24, 144, 255, 0.58) !important;
+          box-shadow:
+            0 0 0 4px rgba(24, 144, 255, 0.12),
+            0 18px 34px rgba(24, 144, 255, 0.16) !important;
         }
 
         .pie-stay-reference-date-picker .ant-picker-input > input,
         .pie-stay-reference-date-picker .antd5-picker-input > input {
           font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'SF Pro Display', 'Segoe UI', sans-serif !important;
           font-weight: 700 !important;
+          font-size: 13px !important;
           letter-spacing: 0.01em !important;
-          color: inherit !important;
+          line-height: 1 !important;
+          min-width: 0 !important;
+          padding: 0 0 0 2px !important;
+          color: #4d6078 !important;
           background: transparent !important;
+        }
+
+        [data-theme='dark'] .pie-stay-reference-date-picker .ant-picker-input > input,
+        [data-theme='dark'] .pie-stay-reference-date-picker .antd5-picker-input > input {
+          color: rgba(235, 242, 250, 0.92) !important;
         }
 
         .pie-stay-reference-date-picker .ant-picker-suffix,
         .pie-stay-reference-date-picker .antd5-picker-suffix {
+          width: 24px !important;
+          height: 24px !important;
+          margin-left: 10px !important;
+          border-radius: 999px !important;
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.12) 0%, rgba(24, 144, 255, 0.08) 100%) !important;
           color: #1890ff !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.9) !important;
           opacity: 1 !important;
+        }
+
+        .pie-stay-reference-date-picker.ant-picker:hover .ant-picker-suffix,
+        .pie-stay-reference-date-picker.antd5-picker:hover .antd5-picker-suffix,
+        .pie-stay-reference-date-picker.ant-picker-focused .ant-picker-suffix,
+        .pie-stay-reference-date-picker.antd5-picker-focused .antd5-picker-suffix {
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.18) 0%, rgba(24, 144, 255, 0.12) 100%) !important;
         }
 
         .pie-stay-reference-date-picker-dropdown {
@@ -1246,25 +1285,25 @@ export default function StayTimePie({
           align-items: center;
           justify-content: space-between;
           gap: 12px;
-          padding: 12px 14px 10px 14px;
-          border-bottom: 1px solid rgba(60, 60, 67, 0.10);
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 248, 250, 0.72) 100%);
-          color: rgba(60, 60, 67, 0.72);
-          font-size: 12px;
+          padding: 13px 14px 11px 14px;
+          border-bottom: 1px solid rgba(60, 60, 67, 0.08);
+          background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 248, 250, 0.78) 100%);
+          color: rgba(60, 60, 67, 0.68);
+          font-size: 11px;
           font-weight: 600;
-          letter-spacing: 0;
+          letter-spacing: 0.04em;
           text-transform: none;
         }
 
         [data-theme='dark'] .pie-stay-reference-date-picker-popup-header {
           border-bottom-color: rgba(255, 255, 255, 0.08);
-          background: linear-gradient(180deg, rgba(32, 32, 34, 0.98) 0%, rgba(24, 24, 26, 0.92) 100%);
-          color: rgba(235, 235, 245, 0.72);
+          background: linear-gradient(180deg, rgba(32, 32, 34, 0.98) 0%, rgba(24, 24, 26, 0.94) 100%);
+          color: rgba(235, 235, 245, 0.7);
         }
 
         .pie-stay-reference-date-picker-popup-close {
-          width: 20px;
-          height: 20px;
+          width: 22px;
+          height: 22px;
           border-radius: 999px;
           border: none;
           background: rgba(120, 120, 128, 0.14);
@@ -1302,7 +1341,7 @@ export default function StayTimePie({
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container {
-          border-radius: 24px !important;
+          border-radius: 20px !important;
           overflow: hidden !important;
           border: 1px solid rgba(60, 60, 67, 0.12) !important;
           background: linear-gradient(160deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 251, 0.94) 100%) !important;
@@ -1322,8 +1361,81 @@ export default function StayTimePie({
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
           padding: 12px 14px 8px !important;
           border-bottom: 1px solid rgba(60, 60, 67, 0.08) !important;
-          border-radius: 24px 24px 0 0 !important;
+          border-radius: 20px 20px 0 0 !important;
           background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 248, 250, 0.64) 100%) !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
+          width: 28px !important;
+          height: 28px !important;
+          border-radius: 999px !important;
+          border: 1px solid rgba(24, 144, 255, 0.14) !important;
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.10) 0%, rgba(24, 144, 255, 0.04) 100%) !important;
+          color: #1890ff !important;
+          display: inline-flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+          transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:hover {
+          transform: translateY(-1px);
+          border-color: rgba(24, 144, 255, 0.28) !important;
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.16) 0%, rgba(24, 144, 255, 0.10) 100%) !important;
+          box-shadow: 0 8px 18px rgba(24, 144, 255, 0.14) !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:active,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn:active,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn:active,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn:active,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn:active,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:active,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:active,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:active {
+          transform: translateY(0);
+          box-shadow: 0 4px 10px rgba(24, 144, 255, 0.10) !important;
+        }
+
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
+          border-color: rgba(24, 144, 255, 0.24) !important;
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.18) 0%, rgba(24, 144, 255, 0.10) 100%) !important;
+          color: #46a6ff !important;
+          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+        }
+
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:hover {
+          border-color: rgba(70, 166, 255, 0.38) !important;
+          background: linear-gradient(180deg, rgba(24, 144, 255, 0.24) 0%, rgba(24, 144, 255, 0.14) 100%) !important;
+          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-body,
@@ -1671,32 +1783,30 @@ export default function StayTimePie({
                   ref={datePickerShellRef}
                   style={{
                     display: 'grid',
-                    gap: '6px',
+                    gap: '8px',
                     marginTop: isExpanded ? '4px' : '6px',
-                    paddingTop: isExpanded ? '8px' : '10px',
-                    paddingLeft: '2px',
-                    paddingRight: '2px',
-                    paddingBottom: isExpanded ? '4px' : '6px',
+                    padding: isExpanded ? '12px 12px 11px' : '13px 13px 12px',
                     borderTop: isDarkMode
                       ? '1px solid rgba(255, 255, 255, 0.08)'
                       : '1px solid rgba(24, 144, 255, 0.10)',
-                    borderRadius: '18px',
+                    borderRadius: '22px',
                     background: isDarkMode
-                      ? 'linear-gradient(160deg, rgba(15, 22, 31, 0.58) 0%, rgba(24, 31, 42, 0.34) 100%)'
-                      : 'linear-gradient(160deg, rgba(255, 255, 255, 0.72) 0%, rgba(246, 249, 255, 0.54) 100%)',
+                      ? 'linear-gradient(160deg, rgba(15, 22, 31, 0.72) 0%, rgba(24, 31, 42, 0.44) 100%)'
+                      : 'linear-gradient(160deg, rgba(255, 255, 255, 0.86) 0%, rgba(246, 249, 255, 0.66) 100%)',
                     boxShadow: isDarkMode
-                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 10px 22px rgba(0, 0, 0, 0.14)'
-                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.9), 0 10px 22px rgba(24, 144, 255, 0.08)',
-                    backdropFilter: 'blur(14px) saturate(170%)',
-                    WebkitBackdropFilter: 'blur(14px) saturate(170%)',
+                      ? 'inset 0 1px 0 rgba(255, 255, 255, 0.06), 0 12px 26px rgba(0, 0, 0, 0.18)'
+                      : 'inset 0 1px 0 rgba(255, 255, 255, 0.92), 0 12px 26px rgba(24, 144, 255, 0.08)',
+                    backdropFilter: 'blur(16px) saturate(175%)',
+                    WebkitBackdropFilter: 'blur(16px) saturate(175%)',
                   }}
                 >
                   <div
                     style={{
-                      fontSize: isExpanded ? '11px' : '12px',
+                      fontSize: isExpanded ? '10px' : '11px',
                       fontWeight: 700,
-                      letterSpacing: '0.02em',
-                      color: isDarkMode ? '#a9bfd5' : '#5f7289',
+                      letterSpacing: '0.08em',
+                      textTransform: 'uppercase',
+                      color: isDarkMode ? '#9fb4c9' : '#6a7d93',
                     }}
                   >
                     Select date
