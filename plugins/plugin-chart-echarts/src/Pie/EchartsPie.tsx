@@ -356,13 +356,15 @@ const DonutLegend = styled.div`
   width: 100%;
   min-width: 0;
   padding: 0 2px 6px;
-  overflow-y: hidden;
+  overflow-y: auto;
   box-sizing: border-box;
 
   @media (max-width: 1200px) {
     grid-template-columns: 1fr;
     max-width: 100%;
   }
+
+  scrollbar-width: thin;
 `;
 
 const DonutLegendRow = styled.div`
@@ -741,8 +743,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                   data={chartData}
                   cx="50%"
                   cy="50%"
-                  innerRadius="62%"
-                  outerRadius="89%"
+                  innerRadius="63%"
+                  outerRadius="90%"
                   paddingAngle={1}
                   strokeWidth={0}
                   dataKey="value"
