@@ -29,6 +29,7 @@ import {
   ChevronRight,
   Pause,
   Play,
+  X,
 } from 'lucide-react';
 
 function FluentPeopleCommunity20Filled(props: SVGProps<SVGSVGElement>) {
@@ -274,7 +275,7 @@ const KPIBanner = styled.div`
   box-sizing: border-box;
   min-width: 0;
 
-  body.dark-theme &,
+  body.dark-theme &,s
   [data-theme='dark'] & {
     background: linear-gradient(135deg, #111111 0%, #0a0a0a 100%);
     border-bottom-color: #1f3744;
@@ -569,6 +570,54 @@ const NavButton = styled.button`
   }
 `;
 
+const OthersButton = styled.button`
+  height: 38px;
+  border-radius: 999px;
+  border: 1px solid var(--color-border);
+  background: rgba(13, 148, 136, 0.1);
+  color: var(--color-primary-dark);
+  padding: 0 14px;
+  font-size: 14px;
+  font-weight: 700;
+  cursor: pointer;
+  transition: all var(--transition-fast);
+
+  &:hover {
+    background: rgba(13, 148, 136, 0.16);
+    transform: translateY(-1px);
+  }
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    border-color: #1f3744;
+    background: rgba(20, 184, 166, 0.16);
+    color: #c9f7f2;
+  }
+`;
+
+const OthersFilterGroup = styled.div`
+  display: flex;
+  align-items: center;
+  gap: 8px;
+`;
+
+const OthersFilterLabel = styled.label`
+  font-size: 13px;
+  font-weight: 700;
+  color: var(--color-text-secondary);
+`;
+
+const OthersFilterSelect = styled.select`
+  height: 32px;
+  border: 1px solid var(--color-border);
+  border-radius: var(--radius-sm);
+  background: var(--color-bg-card);
+  color: var(--color-text-primary);
+  padding: 0 10px;
+  font-size: 13px;
+  font-weight: 600;
+`;
+
 const DataTable = styled.div`
   flex: 1;
   overflow: hidden;
@@ -771,9 +820,12 @@ const locationColors = [
   '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
 ];
 
-const ROWS_PER_PAGE = 5;
+const ROWS_PER_PAGE = 4;
 const AUTO_PAGE_DELAY_MS = 7000;
 const MAX_TOP_ITEMS_IN_TILE = 3;
+const TOP_LOCATIONS_LIMIT = 10;
+type OthersSortMode = 'visits_desc' | 'visits_asc' | 'name_asc' | 'name_desc';
+type OthersBandMode = 'all' | 'high' | 'medium' | 'low';
 
 export default function TableChart({
   data,
@@ -783,39 +835,10 @@ export default function TableChart({
   const [currentPage, setCurrentPage] = useState(0);
   const [isAutoRotatePaused, setIsAutoRotatePaused] = useState(false);
   const [showSkeleton, setShowSkeleton] = useState(!data || data.length === 0);
-
-  const totalPages = useMemo(() => {
-    if (!data || data.length === 0) return 1;
-    return Math.ceil(data.length / ROWS_PER_PAGE);
-  }, [data]);
-
-  useEffect(() => {
-    if (totalPages <= 1 || isAutoRotatePaused) return;
-    const interval = setInterval(() => {
-      setCurrentPage(prev => (prev + 1) % totalPages);
-    }, AUTO_PAGE_DELAY_MS);
-    return () => clearInterval(interval);
-  }, [totalPages, isAutoRotatePaused]);
-
-  const paginatedData = useMemo(() => {
-    if (!data || data.length === 0) return [];
-    const start = currentPage * ROWS_PER_PAGE;
-    return data.slice(start, start + ROWS_PER_PAGE);
-  }, [data, currentPage]);
-
-  // Calculate dynamic height based on data
-  const dynamicHeight = useMemo(() => {
-    if (!data || data.length === 0) return 400;
-    const baseHeight = 200; // KPI banner + header
-    const rowHeight = 60; // Approximate height per row
-    // Pagination renders a fixed row window, so height should not scale with total dataset size.
-    const rowCount = Math.min(data.length, ROWS_PER_PAGE);
-    const calculatedHeight = baseHeight + (rowCount * rowHeight);
-    return Math.max(300, calculatedHeight);
-  }, [data]);
-
-  // Use provided height if available, otherwise use dynamic height
-  const containerHeight = height || dynamicHeight;
+  const [activeView, setActiveView] = useState<'top10' | 'others'>('top10');
+  const [othersPage, setOthersPage] = useState(0);
+  const [othersSortMode, setOthersSortMode] = useState<OthersSortMode>('visits_desc');
+  const [othersBandMode, setOthersBandMode] = useState<OthersBandMode>('all');
   // Get column names from data
   const columns = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -852,30 +875,186 @@ export default function TableChart({
     return numericColumns[1];
   }, [numericColumns]);
 
+  const aggregatedByLocation = useMemo(() => {
+    if (!data || data.length === 0 || !labelColumn || !valueColumn) return [];
+
+    const grouped = new Map<string, number>();
+    data.forEach(row => {
+      const location = String(row[labelColumn] ?? 'Unknown');
+      const visits = Number(row[valueColumn]) || 0;
+      grouped.set(location, (grouped.get(location) || 0) + visits);
+    });
+
+    return Array.from(grouped.entries())
+      .map(([location, visits]) => ({ location, visits }))
+      .sort((a, b) => b.visits - a.visits);
+  }, [data, labelColumn, valueColumn]);
+
+  const totalVisits = useMemo(
+    () => aggregatedByLocation.reduce((sum, item) => sum + item.visits, 0),
+    [aggregatedByLocation],
+  );
+
+  const topLocationRows = useMemo(() => {
+    if (aggregatedByLocation.length === 0 || !labelColumn || !valueColumn) return [];
+
+    const emptyRow = columns.reduce<Record<string, unknown>>((acc, col) => {
+      acc[col] = '';
+      return acc;
+    }, {});
+
+    return aggregatedByLocation.slice(0, TOP_LOCATIONS_LIMIT).map(item => {
+      const row = { ...emptyRow };
+      row[labelColumn] = item.location;
+      row[valueColumn] = item.visits;
+      if (percentColumn) {
+        const percent = totalVisits > 0 ? (item.visits / totalVisits) * 100 : 0;
+        row[percentColumn] = Number(percent.toFixed(1));
+      }
+      return row as DataRecord;
+    });
+  }, [aggregatedByLocation, columns, labelColumn, valueColumn, percentColumn, totalVisits]);
+
+  const othersRows = useMemo(
+    () => aggregatedByLocation.slice(TOP_LOCATIONS_LIMIT),
+    [aggregatedByLocation],
+  );
+
+  const othersBandThresholds = useMemo(() => {
+    if (othersRows.length === 0) {
+      return { highMin: 0, mediumMin: 0 };
+    }
+    const valuesDesc = othersRows.map(item => item.visits).sort((a, b) => b - a);
+    const highCutIndex = Math.floor((valuesDesc.length - 1) / 3);
+    const mediumCutIndex = Math.floor((2 * (valuesDesc.length - 1)) / 3);
+    return {
+      highMin: valuesDesc[highCutIndex] ?? 0,
+      mediumMin: valuesDesc[mediumCutIndex] ?? 0,
+    };
+  }, [othersRows]);
+
+  const filteredOthersRows = useMemo(() => {
+    const { highMin, mediumMin } = othersBandThresholds;
+    const bandFiltered = othersRows.filter(item => {
+      if (othersBandMode === 'high') return item.visits >= highMin;
+      if (othersBandMode === 'medium')
+        return item.visits < highMin && item.visits >= mediumMin;
+      if (othersBandMode === 'low') return item.visits < mediumMin;
+      return true;
+    });
+
+    return [...bandFiltered].sort((a, b) => {
+      if (othersSortMode === 'visits_asc') return a.visits - b.visits;
+      if (othersSortMode === 'name_asc') return a.location.localeCompare(b.location);
+      if (othersSortMode === 'name_desc') return b.location.localeCompare(a.location);
+      return b.visits - a.visits;
+    });
+  }, [othersRows, othersBandThresholds, othersBandMode, othersSortMode]);
+
+  const othersTableRows = useMemo(() => {
+    if (!labelColumn || !valueColumn) return [];
+    const emptyRow = columns.reduce<Record<string, unknown>>((acc, col) => {
+      acc[col] = '';
+      return acc;
+    }, {});
+
+    return filteredOthersRows.map(item => {
+      const row = { ...emptyRow };
+      row[labelColumn] = item.location;
+      row[valueColumn] = item.visits;
+      if (percentColumn) {
+        const percent = totalVisits > 0 ? (item.visits / totalVisits) * 100 : 0;
+        row[percentColumn] = Number(percent.toFixed(1));
+      }
+      return row as DataRecord;
+    });
+  }, [columns, filteredOthersRows, labelColumn, valueColumn, percentColumn, totalVisits]);
+
+  const tableData = useMemo(() => {
+    if (topLocationRows.length > 0) return topLocationRows;
+    return data || [];
+  }, [topLocationRows, data]);
+
+  const topTotalPages = useMemo(() => {
+    if (tableData.length === 0) return 1;
+    return Math.ceil(tableData.length / ROWS_PER_PAGE);
+  }, [tableData]);
+
+  useEffect(() => {
+    if (activeView !== 'top10' || topTotalPages <= 1 || isAutoRotatePaused) return;
+    const interval = setInterval(() => {
+      setCurrentPage(prev => (prev + 1) % topTotalPages);
+    }, AUTO_PAGE_DELAY_MS);
+    return () => clearInterval(interval);
+  }, [activeView, topTotalPages, isAutoRotatePaused]);
+
+  useEffect(() => {
+    if (currentPage < topTotalPages) return;
+    setCurrentPage(0);
+  }, [currentPage, topTotalPages]);
+
+  const paginatedTopData = useMemo(() => {
+    if (tableData.length === 0) return [];
+    const start = currentPage * ROWS_PER_PAGE;
+    return tableData.slice(start, start + ROWS_PER_PAGE);
+  }, [tableData, currentPage]);
+
+  const othersTotalPages = useMemo(() => {
+    if (othersTableRows.length === 0) return 1;
+    return Math.ceil(othersTableRows.length / ROWS_PER_PAGE);
+  }, [othersTableRows]);
+
+  useEffect(() => {
+    if (othersPage < othersTotalPages) return;
+    setOthersPage(0);
+  }, [othersPage, othersTotalPages]);
+
+  useEffect(() => {
+    setOthersPage(0);
+  }, [othersSortMode, othersBandMode]);
+
+  const paginatedOthersData = useMemo(() => {
+    if (othersTableRows.length === 0) return [];
+    const start = othersPage * ROWS_PER_PAGE;
+    return othersTableRows.slice(start, start + ROWS_PER_PAGE);
+  }, [othersTableRows, othersPage]);
+
+  const activeRows = activeView === 'others' ? paginatedOthersData : paginatedTopData;
+  const activePage = activeView === 'others' ? othersPage : currentPage;
+  const activeTotalPages = activeView === 'others' ? othersTotalPages : topTotalPages;
+  const activeBarDataset = activeView === 'others' ? othersTableRows : tableData;
+
+  // Calculate dynamic height based on data
+  const dynamicHeight = useMemo(() => {
+    const totalRows = activeView === 'others' ? othersTableRows.length : tableData.length;
+    if (totalRows === 0) return 400;
+    const baseHeight = 200; // KPI banner + header
+    const rowHeight = 60; // Approximate height per row
+    const rowCount = Math.min(totalRows, ROWS_PER_PAGE);
+    const calculatedHeight = baseHeight + (rowCount * rowHeight);
+    return Math.max(300, calculatedHeight);
+  }, [activeView, othersTableRows.length, tableData.length]);
+
+  // Use provided height if available, otherwise use dynamic height
+  const containerHeight = height || dynamicHeight;
+
   // Calculate KPI values
   const kpiValues = useMemo(() => {
-    if (!data || data.length === 0) {
+    if (aggregatedByLocation.length === 0) {
       return { total: 0, count: 0, average: 0, topItems: 'N/A', topItemsDisplay: 'N/A' };
     }
-    
-    const total = data.reduce((sum, row) => {
-      const value = Number(row[valueColumn]) || 0;
-      return sum + value;
-    }, 0);
-    
-    const count = data.length;
+
+    const total = aggregatedByLocation.reduce((sum, item) => sum + item.visits, 0);
+    const count = aggregatedByLocation.length;
     const average = count > 0 ? Math.round(total / count) : 0;
 
-    const maxValue = data.reduce((max, row) => {
-      const currentValue = Number(row[valueColumn]) || 0;
-      return Math.max(max, currentValue);
-    }, Number.NEGATIVE_INFINITY);
+    const maxValue = aggregatedByLocation[0]?.visits ?? 0;
 
     const tiedTopItems = Array.from(
       new Set(
-        data
-          .filter(row => (Number(row[valueColumn]) || 0) === maxValue)
-          .map(row => String(row[labelColumn] || 'N/A')),
+        aggregatedByLocation
+          .filter(item => item.visits === maxValue)
+          .map(item => item.location),
       ),
     );
 
@@ -888,13 +1067,13 @@ export default function TableChart({
       : topItems;
 
     return { total, count, average, topItems, topItemsDisplay };
-  }, [data, valueColumn, labelColumn]);
+  }, [aggregatedByLocation]);
 
   // Calculate max value for bar chart
   const maxBarValue = useMemo(() => {
-    if (!data || data.length === 0 || !valueColumn) return 0;
-    return Math.max(...data.map(row => Number(row[valueColumn]) || 0));
-  }, [data, valueColumn]);
+    if (activeBarDataset.length === 0 || !valueColumn) return 0;
+    return Math.max(...activeBarDataset.map(row => Number(row[valueColumn]) || 0));
+  }, [activeBarDataset, valueColumn]);
 
   useEffect(() => {
     let timeoutId: number;
@@ -975,49 +1154,116 @@ export default function TableChart({
         {/* Table Section */}
         <TableSection>
           <SectionHeader>
-            {totalPages > 1 && (
+            {(othersRows.length > 0 || activeTotalPages > 1 || activeView === 'others') && (
               <HeaderControls>
-                <PageMeta>
-                  Page {currentPage + 1} / {totalPages}
-                </PageMeta>
-                <NavButton
-                  type="button"
-                  aria-label="Previous page"
-                  onClick={() =>
-                    setCurrentPage(prev => (prev - 1 + totalPages) % totalPages)
-                  }
-                >
-                  <ChevronLeft size={18} />
-                </NavButton>
-                <NavButton
-                  type="button"
-                  aria-label={
-                    isAutoRotatePaused
-                      ? 'Resume auto pagination'
-                      : 'Pause auto pagination'
-                  }
-                  title={
-                    isAutoRotatePaused
-                      ? 'Resume auto pagination'
-                      : 'Pause auto pagination'
-                  }
-                  onClick={() =>
-                    setIsAutoRotatePaused(prevPaused => !prevPaused)
-                  }
-                >
-                  {isAutoRotatePaused ? (
-                    <Play size={18} />
-                  ) : (
-                    <Pause size={18} />
-                  )}
-                </NavButton>
-                <NavButton
-                  type="button"
-                  aria-label="Next page"
-                  onClick={() => setCurrentPage(prev => (prev + 1) % totalPages)}
-                >
-                  <ChevronRight size={18} />
-                </NavButton>
+                {activeView === 'top10' && othersRows.length > 0 && (
+                  <OthersButton
+                    type="button"
+                    aria-label={`Show ${othersRows.length} locations in Others`}
+                    onClick={() => {
+                      setOthersPage(0);
+                      setActiveView('others');
+                    }}
+                  >
+                    Others ({othersRows.length})
+                  </OthersButton>
+                )}
+                {activeView === 'others' && (
+                  <>
+                    <OthersFilterGroup>
+                      <OthersFilterLabel htmlFor="others-sort-inline">Sort by</OthersFilterLabel>
+                      <OthersFilterSelect
+                        id="others-sort-inline"
+                        value={othersSortMode}
+                        onChange={event =>
+                          setOthersSortMode(event.target.value as OthersSortMode)
+                        }
+                      >
+                        <option value="visits_desc">Highest visits</option>
+                        <option value="visits_asc">Lowest visits</option>
+                        <option value="name_asc">A-Z</option>
+                        <option value="name_desc">Z-A</option>
+                      </OthersFilterSelect>
+                    </OthersFilterGroup>
+                    <OthersFilterGroup>
+                      <OthersFilterLabel htmlFor="others-band-inline">Visit band</OthersFilterLabel>
+                      <OthersFilterSelect
+                        id="others-band-inline"
+                        value={othersBandMode}
+                        onChange={event =>
+                          setOthersBandMode(event.target.value as OthersBandMode)
+                        }
+                      >
+                        <option value="all">All</option>
+                        <option value="high">High</option>
+                        <option value="medium">Medium</option>
+                        <option value="low">Low</option>
+                      </OthersFilterSelect>
+                    </OthersFilterGroup>
+                    <NavButton
+                      type="button"
+                      aria-label="Back to Top 10 view"
+                      onClick={() => setActiveView('top10')}
+                    >
+                      <X size={18} />
+                    </NavButton>
+                  </>
+                )}
+                {(activeView === 'others' || activeTotalPages > 1) && (
+                  <>
+                    <PageMeta>
+                      Page {activePage + 1} / {activeTotalPages}
+                    </PageMeta>
+                    <NavButton
+                      type="button"
+                      aria-label="Previous page"
+                      disabled={activeTotalPages <= 1}
+                      onClick={() =>
+                        activeView === 'others'
+                          ? setOthersPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
+                          : setCurrentPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
+                      }
+                    >
+                      <ChevronLeft size={18} />
+                    </NavButton>
+                    {activeView === 'top10' && (
+                      <NavButton
+                        type="button"
+                        aria-label={
+                          isAutoRotatePaused
+                            ? 'Resume auto pagination'
+                            : 'Pause auto pagination'
+                        }
+                        title={
+                          isAutoRotatePaused
+                            ? 'Resume auto pagination'
+                            : 'Pause auto pagination'
+                        }
+                        onClick={() =>
+                          setIsAutoRotatePaused(prevPaused => !prevPaused)
+                        }
+                      >
+                        {isAutoRotatePaused ? (
+                          <Play size={18} />
+                        ) : (
+                          <Pause size={18} />
+                        )}
+                      </NavButton>
+                    )}
+                    <NavButton
+                      type="button"
+                      aria-label="Next page"
+                      disabled={activeTotalPages <= 1}
+                      onClick={() =>
+                        activeView === 'others'
+                          ? setOthersPage(prev => (prev + 1) % activeTotalPages)
+                          : setCurrentPage(prev => (prev + 1) % activeTotalPages)
+                      }
+                    >
+                      <ChevronRight size={18} />
+                    </NavButton>
+                  </>
+                )}
               </HeaderControls>
             )}
           </SectionHeader>
@@ -1031,50 +1277,63 @@ export default function TableChart({
                 </tr>
               </TableHead>
               <TableBody>
-                {paginatedData.map((row, rowIndex) => {
-                  const globalIndex = currentPage * ROWS_PER_PAGE + rowIndex;
-                  const barWidth = maxBarValue > 0 && valueColumn
-                    ? (Number(row[valueColumn]) / maxBarValue) * 100
-                    : 0;
-                  const color = locationColors[globalIndex % locationColors.length];
-                  
-                  return (
-                    <TableRow key={rowIndex}>
-                      {columns.map((col, colIndex) => {
-                        const value = row[col];
-                        const isNumeric = numericColumns.includes(col);
-                        const isLabel = col === labelColumn;
-                        const isPercent = col === percentColumn;
-                        
-                        return (
-                          <TableCell key={colIndex} colIndex={colIndex}>
-                            {isLabel ? (
-                              <LocationCell>
-                                <LocationDot color={color} />
-                                {String(value)}
-                              </LocationCell>
-                            ) : isNumeric && col === valueColumn ? (
-                              <BarCell>
-                                <BarContainer>
-                                  <BarFill width={barWidth} color={color} />
-                                </BarContainer>
-                                <span style={{ fontWeight: 700, fontSize: 22, minWidth: 70, textAlign: 'right' }}>
-                                  {Number(value).toLocaleString()}
+                {activeRows.length === 0 ? (
+                  <TableRow>
+                    <TableCell colIndex={0} style={{ textAlign: 'left' }}>
+                      {activeView === 'others'
+                        ? 'No locations match the selected filters.'
+                        : 'No data available.'}
+                    </TableCell>
+                    {columns.slice(1).map((_, colIndex) => (
+                      <TableCell key={colIndex + 1} colIndex={colIndex + 1} />
+                    ))}
+                  </TableRow>
+                ) : (
+                  activeRows.map((row, rowIndex) => {
+                    const globalIndex = activePage * ROWS_PER_PAGE + rowIndex;
+                    const barWidth = maxBarValue > 0 && valueColumn
+                      ? (Number(row[valueColumn]) / maxBarValue) * 100
+                      : 0;
+                    const color = locationColors[globalIndex % locationColors.length];
+
+                    return (
+                      <TableRow key={rowIndex}>
+                        {columns.map((col, colIndex) => {
+                          const value = row[col];
+                          const isNumeric = numericColumns.includes(col);
+                          const isLabel = col === labelColumn;
+                          const isPercent = col === percentColumn;
+
+                          return (
+                            <TableCell key={colIndex} colIndex={colIndex}>
+                              {isLabel ? (
+                                <LocationCell>
+                                  <LocationDot color={color} />
+                                  {String(value)}
+                                </LocationCell>
+                              ) : isNumeric && col === valueColumn ? (
+                                <BarCell>
+                                  <BarContainer>
+                                    <BarFill width={barWidth} color={color} />
+                                  </BarContainer>
+                                  <span style={{ fontWeight: 700, fontSize: 22, minWidth: 70, textAlign: 'right' }}>
+                                    {Number(value).toLocaleString()}
+                                  </span>
+                                </BarCell>
+                              ) : isPercent ? (
+                                <span style={{ fontWeight: 700, fontSize: 22, color: '#0d9488' }}>
+                                  {value}%
                                 </span>
-                              </BarCell>
-                            ) : isPercent ? (
-                              <span style={{ fontWeight: 700, fontSize: 22, color: '#0d9488' }}>
-                                {value}%
-                              </span>
-                            ) : (
-                              String(value)
-                            )}
-                          </TableCell>
-                        );
-                      })}
-                    </TableRow>
-                  );
-                })}
+                              ) : (
+                                String(value)
+                              )}
+                            </TableCell>
+                          );
+                        })}
+                      </TableRow>
+                    );
+                  })
+                )}
               </TableBody>
             </Table>
           </DataTable>
