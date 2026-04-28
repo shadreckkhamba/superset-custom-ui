@@ -796,10 +796,15 @@ const PercentValue = styled.span`
   max-width: 100%;
   font-weight: 700;
   font-size: clamp(16px, 2vw, 22px);
-  color: #0d9488;
+  color: var(--color-text-primary);
   overflow: hidden;
   text-overflow: ellipsis;
   white-space: nowrap;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: #ffffff;
+  }
 `;
 
 const BarFill = styled.div<{ width: number; color?: string }>`
