@@ -501,8 +501,9 @@ const CHART_COLORS = [
   '#EF6C00',   
   '#5E35B1',   
   '#EC407A',   
-  '#546E7A',
+  '#546E7A',   
 ];
+
 
 type SliceLabelProps = {
   cx: number;
