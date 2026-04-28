@@ -49,16 +49,15 @@ function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
 
 // CSS Variables for teal medical/clinical palette
 const themeVars = css`
-  --color-primary: #0d9488;
-  --color-primary-light: #14b8a6;
-  --color-primary-dark: #0f766e;
-  --color-secondary: #06b6d4;
-  --color-accent: #0891b2;
+--color-primary: #159b90;       /* 175° teal base */
+--color-primary-light: #58f3dc;  /* 174° bright cyan pop */
+--color-primary-dark: #034936;   /* 175° deep teal */
+--color-secondary: #2974ee;      /* 222° blue (+47°) */
+--color-accent: #f59e0b;         /*  45° amber (+110°) */
   --color-success: #10b981;
   --color-warning: #f59e0b;
   --color-error: #ef4444;
   --color-info: #3b82f6;
-  
   --color-bg-card: #ffffff;
   --color-bg-muted: #f8fafc;
   --color-bg-hover: #f1f5f9;
