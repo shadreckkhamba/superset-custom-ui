@@ -622,22 +622,11 @@ const OthersFilterSelect = styled.select`
 const DataTable = styled.div`
   flex: 1;
   overflow-x: hidden;
-  overflow-y: auto;
+  overflow-y: hidden;
   max-height: none;
   transition: max-height 0.3s ease-in-out;
   min-width: 0;
   max-width: 100%;
-  scrollbar-width: thin;
-
-  &::-webkit-scrollbar {
-    width: 8px;
-    height: 8px;
-  }
-
-  &::-webkit-scrollbar-thumb {
-    background: var(--color-border);
-    border-radius: 8px;
-  }
 `;
 
 const Table = styled.table`
@@ -863,7 +852,7 @@ const locationColors = [
   '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
 ];
 
-const ROWS_PER_PAGE = 4;
+const ROWS_PER_PAGE = 3;
 const AUTO_PAGE_DELAY_MS = 7000;
 const MAX_TOP_ITEMS_IN_TILE = 3;
 const TOP_LOCATIONS_LIMIT = 10;
