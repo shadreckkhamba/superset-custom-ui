@@ -41,6 +41,7 @@ const APP_DIR = path.resolve(__dirname, './');
 // output dir
 const BUILD_DIR = path.resolve(__dirname, '../superset/static/assets');
 const ROOT_DIR = path.resolve(__dirname, '..');
+const LAUNCHER_HTML = fs.readFileSync(path.join(APP_DIR, 'launcher.html'), 'utf8');
 // Public path for extracted css src:urls. All assets are compiled into the same
 // folder. This forces the src:url in the extracted css to only contain the filename
 // and will therefore be relative to the .css file itself and not have to worry about
@@ -118,6 +119,7 @@ const plugins = [
   // expose mode variable to other modules
   new webpack.DefinePlugin({
     'process.env.WEBPACK_MODE': JSON.stringify(mode),
+    'process.env.LAUNCHER_HTML': JSON.stringify(LAUNCHER_HTML),
     'process.env.REDUX_DEFAULT_MIDDLEWARE':
       process.env.REDUX_DEFAULT_MIDDLEWARE,
     'process.env.SCARF_ANALYTICS': JSON.stringify(process.env.SCARF_ANALYTICS),
@@ -126,6 +128,7 @@ const plugins = [
   new CopyPlugin({
     patterns: [
       'package.json',
+      { from: 'launcher.html', to: 'launcher.html' },
       { from: 'src/assets/images', to: 'images' },
       { from: 'src/assets/stylesheets', to: 'stylesheets' },
     ],
@@ -396,6 +399,10 @@ const config = {
         test: /\.js$/,
         include: /node_modules\/react-dom/,
         use: ['react-hot-loader/webpack'],
+      },
+      {
+        test: /\.html$/,
+        type: 'asset/source',
       },
       {
         test: /\.css$/,

@@ -24,6 +24,7 @@ import { debounce } from 'lodash';
 import { useHistory } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
+import { fetchDateRanges, getDateRangeForChart, getFallbackDateRange } from '../../../utils/dateRangeUtils';
 
 import { exportChart, mountExploreUrl } from 'src/explore/exploreUtils';
 import ChartContainer from 'src/components/Chart/ChartContainer';
@@ -191,6 +192,7 @@ const Chart = props => {
   const [descriptionHeight, setDescriptionHeight] = useState(0);
   const [height, setHeight] = useState(props.height);
   const [width, setWidth] = useState(props.width);
+  const [dateRanges, setDateRanges] = useState(null);
   const history = useHistory();
   const resize = useCallback(
     debounce(() => {
@@ -225,6 +227,67 @@ const Chart = props => {
       setDescriptionHeight(descriptionHeight);
     }
   }, [isExpanded]);
+
+  // Fetch date ranges from API
+  useEffect(() => {
+    if (isStandalone) {
+      console.log('Fetching date ranges for chart:', props.id);
+      fetchDateRanges()
+        .then(data => {
+          console.log('Initial date ranges fetch:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to fetch date ranges:', error);
+          setDateRanges(null); // This will trigger fallback
+        });
+    }
+  }, [isStandalone]);
+
+  // Clean up any duplicate badges on mount
+  useEffect(() => {
+    if (isStandalone) {
+      // Remove any existing badges for this chart to prevent duplicates
+      const existingBadges = document.querySelectorAll(`[data-chart-id="${props.id}"].date-range-badge`);
+      if (existingBadges.length > 1) {
+        // Keep only the first one, remove the rest
+        for (let i = 1; i < existingBadges.length; i++) {
+          existingBadges[i].remove();
+        }
+      }
+    }
+  }, [isStandalone, props.id]);
+
+  // Refresh date ranges when chart updates (for auto-refresh)
+  useEffect(() => {
+    if (isStandalone && chart.chartUpdateEndTime) {
+      console.log('Chart updated, refreshing date ranges...', chart.chartUpdateEndTime);
+      // Force refresh date ranges when chart data updates
+      fetchDateRanges(true)
+        .then(data => {
+          console.log('Date ranges refreshed:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to refresh date ranges:', error);
+        });
+    }
+  }, [isStandalone, chart.chartUpdateEndTime]);
+
+  // Also refresh when chart finishes loading
+  useEffect(() => {
+    if (isStandalone && chart.chartStatus && chart.chartStatus !== 'loading') {
+      console.log('Chart finished loading, refreshing date ranges...', chart.chartStatus);
+      fetchDateRanges(true)
+        .then(data => {
+          console.log('Date ranges refreshed after load:', data);
+          setDateRanges(data);
+        })
+        .catch(error => {
+          console.error('Failed to refresh date ranges after chart load:', error);
+        });
+    }
+  }, [isStandalone, chart.chartStatus]);
 
   useEffect(
     () => () => {
@@ -457,22 +520,28 @@ const Chart = props => {
 
  
   const dateRangeLabel = useMemo(() => {
-   const today = new Date();
-   const todayDay = today.getDate();
+    if (dateRanges && slice.slice_name) {
+      // Try to get date range from API based on slice name
+      const apiDateRange = getDateRangeForChart(dateRanges, slice.slice_name);
+      if (apiDateRange) {
+        console.log(`Using API date range for ${slice.slice_name}:`, apiDateRange);
+        return apiDateRange;
+      } else {
+        console.log(`No API date range found for ${slice.slice_name}, using fallback`);
+      }
+    }
+    
+    // Fallback to original logic if API data not available or no matching table
+    const fallbackRange = getFallbackDateRange();
+    console.log('Using fallback date range:', fallbackRange);
+    return fallbackRange;
+  }, [dateRanges, slice.slice_name]);
 
-   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-   const options = { day: 'numeric', month: 'short', year: 'numeric' };
-
-   const from = startOfMonth.toLocaleDateString('en-GB', options);
-   const to = today.toLocaleDateString('en-GB', options);
-
-   if (todayDay === 1) {
-     return `Today, ${from}`;
-   }
-
-   return `${from} - ${to}`;
-  }, []);
+  const isDarkTheme =
+    typeof document !== 'undefined' &&
+    (document.body?.classList.contains('dark-theme') ||
+      document.body?.getAttribute('data-theme') === 'dark' ||
+      document.documentElement?.getAttribute('data-theme') === 'dark');
 
   return (
     <SliceContainer
@@ -520,36 +589,42 @@ const Chart = props => {
       />
 
       {/* 📅 Date range badge aligned with chart title */}
-      { isStandalone && (
-        <div className="date-range-badge"
-        style={{
-          position: 'absolute',
-          top: '0px',
-          right: '0px',
-          transform: 'translate(10px, -12px)',
-          background: 'rgb(227, 251, 255)',
-          color: '#003366',
-          fontSize: '24px',
-          fontWeight: 500,
-          padding: '8px 12px 6px 14px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-          zIndex: 999,
-          maxWidth: 'none',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          justifyContent: 'space-between',
-          lineHeight: '1.2',
-          minHeight: '32px',
-        }}
+      {isStandalone && dateRangeLabel && (
+        <div
+          className="date-range-badge"
+          data-chart-id={props.id}
+          style={{
+            position: 'absolute',
+            top: isDarkTheme ? '14px' : '8px',
+            right: '8px',
+            background: '#f2f2f2',
+            color: '#7f7f7f',
+            fontSize: '16px',
+            fontWeight: 500,
+            padding: '10px 22px',
+            borderRadius: '999px',
+            border: '1px solid #dddddd',
+            boxShadow:
+              'inset 0 1px 0 rgba(255, 255, 255, 0.85), 0 1px 2px rgba(0, 0, 0, 0.04)',
+            zIndex: 50,
+            minWidth: '220px',
+            maxWidth: 'calc(100% - 16px)',
+            whiteSpace: 'nowrap',
+            overflow: 'hidden',
+            textOverflow: 'ellipsis',
+            pointerEvents: 'none',
+            display: 'inline-flex',
+            alignItems: 'center',
+            justifyContent: 'flex-start',
+            lineHeight: '1.25',
+            minHeight: '42px',
+            letterSpacing: '0.01em',
+          }}
           title={dateRangeLabel}
         >
-          <span style={{ flexGrow: 1, textAlign: 'right' }}>{dateRangeLabel}</span>
+          <span style={{ flexGrow: 1, color: 'inherit', fontSize: 'inherit' }}>
+            {dateRangeLabel}
+          </span>
         </div>
       )}
 

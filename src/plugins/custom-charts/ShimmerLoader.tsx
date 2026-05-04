@@ -157,7 +157,7 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
         <div style={{ 
           flex: '1 1 0',
           minWidth: 'clamp(120px, 12vw, 180px)',
-          maxWidth: 'clamp(160px, 16vw, 220px)',
+          maxWidth: 'clamp(230px, 16vw, 280px)',
           display: 'flex', 
           flexDirection: 'column', 
           gap: 'clamp(8px, 1vh, 14px)',
@@ -271,17 +271,8 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
 
   if (type === 'line') {
     return (
-      <div style={{ width: '100%', height: '100%', padding: '18px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+      <div style={{ width: '100%', height: '100%', padding: '10px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
         <style>{shimmerStyle}</style>
-        {/* Title */}
-        <div
-          className="shimmer"
-          style={{
-            width: '55%',
-            height: '18px',
-            borderRadius: '6px',
-          }}
-        />
 
         {/* Date navigation bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>

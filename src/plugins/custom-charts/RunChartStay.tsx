@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -212,7 +213,7 @@ const createNoDataPlugin = (isDarkMode: boolean) => ({
     ctx.textBaseline = "middle";
     ctx.fillStyle = isDarkMode ? "#b0b0b0" : "#999";
     ctx.font = "bold 18px sans-serif";
-    ctx.fillText("No patient data available for this week", width / 2, height / 2);
+    ctx.fillText("No patient data available", width / 2, height / 2);
     ctx.restore();
   },
 });
@@ -227,11 +228,14 @@ export default function RunChartStay({
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chartContainerWidth, setChartContainerWidth] = useState(0);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const chartRef = useRef<ChartJS<"bar" | "line"> | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const nextWeekBtnRef = useRef<HTMLButtonElement | null>(null);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAnimatedOnViewRef = useRef(false);
   const noDataPlugin = useMemo(() => createNoDataPlugin(isDarkMode), [isDarkMode]);
@@ -258,6 +262,16 @@ export default function RunChartStay({
     () => `${weekOffset}-${refreshKey ?? 0}-${resetKey ?? 0}`,
     [weekOffset, refreshKey, resetKey],
   );
+  const useCompactDesktopAxisSizing =
+    compact &&
+    (chartContainerWidth >= 520 ||
+      (typeof window !== "undefined" && window.innerWidth >= 1100));
+  const xAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 18 : 14) : 32;
+  const xAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 14 : 11) : 20;
+  const yAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 38;
+  const yAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
+  const y1AxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 42;
+  const y1AxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
 
   const animateBarsIn = useCallback(() => {
     const chart = chartRef.current;
@@ -574,7 +588,14 @@ useEffect(() => {
     const el = chartContainerRef.current;
     if (!el) return undefined;
 
+    const syncChartContainerWidth = () => {
+      setChartContainerWidth(el.clientWidth);
+    };
+
+    syncChartContainerWidth();
+
     const resizeObserver = new ResizeObserver(() => {
+      syncChartContainerWidth();
       runChartResize();
     });
 
@@ -899,13 +920,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Week Days",
-            font: { size: compact ? 14 : 32, weight: 700 },
+            font: { size: xAxisTitleFontSize, weight: 700 },
             color: "#297acb",
             padding: { top: 8, bottom: 2 },
           },
           ticks: { 
             color: isDarkMode ? "#e0e0e0" : "#262626", 
-            font: { size: compact ? 11 : 20, weight: 700 },
+            font: { size: xAxisTickFontSize, weight: 700 },
             padding: compact ? 8 : 10,
             autoSkip: compact,
           },
@@ -924,13 +945,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Average Stay (hours)",
-            font: { size: compact ? 16 : 38, weight: 700 },
+            font: { size: yAxisTitleFontSize, weight: 700 },
             color: "#1890ff",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: yAxisTickFontSize, weight: 600 },
             stepSize: 1,
             precision: 0,
             autoSkip: false,
@@ -951,13 +972,13 @@ useEffect(() => {
           title: {
             display: true,
             text: "Total Patients",
-            font: { size: compact ? 16 : 42, weight: 700 },
+            font: { size: y1AxisTitleFontSize, weight: 700 },
             color: "#52c487",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: y1AxisTickFontSize, weight: 600 },
             stepSize: patientTickStep,
             autoSkip: false,
             padding: compact ? 10 : 15,
@@ -1016,6 +1037,8 @@ useEffect(() => {
               tooltipEl.style.willChange = "transform, opacity";
               tooltipEl.style.opacity = "0";
               tooltipEl.style.transform = "translateY(12px) scale(0.9)";
+              tooltipEl.style.borderRadius = "12px";
+              tooltipEl.style.setProperty("overflow", "visible", "important");
               tooltipEl.dataset.visible = "false";
               tooltipEl.dataset.dayIndex = "-1";
               parent.appendChild(tooltipEl);
@@ -1079,10 +1102,12 @@ useEffect(() => {
               <div style="
                 background: ${tooltipBackground};
                 border-radius: 12px;
+                overflow: hidden;
                 padding: ${tooltipPadding};
                 box-shadow: ${tooltipShadow};
                 border: ${tooltipBorder};
                 min-width: ${tooltipMinWidth}px;
+                background-clip: padding-box;
               ">
                 <div style="display: flex; flex-direction: column; gap: ${tooltipGap}px;">
                   <div style="display: flex; align-items: center; gap: ${tooltipGap}px;">
@@ -1178,7 +1203,20 @@ useEffect(() => {
 
       },
     }),
-    [compact, maxDuration, maxPatients, patientTickStep, dailyAverages, isDarkMode]
+    [
+      compact,
+      maxDuration,
+      maxPatients,
+      patientTickStep,
+      dailyAverages,
+      isDarkMode,
+      xAxisTitleFontSize,
+      xAxisTickFontSize,
+      yAxisTitleFontSize,
+      yAxisTickFontSize,
+      y1AxisTitleFontSize,
+      y1AxisTickFontSize,
+    ]
   );
 
   if (loading) {
@@ -1186,6 +1224,12 @@ useEffect(() => {
   }
 
   const openInfoModal = () => {
+    if (
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('slideshow') === '1'
+    ) {
+      return;
+    }
     if (infoCloseTimeoutRef.current) {
       clearTimeout(infoCloseTimeoutRef.current);
       infoCloseTimeoutRef.current = null;
@@ -1200,6 +1244,10 @@ useEffect(() => {
       infoCloseTimeoutRef.current = null;
     }, 360);
   };
+
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
 
   return (
     <div
@@ -1340,11 +1388,18 @@ useEffect(() => {
         {/* Right Button with hover tooltip and click effect */}
         <div style={{ position: "relative" }}>
           <button
+            ref={nextWeekBtnRef}
             onClick={() => {
               if (!isNextWeekFuture) setWeekOffset((w) => w + 1);
             }}
-            onMouseEnter={() => isNextWeekFuture && setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={() => {
+              if (isNextWeekFuture && nextWeekBtnRef.current) {
+                const rect = nextWeekBtnRef.current.getBoundingClientRect();
+                setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+                setShowTooltip(true);
+              }
+            }}
+            onMouseLeave={() => { setShowTooltip(false); setTooltipPos(null); }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -1394,25 +1449,40 @@ useEffect(() => {
           </button>
 
           {/* Tooltip */}
-          {showTooltip && isNextWeekFuture && (
+          {showTooltip && isNextWeekFuture && tooltipPos && typeof document !== 'undefined' && createPortal(
             <div
               style={{
-                position: "absolute",
-                top: tooltipOffsetTop,
-                right: tooltipOffsetRight,
-                backgroundColor: "#242323ff",
+                position: "fixed",
+                left: `${tooltipPos.x}px`,
+                top: `${tooltipPos.y - 10}px`,
+                transform: "translate(-70%, -100%)",
+                backgroundColor: isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)",
                 color: "#fff",
-                padding: "8px 12px",
+                padding: "7px 14px",
                 borderRadius: "8px",
-                fontSize: "14px",
+                fontSize: compact ? "12px" : "13px",
+                fontWeight: 500,
                 whiteSpace: "nowrap",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                opacity: 1,
-                transition: "opacity 0.3s ease",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                zIndex: 99999,
+                pointerEvents: "none",
+                border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              No patient data available
-            </div>
+              Can't go beyond current week
+              <div style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "6px solid transparent",
+                borderRight: "6px solid transparent",
+                borderTop: `6px solid ${isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)"}`,
+              }} />
+            </div>,
+            document.body
           )}
         </div>
       </div>
@@ -1441,6 +1511,7 @@ useEffect(() => {
           transition: "background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
+        {!isSlideshowMode && (
         <button
           type="button"
           aria-label="What am I seeing?"
@@ -1473,6 +1544,7 @@ useEffect(() => {
         >
           <Info size={infoIconSize} strokeWidth={2.2} />
         </button>
+        )}
         <style>{`
           .run-stay-chart-container {
             overflow: hidden !important;
@@ -1494,9 +1566,13 @@ useEffect(() => {
             max-height: 100% !important;
             max-width: 100% !important;
           }
-          .run-stay-chart-container div {
+          .run-stay-chart-container div:not(.chartjs-tooltip) {
             overflow: hidden !important;
             max-width: 100% !important;
+          }
+          .run-stay-chart-container .chartjs-tooltip {
+            overflow: visible !important;
+            border-radius: 12px !important;
           }
           .run-stay-chart-container div canvas {
             max-width: 100% !important;
@@ -1560,7 +1636,7 @@ useEffect(() => {
         </div>
       </div>
 
-      {showInfoModal && (
+      {showInfoModal && !isSlideshowMode && (
         <div
           role="presentation"
           onClick={closeInfoModal}
