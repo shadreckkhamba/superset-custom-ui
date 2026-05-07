@@ -578,7 +578,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
   const isDonut = Boolean(formData?.donut);
 
   const total = data.reduce(
-    (sum: number, item: { value: number }) => sum + (item.value || 0),
+    (sum: number, item: { value: number }) => sum + (Number(item.value) || 0),
     0,
   );
 
@@ -595,7 +595,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
   );
-  const hasData = chartData.length > 0;
+  const hasData = chartData.some(item => Number(item.value) > 0);
 
   const [showSkeleton, setShowSkeleton] = useState(chartData.length === 0);
 
