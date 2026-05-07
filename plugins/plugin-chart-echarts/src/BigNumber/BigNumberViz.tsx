@@ -547,12 +547,13 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     const shouldApplyOverflow = this.shouldApplyOverflow(height);
     const metricLabelText = metricName ? String(metricName) : '';
     const subtitleText = subtitle ? String(subtitle).trim() : '';
+    const hasBigNumberValue =
+      typeof bigNumber === 'number' && Number.isFinite(bigNumber);
+    const emptyStateText = 'No data available';
     
-    const fallbackFromBigNumber =
-      typeof bigNumber === 'number' &&
-      Number.isFinite(bigNumber)
-        ? defaultNumberFormatter(bigNumber)
-        : '';
+    const fallbackFromBigNumber = hasBigNumberValue
+      ? defaultNumberFormatter(bigNumber)
+      : emptyStateText;
     
     const safeWidth = Number.isFinite(width) ? width : 320;
     const fontSize = Math.max(
@@ -599,7 +600,9 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           <div
             className="header-line"
             style={{
-              fontSize: `clamp(${Math.round(fontSize * 0.5)}px, ${fontSize}px, ${fontSize}px)`,
+              fontSize: hasBigNumberValue
+                ? `clamp(${Math.round(fontSize * 0.5)}px, ${fontSize}px, ${fontSize}px)`
+                : `clamp(20px, ${Math.max(Math.min(safeWidth * 0.07, 32), 20)}px, 32px)`,
               fontWeight: 800,
               color: '#15333a',
               textAlign: 'center',
@@ -611,6 +614,21 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
           >
             {fallbackFromBigNumber}
           </div>
+          {!hasBigNumberValue && (
+            <div
+              className="subtitle-line subheader-line"
+              style={{
+                fontSize: 'clamp(13px, 2vw, 18px)',
+                fontWeight: 600,
+                color: '#5d7079',
+                textAlign: 'center',
+                maxWidth: '100%',
+              }}
+            >
+              {subtitleText ||
+                'No records were returned for the selected time range.'}
+            </div>
+          )}
         </div>
       </div>
     );
