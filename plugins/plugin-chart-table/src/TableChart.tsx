@@ -728,6 +728,38 @@ const TableCell = styled.td<{ colIndex?: number }>`
   text-align: ${props => props.colIndex === 2 ? 'center' : 'left'};
 `;
 
+const EmptyTableState = styled.div`
+  width: 100%;
+  min-height: 150px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px 18px;
+  border: 1px dashed var(--color-border);
+  border-radius: var(--radius-md);
+  background: linear-gradient(
+    180deg,
+    rgba(21, 155, 144, 0.04) 0%,
+    rgba(248, 250, 252, 1) 100%
+  );
+  color: var(--color-text-secondary);
+  font-size: clamp(15px, 2vw, 20px);
+  font-weight: 700;
+  box-sizing: border-box;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: linear-gradient(
+      180deg,
+      rgba(21, 155, 144, 0.12) 0%,
+      rgba(17, 17, 17, 1) 100%
+    );
+    border-color: #1f3744;
+    color: #d7e5ea;
+  }
+`;
+
 const LocationCell = styled.div`
   display: flex;
   align-items: center;
@@ -1267,24 +1299,29 @@ export default function TableChart({
           </SectionHeader>
           <DataTable>
             <Table>
-              <TableHead>
-                <tr>
-                  {columns.map((col, index) => (
-                    <TableHeader key={index} colIndex={index}>{col}</TableHeader>
-                  ))}
-                </tr>
-              </TableHead>
+              {columns.length > 0 && (
+                <TableHead>
+                  <tr>
+                    {columns.map((col, index) => (
+                      <TableHeader key={index} colIndex={index}>{col}</TableHeader>
+                    ))}
+                  </tr>
+                </TableHead>
+              )}
               <TableBody>
                 {activeRows.length === 0 ? (
                   <TableRow>
-                    <TableCell colIndex={0} style={{ textAlign: 'left' }}>
-                      {activeView === 'others'
-                        ? 'No locations match the selected filters.'
-                        : 'No data available.'}
+                    <TableCell
+                      colIndex={0}
+                      colSpan={Math.max(columns.length, 1)}
+                      style={{ textAlign: 'left', whiteSpace: 'normal' }}
+                    >
+                      <EmptyTableState>
+                        {activeView === 'others'
+                          ? 'No locations match the selected filters.'
+                          : 'No data available'}
+                      </EmptyTableState>
                     </TableCell>
-                    {columns.slice(1).map((_, colIndex) => (
-                      <TableCell key={colIndex + 1} colIndex={colIndex + 1} />
-                    ))}
                   </TableRow>
                 ) : (
                   activeRows.map((row, rowIndex) => {
