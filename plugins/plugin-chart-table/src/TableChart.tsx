@@ -48,6 +48,8 @@ function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
 }
 
 // CSS Variables for teal medical/clinical palette
+//changed color palette
+
 const themeVars = css`
 --color-primary: #159b90;       /* 175° teal base */
 --color-primary-light: #58f3dc;  /* 174° bright cyan pop */
