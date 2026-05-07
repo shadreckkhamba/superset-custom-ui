@@ -46,7 +46,6 @@ import {
   getPermalinkValue,
 } from 'src/dashboard/components/nativeFilters/FilterBar/keyValue';
 import DashboardContainer from 'src/dashboard/containers/Dashboard';
-import OfflineOverlay from 'src/dashboard/components/OfflineOverlay';
 
 import { nanoid } from 'nanoid';
 import { RootState } from '../types';
@@ -250,7 +249,6 @@ export const DashboardPage: FC<PageProps> = ({ idOrSlug }: PageProps) => {
   return (
     <>
       <Global styles={globalStyles} />
-      <OfflineOverlay />
       {readyToRender && hasDashboardInfoInitiated ? (
         <>
           <SyncDashboardState dashboardPageId={dashboardPageId} />

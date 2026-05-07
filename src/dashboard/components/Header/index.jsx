@@ -92,10 +92,6 @@ import { T } from 'lodash/fp';
 import './responsive-dashboard.css';
 
 const extensionsRegistry = getExtensionsRegistry();
-const SLIDESHOW_ROTATION_SECONDS = 20;
-const SLIDESHOW_SYNC_LOADER_SESSION_KEY =
-  'superset-slideshow-sync-loader-shown';
-const SLIDESHOW_SYNC_LOADER_DURATION_MS = 1600;
 
 const headerContainerStyle = theme => css`
   border-bottom: 1px solid ${theme.colors.grayscale.light2};
@@ -167,132 +163,6 @@ const headerContainerStyle = theme => css`
     background-color: rgba(20, 24, 30, 0.72) !important;
     box-shadow: 0 6px 18px rgba(0, 0, 0, 0.4) !important;
     border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
-  }
-
-  .refresh-badge-wrapper {
-    display: flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-    max-width: 100%;
-    flex-wrap: nowrap;
-  }
-
-  .refresh-badge {
-    display: inline-flex;
-    align-items: center;
-    gap: 8px;
-    min-width: 0;
-  }
-
-  .refresh-badge .refresh-text {
-    display: inline-flex;
-    align-items: center;
-    gap: 4px;
-    white-space: nowrap;
-    font-size: 13px;
-    line-height: 1.2;
-  }
-
-  .slideshow-countdown-ring {
-    position: relative;
-    width: 50px;
-    height: 50px;
-    flex: 0 0 50px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    overflow: hidden;
-  }
-
-  .slideshow-countdown-ring svg {
-    width: 100%;
-    height: 100%;
-    display: block;
-  }
-
-  .slideshow-countdown-ring-content {
-    position: absolute;
-    inset: 0;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    pointer-events: none;
-    text-align: center;
-    padding-top: 1px;
-  }
-
-	  .slideshow-countdown-ring-value {
-	    font-size: 16px;
-	    font-weight: 800;
-	    line-height: 1;
-	    font-variant-numeric: tabular-nums;
-	  }
-
-	  .slideshow-countdown-ring-label {
-	    margin-top: 1px;
-	    font-size: 6.2px;
-	    line-height: 1;
-	    font-weight: 800;
-	    letter-spacing: 0.04em;
-	    text-transform: uppercase;
-	    white-space: nowrap;
-	  }
-
-  @media (max-width: 900px) {
-    .refresh-badge-wrapper {
-      gap: 7px;
-    }
-
-    .slideshow-countdown-ring {
-      width: 44px;
-      height: 44px;
-      flex-basis: 44px;
-    }
-
-	    .slideshow-countdown-ring-value {
-	      font-size: 14px;
-	    }
-
-	    .slideshow-countdown-ring-label {
-	      font-size: 5.4px;
-	      letter-spacing: 0.03em;
-	    }
-
-    .refresh-badge .refresh-text {
-      font-size: 11px;
-    }
-  }
-
-  @media (max-width: 640px) {
-    .refresh-badge-wrapper {
-      gap: 6px;
-    }
-
-    .slideshow-countdown-ring {
-      width: 40px;
-      height: 40px;
-      flex-basis: 40px;
-    }
-
-	    .slideshow-countdown-ring-value {
-	      font-size: 12px;
-	    }
-
-	    .slideshow-countdown-ring-label {
-	      margin-top: 0;
-	      font-size: 4.8px;
-	      letter-spacing: 0.02em;
-	    }
-
-    .refresh-badge {
-      gap: 6px;
-    }
-
-    .refresh-badge .refresh-text {
-      font-size: 10px;
-    }
   }
 `;
 
@@ -481,38 +351,6 @@ const Header = () => {
   const query = new URLSearchParams(location.search);
   const isStandalone = query.get('standalone') === '1';
   const isSlideshow = query.get('slideshow') === '1';
-  const [slideshowCountdownSeconds, setSlideshowCountdownSeconds] = useState(
-    SLIDESHOW_ROTATION_SECONDS,
-  );
-  const [slideshowCountdownProgress, setSlideshowCountdownProgress] =
-    useState(1);
-  const [showSlideshowSyncLoader, setShowSlideshowSyncLoader] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    const inSlideshow =
-      new URLSearchParams(window.location.search).get('slideshow') === '1';
-    if (inSlideshow === false) {
-      return false;
-    }
-
-    try {
-      const alreadyShown =
-        window.sessionStorage.getItem(
-          SLIDESHOW_SYNC_LOADER_SESSION_KEY,
-        ) === '1';
-
-      if (alreadyShown === false) {
-        window.sessionStorage.setItem(SLIDESHOW_SYNC_LOADER_SESSION_KEY, '1');
-        return true;
-      }
-    } catch (error) {
-      return true;
-    }
-
-    return false;
-  });
   //debugging
   console.log('Rendering Header - isStandalone:', isStandalone, 'isSlideshow:', isSlideshow);
   
@@ -610,14 +448,6 @@ const Header = () => {
 
   const openSlideshow = useCallback(() => {
     console.log('🎬 Opening slideshow - setting isSlideshowOpen to true');
-    try {
-      window.sessionStorage.removeItem(SLIDESHOW_SYNC_LOADER_SESSION_KEY);
-    } catch (error) {
-      // noop: sessionStorage may be unavailable in locked-down contexts
-    }
-    setShowSlideshowSyncLoader(true);
-    setSlideshowCountdownSeconds(SLIDESHOW_ROTATION_SECONDS);
-    setSlideshowCountdownProgress(1);
     updateSlideshowUrlParam(true);
     setIsSlideshowOpen(true);
   }, [updateSlideshowUrlParam]);
@@ -625,7 +455,6 @@ const Header = () => {
     console.log('🎬 Closing slideshow - setting isSlideshowOpen to false');
     updateSlideshowUrlParam(false);
     setIsSlideshowOpen(false);
-    setSlideshowCountdownProgress(1);
   }, [updateSlideshowUrlParam]);
 
   useEffect(() => {
@@ -639,26 +468,6 @@ const Header = () => {
         return;
       }
 
-      if (event.data?.type === 'superset-dashboard-slideshow-countdown') {
-        const remainingSeconds = Number(event.data?.remainingSeconds);
-        if (!Number.isNaN(remainingSeconds)) {
-          setSlideshowCountdownSeconds(Math.max(0, Math.ceil(remainingSeconds)));
-        }
-        const progressRatio = Number(event.data?.progressRatio);
-        if (!Number.isNaN(progressRatio)) {
-          setSlideshowCountdownProgress(
-            Math.max(0, Math.min(1, progressRatio)),
-          );
-        } else if (!Number.isNaN(remainingSeconds)) {
-          setSlideshowCountdownProgress(
-            Math.max(
-              0,
-              Math.min(1, remainingSeconds / SLIDESHOW_ROTATION_SECONDS),
-            ),
-          );
-        }
-        return;
-      }
       if (event.data?.type === 'superset-dashboard-set-dark-mode') {
         setIsDarkMode(Boolean(event.data?.enabled));
       }
@@ -670,20 +479,6 @@ const Header = () => {
       window.removeEventListener('message', handleSlideshowMessage);
     };
   }, [closeSlideshow]);
-  useEffect(() => {
-    if (isSlideshow === false || showSlideshowSyncLoader === false) {
-      return undefined;
-    }
-
-    const timeoutId = window.setTimeout(() => {
-      setShowSlideshowSyncLoader(false);
-    }, SLIDESHOW_SYNC_LOADER_DURATION_MS);
-
-    return () => {
-      window.clearTimeout(timeoutId);
-    };
-  }, [isSlideshow, showSlideshowSyncLoader]);
-
   // Debug: Track slideshow state changes
   useEffect(() => {
     console.log('🎬 isSlideshowOpen state changed to:', isSlideshowOpen);
@@ -1124,8 +919,6 @@ const Header = () => {
     shallowEqual,
   );
   const isLoading = useSelector(state => isDashboardLoading(state.charts));
-  const shouldRenderPatientStayOverlay =
-    !editMode && (!isStandalone || isSlideshow || isPatientStayView);
 
   // Debug: Log when isPatientStayView changes
   useEffect(() => {
@@ -1135,19 +928,13 @@ const Header = () => {
       isSlideshow,
       isStandalone,
       editMode,
-      shouldRenderOverlay: shouldRenderPatientStayOverlay,
+      shouldRenderOverlay: !editMode && (!isStandalone || isSlideshow)
     });
-  }, [
-    isPatientStayView,
-    isSlideshow,
-    isStandalone,
-    editMode,
-    shouldRenderPatientStayOverlay,
-  ]);
+  }, [isPatientStayView, isSlideshow, isStandalone, editMode]);
 
   useEffect(() => {
     const shouldLockScroll =
-      shouldRenderPatientStayOverlay && isPatientStayView;
+      !editMode && (!isStandalone || isSlideshow) && isPatientStayView;
     const className = 'patient-stay-scroll-lock';
     const root = document.documentElement;
     const wrapperEl = document.querySelector(
@@ -1169,7 +956,7 @@ const Header = () => {
       root.classList.remove(className);
       wrapperEl?.classList.remove(className);
     };
-  }, [isPatientStayView, shouldRenderPatientStayOverlay]);
+  }, [editMode, isSlideshow, isStandalone, isPatientStayView]);
 
   useEffect(() => {
     if (!isPatientStayView) {
@@ -1311,7 +1098,6 @@ const Header = () => {
         const data = await res.json();
 
         const apiTimestamp = new Date(data.last_updated).getTime();
-        const isFirstTimestamp = lastUpdatedRef.current === 0;
         if (apiTimestamp > lastUpdatedRef.current) {
           console.log('API change detected — refreshing charts');
           lastUpdatedRef.current = apiTimestamp;
@@ -1320,15 +1106,6 @@ const Header = () => {
           const affectedCharts = chartIds.filter(id => !immune.includes(id));
   
            boundActionCreators.fetchCharts(affectedCharts, true, 0, dashboardInfo.id);
-
-          // In slideshow, also refresh the Patient Stay view charts when new data lands.
-          // This keeps the Stay slide in sync with the same update-status signal driving
-          // the Clinical Service Monitoring refresh.
-          if (!isFirstTimestamp && isSlideshow && isPatientStayView) {
-            setBigNumberRefreshKey(prev => prev + 1);
-            setPieRefreshKey(prev => prev + 1);
-            setRunChartRefreshKey(prev => prev + 1);
-          }
         }
       } catch (err) {
         console.error('Failed to poll update status:', err);
@@ -1336,15 +1113,7 @@ const Header = () => {
     }, 2000);
 
     return () => clearInterval(interval);
-  }, [
-    chartIds,
-    dashboardInfo.id,
-    dashboardInfo.metadata,
-    isStandalone,
-    boundActionCreators,
-    isPatientStayView,
-    isSlideshow,
-  ]);
+  }, [chartIds, dashboardInfo.id, dashboardInfo.metadata, isStandalone, boundActionCreators]);
 
   useEffect(() => {
     if (UNDO_LIMIT - undoLength <= 0 && !didNotifyMaxUndoHistoryToast) {
@@ -1431,26 +1200,7 @@ const Header = () => {
   }, [boundActionCreators, editMode]);
 
   const handleDashboardSwitch = useCallback(checked => {
-    const nextIsPatientStayView = Boolean(checked);
-    setIsPatientStayView(nextIsPatientStayView);
-
-    if (typeof window === 'undefined') {
-      return;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    if (nextIsPatientStayView) {
-      params.set('view', 'stay');
-    } else {
-      params.delete('view');
-    }
-
-    const nextSearch = params.toString();
-    const nextUrl = `${window.location.pathname}${
-      nextSearch ? `?${nextSearch}` : ''
-    }${window.location.hash}`;
-
-    window.history.replaceState(window.history.state, '', nextUrl);
+    setIsPatientStayView(Boolean(checked));
   }, []);
 
   const overwriteDashboard = useCallback(() => {
@@ -1690,104 +1440,20 @@ const Header = () => {
     timeZone: 'Africa/Blantyre',
   };
 
-	  const shouldShowSyncLoader =
-	    isSlideshow ? showSlideshowSyncLoader : isSynced === false;
-	  const countdownTotalSeconds = Math.max(0, Math.ceil(slideshowCountdownSeconds));
-	  const countdownInSecondsMode = countdownTotalSeconds < 60;
-	  const countdownDisplayValue = countdownInSecondsMode
-	    ? countdownTotalSeconds
-	    : Math.max(1, Math.ceil(countdownTotalSeconds / 60));
-	  const countdownDisplayLabel = countdownInSecondsMode
-	    ? countdownTotalSeconds === 1
-	      ? 'SEC'
-	      : 'SECS'
-	    : countdownDisplayValue === 1
-	      ? 'MIN'
-	      : 'MINS';
-	  const countdownProgress = Math.max(
-	    0,
-	    Math.min(1, slideshowCountdownProgress),
-	  );
-  const countdownRadius = 19;
-  const countdownStrokeWidth = 5;
-  const countdownViewBoxSize = 52;
-  const countdownCenter = countdownViewBoxSize / 2;
-  const countdownCircumference = 2 * Math.PI * countdownRadius;
-  const countdownStrokeOffset =
-    countdownCircumference * (1 - countdownProgress);
-
-  const refreshBadge = isStandalone ? (
+ const refreshBadge = isStandalone ? (
     <div className="refresh-badge-wrapper">
-      {isSlideshow && (
-        <div className="slideshow-countdown-ring">
-          <svg
-            viewBox={`0 0 ${countdownViewBoxSize} ${countdownViewBoxSize}`}
-            aria-hidden="true"
-          >
-            <circle
-              cx={countdownCenter}
-              cy={countdownCenter}
-              r={countdownRadius}
-              fill="none"
-              stroke={isDarkMode ? 'rgba(148, 163, 184, 0.35)' : '#d7dee8'}
-              strokeWidth={countdownStrokeWidth}
-            />
-            <circle
-              cx={countdownCenter}
-              cy={countdownCenter}
-              r={countdownRadius}
-              fill="none"
-              stroke={isDarkMode ? '#58b9ff' : '#2f94ab'}
-              strokeWidth={countdownStrokeWidth}
-              strokeLinecap="round"
-              strokeDasharray={countdownCircumference}
-              strokeDashoffset={countdownStrokeOffset}
-              transform={`rotate(-90 ${countdownCenter} ${countdownCenter})`}
-              style={{ transition: 'stroke-dashoffset 0.2s linear' }}
-            />
-          </svg>
-          <div className="slideshow-countdown-ring-content">
-            <span
-              className="slideshow-countdown-ring-value"
-              style={{ color: isDarkMode ? '#9ed9ff' : '#2f94ab' }}
-            >
-              {countdownDisplayValue}
-            </span>
-	            <span
-	              className="slideshow-countdown-ring-label"
-	              style={{ color: isDarkMode ? '#c6d8ea' : '#5c6b7a' }}
-	            >
-	              {countdownDisplayLabel}
-	            </span>
-	          </div>
-	        </div>
-	      )}
       <div className="refresh-badge">
         <span className="clock-icon">🕒</span>
-        <span
-          className="refresh-text"
-          style={isDarkMode ? undefined : { fontSize: '14px', lineHeight: 1.2 }}
-        >
+        <span className="refresh-text">  
           {isSynced ? (
             <>
               Last updated:{' '}
-              <span
-                className="refresh-time"
-                style={isDarkMode ? undefined : { fontSize: '14px', fontWeight: 600 }}
-              >
+              <span className="refresh-time">
                 {lastUpdated.toLocaleString('en-US', formatOptions)}
               </span>
             </>
-          ) : shouldShowSyncLoader ? (
-            <em style={{ color: 'gray' }}>Syncing last update time...</em>
           ) : (
-            <>
-              Last updated:{' '}
-              <span
-                className="refresh-time"
-                style={isDarkMode ? undefined : { fontSize: '14px', fontWeight: 600 }}
-              >Waiting for latest sync...</span>
-            </>
+            <em style={{ color: 'gray' }}>Syncing last update time...</em>
           )}
         </span>
       </div>
@@ -1897,10 +1563,6 @@ const Header = () => {
     isDarkMode,
     handleRefreshCharts,
     isStandalone,
-    isSlideshow,
-    slideshowCountdownSeconds,
-    slideshowCountdownProgress,
-    showSlideshowSyncLoader,
     discardChanges,
     openReportsModal,
     t,
@@ -2620,7 +2282,7 @@ const handleSaveAsImage = async () => {
               grid-column: 1 / -1;
             }
           }
-          ${shouldRenderPatientStayOverlay &&
+          ${!editMode && (!isStandalone || isSlideshow) &&
           `
             .dashboard-content,
             [data-test="dashboard-filters-panel"] {
@@ -2647,7 +2309,7 @@ const handleSaveAsImage = async () => {
         `}
       />
 
-      {shouldRenderPatientStayOverlay && (
+      {!editMode && (!isStandalone || isSlideshow) && (
         <div
           className="patient-stay-overlay"
           data-slideshow={isSlideshow ? 'true' : 'false'}
@@ -2716,7 +2378,6 @@ const handleSaveAsImage = async () => {
                     resetKey={bigNumberResetKey}
                     isDarkMode={isDarkMode}
                     isExpanded
-                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -2753,7 +2414,6 @@ const handleSaveAsImage = async () => {
                     resetKey={pieResetKey}
                     isDarkMode={isDarkMode}
                     isExpanded
-                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -2790,7 +2450,6 @@ const handleSaveAsImage = async () => {
                     resetKey={runChartResetKey}
                     isDarkMode={isDarkMode}
                     compact
-                    autoRefresh={!isSlideshow}
                   />
                 </div>
               </div>
@@ -3763,7 +3422,6 @@ const handleSaveAsImage = async () => {
                   refreshKey={bigNumberRefreshKey}
                   resetKey={bigNumberResetKey}
                   isDarkMode={isDarkMode}
-                  autoRefresh={!isSlideshow}
                 />
               </div>
             </div>
@@ -3873,7 +3531,6 @@ const handleSaveAsImage = async () => {
                   refreshKey={pieRefreshKey}
                   resetKey={pieResetKey}
                   isDarkMode={isDarkMode}
-                  autoRefresh={!isSlideshow}
                 />
               </div>
             </div>
@@ -3983,7 +3640,6 @@ const handleSaveAsImage = async () => {
                 refreshKey={runChartRefreshKey}
                 resetKey={runChartResetKey}
                 isDarkMode={isDarkMode}
-                autoRefresh={!isSlideshow}
               />
             </div>
             </div>
@@ -3998,6 +3654,9 @@ const handleSaveAsImage = async () => {
         onClose={closeSlideshow}
         dashboardId={dashboardInfo.id}
         isDarkMode={isDarkMode}
+        actionsMenu={menu}
+        isActionsMenuOpen={isDropdownVisible}
+        onActionsMenuOpenChange={setIsDropdownVisible}
       />
     </div>
   );

@@ -493,6 +493,61 @@ const CenterValue = styled.div`
   }
 `;
 
+const ChartEmptyState = styled.div`
+  width: 100%;
+  height: 100%;
+  min-height: 180px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  text-align: center;
+  padding: 24px;
+  border-radius: 24px;
+  border: 1px dashed rgba(21, 101, 192, 0.24);
+  background: linear-gradient(
+    180deg,
+    rgba(255, 255, 255, 0.35) 0%,
+    rgba(227, 239, 246, 0.8) 100%
+  );
+  color: #48616d;
+  font-size: clamp(16px, 2vw, 22px);
+  font-weight: 700;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    border-color: rgba(148, 163, 184, 0.32);
+    background: linear-gradient(
+      180deg,
+      rgba(40, 50, 63, 0.72) 0%,
+      rgba(20, 24, 29, 0.92) 100%
+    );
+    color: #d5e5ec;
+  }
+`;
+
+const LegendEmptyState = styled.div`
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 96px;
+  padding: 18px 16px;
+  border-radius: 12px;
+  background: #edf3f6;
+  border: 1px dashed #d4dfe4;
+  color: #5d7079;
+  text-align: center;
+  font-size: clamp(14px, 1.8vw, 18px);
+  font-weight: 700;
+
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #252540;
+    border-color: #3d4a5a;
+    color: #c8d3dc;
+  }
+`;
+
 const CHART_COLORS = [
   '#1565C0',   
   '#e03b09',  
@@ -540,6 +595,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
   );
+  const hasData = chartData.length > 0;
 
   const [showSkeleton, setShowSkeleton] = useState(chartData.length === 0);
 
@@ -673,31 +729,35 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       {!isDonut ? (
         <PieTemplate>
           <PieChartWrap>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 14, right: 64, bottom: 18, left: 30 }}>
-                <Pie
-                  data={chartData}
-                  cx="46%"
-                  cy="48%"
-                  outerRadius="80%"
-                  strokeWidth={0}
-                  dataKey="value"
-                  animationBegin={120}
-                  animationDuration={720}
-                  labelLine={false}
-                  label={renderSliceLabel('pie')}
-                >
-                  {chartData.map(
-                    (
-                      entry: { name: string; value: number; color: string },
-                      index: number,
-                    ) => (
-                      <Cell key={`cell-${index}`} fill={entry.color} />
-                    ),
-                  )}
-                </Pie>
-              </PieChart>
-            </ResponsiveContainer>
+            {hasData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 14, right: 64, bottom: 18, left: 30 }}>
+                  <Pie
+                    data={chartData}
+                    cx="46%"
+                    cy="48%"
+                    outerRadius="80%"
+                    strokeWidth={0}
+                    dataKey="value"
+                    animationBegin={120}
+                    animationDuration={720}
+                    labelLine={false}
+                    label={renderSliceLabel('pie')}
+                  >
+                    {chartData.map(
+                      (
+                        entry: { name: string; value: number; color: string },
+                        index: number,
+                      ) => (
+                        <Cell key={`cell-${index}`} fill={entry.color} />
+                      ),
+                    )}
+                  </Pie>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <ChartEmptyState>No data available</ChartEmptyState>
+            )}
           </PieChartWrap>
 
           <RightPanel>
@@ -708,16 +768,109 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                 </PieLegendItem>
                 <PieLegendTotalValue>{total.toLocaleString()}</PieLegendTotalValue>
               </PieLegendRow>
-              {chartData.map(
+              {hasData ? (
+                chartData.map(
+                  (item: {
+                    name: string;
+                    value: number;
+                    color: string;
+                    percentage: string;
+                  }) => (
+                    <PieLegendRow key={`pie-legend-${item.name}`}>
+                      <PieLegendItem>
+                        <Dot
+                          $color={item.color}
+                          className="pie-color-dot"
+                          style={
+                            {
+                              ['--dot-color' as string]: item.color,
+                            } as CSSProperties
+                          }
+                        />
+                        <PieLegendLabel>{item.name}</PieLegendLabel>
+                      </PieLegendItem>
+                      <PieLegendPercent>{item.value.toLocaleString()}</PieLegendPercent>
+                    </PieLegendRow>
+                  ),
+                )
+              ) : (
+                <LegendEmptyState>No data available</LegendEmptyState>
+              )}
+            </PieLegend>
+          </RightPanel>
+        </PieTemplate>
+      ) : (
+        <DonutTemplate>
+          <DonutChartWrap>
+            {hasData ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
+                  <Pie
+                    data={chartData}
+                    cx="50%"
+                    cy="50%"
+                    innerRadius="63%"
+                    outerRadius="90%"
+                    paddingAngle={1}
+                    strokeWidth={0}
+                    dataKey="value"
+                    animationBegin={120}
+                    animationDuration={760}
+                    labelLine={false}
+                    label={renderSliceLabel('donut')}
+                  >
+                    {chartData.map(
+                      (
+                        entry: { name: string; value: number; color: string },
+                        index: number,
+                      ) => (
+                        <Cell key={`donut-cell-${index}`} fill={entry.color} />
+                      ),
+                    )}
+                  </Pie>
+                  <foreignObject
+                    x="22%"
+                    y="22%"
+                    width="56%"
+                    height="56%"
+                    style={{ pointerEvents: 'none', overflow: 'visible' }}
+                  >
+                    <div
+                      style={{
+                        display: 'flex',
+                        flexDirection: 'column',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        height: '100%',
+                        overflow: 'visible',
+                      }}
+                    >
+                      <CenterLabel>Total</CenterLabel>
+                      <CenterValue>{total.toLocaleString()}</CenterValue>
+                    </div>
+                  </foreignObject>
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <ChartEmptyState>No data available</ChartEmptyState>
+            )}
+          </DonutChartWrap>
+
+          <DonutLegend>
+            {hasData ? (
+              chartData.map(
                 (item: {
                   name: string;
                   value: number;
                   color: string;
                   percentage: string;
                 }) => (
-                  <PieLegendRow key={`pie-legend-${item.name}`}>
-                    <PieLegendItem>
-                      <Dot
+                  <DonutLegendRow
+                    key={`legend-${item.name}`}
+                    className="donut-mini-row"
+                  >
+                    <DonutLegendLabelWrap>
+                      <DonutDot
                         $color={item.color}
                         className="pie-color-dot"
                         style={
@@ -726,97 +879,16 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                           } as CSSProperties
                         }
                       />
-                      <PieLegendLabel>{item.name}</PieLegendLabel>
-                    </PieLegendItem>
-                    <PieLegendPercent>{item.value.toLocaleString()}</PieLegendPercent>
-                  </PieLegendRow>
+                      <DonutLegendLabel>{item.name}</DonutLegendLabel>
+                    </DonutLegendLabelWrap>
+                    <DonutLegendValueStack>
+                      <DonutLegendPercent>{item.value.toLocaleString()}</DonutLegendPercent>
+                    </DonutLegendValueStack>
+                  </DonutLegendRow>
                 ),
-              )}
-            </PieLegend>
-          </RightPanel>
-        </PieTemplate>
-      ) : (
-        <DonutTemplate>
-          <DonutChartWrap>
-            <ResponsiveContainer width="100%" height="100%">
-              <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
-                <Pie
-                  data={chartData}
-                  cx="50%"
-                  cy="50%"
-                  innerRadius="63%"
-                  outerRadius="90%"
-                  paddingAngle={1}
-                  strokeWidth={0}
-                  dataKey="value"
-                  animationBegin={120}
-                  animationDuration={760}
-                  labelLine={false}
-                  label={renderSliceLabel('donut')}
-                >
-                  {chartData.map(
-                    (
-                      entry: { name: string; value: number; color: string },
-                      index: number,
-                    ) => (
-                      <Cell key={`donut-cell-${index}`} fill={entry.color} />
-                    ),
-                  )}
-                </Pie>
-                <foreignObject
-                  x="22%"
-                  y="22%"
-                  width="56%"
-                  height="56%"
-                  style={{ pointerEvents: 'none', overflow: 'visible' }}
-                >
-                  <div
-                    style={{
-                      display: 'flex',
-                      flexDirection: 'column',
-                      alignItems: 'center',
-                      justifyContent: 'center',
-                      height: '100%',
-                      overflow: 'visible',
-                    }}
-                  >
-                    <CenterLabel>Total</CenterLabel>
-                    <CenterValue>{total.toLocaleString()}</CenterValue>
-                  </div>
-                </foreignObject>
-              </PieChart>
-            </ResponsiveContainer>
-          </DonutChartWrap>
-
-          <DonutLegend>
-            {chartData.map(
-              (item: {
-                name: string;
-                value: number;
-                color: string;
-                percentage: string;
-              }) => (
-                <DonutLegendRow
-                  key={`legend-${item.name}`}
-                  className="donut-mini-row"
-                >
-                  <DonutLegendLabelWrap>
-                    <DonutDot
-                      $color={item.color}
-                      className="pie-color-dot"
-                      style={
-                        {
-                          ['--dot-color' as string]: item.color,
-                        } as CSSProperties
-                      }
-                    />
-                    <DonutLegendLabel>{item.name}</DonutLegendLabel>
-                  </DonutLegendLabelWrap>
-                  <DonutLegendValueStack>
-                    <DonutLegendPercent>{item.value.toLocaleString()}</DonutLegendPercent>
-                  </DonutLegendValueStack>
-                </DonutLegendRow>
-              ),
+              )
+            ) : (
+              <LegendEmptyState>No data available</LegendEmptyState>
             )}
           </DonutLegend>
         </DonutTemplate>

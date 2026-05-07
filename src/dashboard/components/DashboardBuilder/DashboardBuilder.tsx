@@ -79,6 +79,7 @@ import { getRootLevelTabsComponent, shouldFocusTabs } from './utils';
 import DashboardContainer from './DashboardContainer';
 import { useNativeFilters } from './state';
 import DashboardWrapper from './DashboardWrapper';
+import NetworkStatusOverlay from 'src/components/NetworkStatusOverlay';
 
 // @z-index-above-dashboard-charts + 1 = 11
 const FiltersPanel = styled.div<{ width: number; hidden: boolean }>`
@@ -374,6 +375,7 @@ const DashboardBuilder = () => {
   const dispatch = useDispatch();
   const uiConfig = useUiConfig();
   const theme = useTheme();
+  const isStandalone = new URLSearchParams(window.location.search).get('standalone') === '1';
 
   const dashboardId = useSelector<RootState, string>(
     ({ dashboardInfo }) => `${dashboardInfo.id}`,
@@ -614,6 +616,7 @@ const DashboardBuilder = () => {
 
   return (
     <DashboardWrapper>
+      {isStandalone && <NetworkStatusOverlay />}
       {showFilterBar &&
         filterBarOrientation === FilterBarOrientation.Vertical && (
           <>
