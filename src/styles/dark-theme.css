@@ -114,6 +114,52 @@ body {
   box-shadow: none !important;
 }
 
+/* Preserve rounded corners for custom mini detail rows/cards in dark mode */
+.dark-theme [data-test-viz-type="pie"] .pie-mini-row {
+  border-radius: 12px !important;
+  min-height: 102px !important;
+  overflow: visible !important;
+}
+
+.dark-theme [data-test-viz-type="pie"] .pie-mini-row.priority-mini-row {
+  min-height: 108px !important;
+  padding-top: 3px !important;
+  padding-bottom: 3px !important;
+}
+
+/* Keep custom pie legend markers visible (override nuclear reset above) */
+.dark-theme [data-test-viz-type="pie"] .pie-color-dot {
+  background-color: var(--dot-color) !important;
+  border-radius: 50% !important;
+  border: 2px solid rgba(236, 251, 255, 0.95) !important;
+  box-shadow: 0 0 0 1px rgba(20, 39, 47, 0.92) !important;
+  width: 28px !important;
+  height: 28px !important;
+  min-width: 28px !important;
+  min-height: 28px !important;
+  display: inline-block !important;
+}
+
+.dark-theme [data-test-viz-type="pie"] .pie-color-iconchip {
+  background-color: var(--dot-color) !important;
+  border-radius: 50% !important;
+  border: 1px solid rgba(236, 251, 255, 0.95) !important;
+  box-shadow: 0 0 0 1px rgba(20, 39, 47, 0.92) !important;
+  color: #08202a !important;
+  width: 46px !important;
+  height: 46px !important;
+  min-width: 46px !important;
+  min-height: 46px !important;
+  display: inline-flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+}
+
+.dark-theme [data-test-viz-type="pie"] .pie-color-iconchip svg {
+  stroke: currentColor !important;
+  color: currentColor !important;
+}
+
 .dark-theme .css-v2o9ep {
   background-color: #1a1a1a !important;
   border-radius: 4px !important;
