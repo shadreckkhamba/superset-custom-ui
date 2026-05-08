@@ -194,7 +194,6 @@ interface RunChartStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   compact?: boolean;
-  autoRefresh?: boolean;
 }
 
 const createNoDataPlugin = (isDarkMode: boolean) => ({
@@ -222,7 +221,6 @@ export default function RunChartStay({
   resetKey,
   isDarkMode = false,
   compact = false,
-  autoRefresh = true,
 }: RunChartStayProps): JSX.Element {
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
@@ -390,15 +388,15 @@ export default function RunChartStay({
   }, [resetKey, handleReload]);
 
   // Initial fetch + interval - only auto-refresh when viewing current week
-useEffect(() => {
-  fetchData();
-  // Only auto-refresh if viewing current week (weekOffset === 0)
-  if (autoRefresh && weekOffset === 0) {
-    const id = setInterval(fetchData, 60000);
-    return () => clearInterval(id);
-  }
-  return undefined;
-}, [autoRefresh, fetchData, weekOffset]);
+  useEffect(() => {
+    fetchData();
+    // Only auto-refresh if viewing current week (weekOffset === 0)
+    if (weekOffset === 0) {
+      const id = setInterval(fetchData, 60000);
+      return () => clearInterval(id);
+    }
+    return undefined;
+  }, [fetchData, weekOffset]);
 
   // Force chart to fully re-measure modal container after mount/render transitions.
   useEffect(() => {
@@ -1585,16 +1583,14 @@ useEffect(() => {
             aria-modal="true"
             aria-label="Chart explanation"
             onClick={(e) => e.stopPropagation()}
-	            style={{
-	              background: isDarkMode
-	                ? 'rgba(30, 35, 42, 0.70)'
-	                : 'rgba(255, 255, 255, 0.70)',
-	              backdropFilter: 'blur(16px) saturate(170%)',
-	              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-	              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
-	              boxShadow: isDarkMode
-	                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
-	                : '0 24px 52px rgba(24, 144, 255, 0.24)',
+            style={{
+              background: isDarkMode
+                ? 'rgba(30, 35, 42, 0.92)'
+                : '#ffffff',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+              boxShadow: isDarkMode
+                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
+                : '0 24px 52px rgba(24, 144, 255, 0.24)',
               color: isDarkMode ? '#f0f0f0' : '#1f2937',
               overflow: 'hidden',
               transformOrigin: 'top right',
@@ -1605,9 +1601,6 @@ useEffect(() => {
               width: 'clamp(320px, 90vw, 500px)',
               maxWidth: 'calc(100% - 20px)',
               borderRadius: '16px',
-              maxHeight: 'calc(100% - 24px)',
-              display: 'flex',
-              flexDirection: 'column',
             }}
           >
             <div
@@ -1656,18 +1649,7 @@ useEffect(() => {
                 <X size={18} />
               </button>
             </div>
-            <div
-              style={{
-                padding: 'clamp(12px, 2.8vw, 16px)',
-                display: 'grid',
-                gap: 'clamp(10px, 2.5vw, 14px)',
-                flex: '1 1 auto',
-                minHeight: 0,
-                overflowY: 'auto',
-                overscrollBehavior: 'contain',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+            <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Weekly trend line</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>

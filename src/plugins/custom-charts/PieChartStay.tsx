@@ -93,17 +93,16 @@ interface PieChartStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   isExpanded?: boolean;
-  autoRefresh?: boolean;
 }
 export default function StayTimePie({
   refreshKey,
   resetKey,
   isDarkMode = false,
   isExpanded = false,
-  autoRefresh = true,
 }: PieChartStayProps): JSX.Element {
   const [percentages, setPercentages] = useState<number[]>([]);
   const [loading, setLoading] = useState(true);
+  const [hasLoadedOnce, setHasLoadedOnce] = useState(false);
   const [lastUpdate, setLastUpdate] = useState<Date | null>(null);
 
   const [mostCommonRange, setMostCommonRange] = useState<string | null>(null);
@@ -128,6 +127,7 @@ export default function StayTimePie({
   useEffect(() => {
       if (refreshKey !== undefined) {
         setActualPercent(0);
+        setHasLoadedOnce(false);
         loadData();
       }
   }, [refreshKey]);
@@ -258,6 +258,7 @@ const loadData = async () => {
     
     setTimeout(() => {
       setLoading(false);
+      setHasLoadedOnce(true);
     }, remainingTime);
   }
 };
@@ -270,17 +271,13 @@ useEffect(() => {
   setActualPercent(null);
   setAnimatedPercent(0);
   loadData();
-
-  if (!autoRefresh) {
-    return undefined;
-  }
-
+  
   const intervalId = setInterval(() => {
     loadData();
   }, 60000);
 
   return () => clearInterval(intervalId);
-}, [autoRefresh, selectedPeriod]);
+}, [selectedPeriod]);
 
 // If the focused slice disappears in a new dataset, fall back to all slices
 useEffect(() => {
@@ -508,11 +505,12 @@ useEffect(() => {
         if (!meta?.data) return;
 
         const chartRadius = Math.min(chartWidth, chartHeight) / 2;
+        const sliceOuterRadius = chartRadius * 0.85;
         const selectedIdx = selectedSliceIndex;
 
-        // Make responsive based on chart size with tighter bounds so connectors don't get too long.
-        const outerOffset = Math.min(Math.max(10, chartRadius * 0.05), 15); // 10-15px range
-        const bendDistance = Math.min(Math.max(18, chartRadius * 0.10), 28); // 18-28px range
+        // Make responsive based on chart size with better min/max bounds
+        const outerOffset = Math.min(Math.max(18, chartRadius * 0.08), 28);   // 18-28px range
+        const bendDistance = Math.min(Math.max(35, chartRadius * 0.15), 50);  // 35-50px range (reduced max)
 
         meta.data.forEach((arc: any, index: number) => {
           const value = datasetValues[index] || 0;
@@ -523,19 +521,14 @@ useEffect(() => {
           const cosAngle = Math.cos(angle);
           const sinAngle = Math.sin(angle);
 
-          // Anchor the connector line at the actual circumference of the arc (not inside the slice).
-          const arcCenterX = Number(arc.x ?? centerX);
-          const arcCenterY = Number(arc.y ?? centerY);
-          const arcOuterRadius = Number(arc.outerRadius ?? chartRadius * 0.85);
+          const lineStartX = centerX + cosAngle * (sliceOuterRadius + 5);
+          const lineStartY = centerY + sinAngle * (sliceOuterRadius + 5);
 
-          const lineStartX = arcCenterX + cosAngle * arcOuterRadius;
-          const lineStartY = arcCenterY + sinAngle * arcOuterRadius;
-
-          const midX = arcCenterX + cosAngle * (arcOuterRadius + outerOffset);
-          const midY = arcCenterY + sinAngle * (arcOuterRadius + outerOffset);
+          const midX = centerX + cosAngle * (sliceOuterRadius + outerOffset);
+          const midY = centerY + sinAngle * (sliceOuterRadius + outerOffset);
 
           // Reduce bend distance on left side to prevent cutoff
-          const adjustedBendDistance = cosAngle < 0 ? bendDistance * 0.75 : bendDistance;
+          const adjustedBendDistance = cosAngle < 0 ? bendDistance * 0.8 : bendDistance;
           const bendX = midX + (cosAngle >= 0 ? adjustedBendDistance : -adjustedBendDistance);
           const bendY = midY;
           const clampedBendX = Math.min(canvasWidth - 10, Math.max(10, bendX));
@@ -555,10 +548,7 @@ useEffect(() => {
 
           // Label text - keep readable but avoid clipping on smaller/denser views
           const text = `${value.toFixed(1)}%`;
-          const isLargeCanvas = canvasHeight >= 340;
-          const fontSize = isLargeCanvas
-            ? Math.min(Math.max(20, chartRadius * 0.11), 32)
-            : Math.min(Math.max(16, chartRadius * 0.08), 26);
+          const fontSize = Math.min(Math.max(16, chartRadius * 0.08), 26);
           ctx.font = `bold ${fontSize}px sans-serif`;
           
           ctx.fillStyle = labelColor;
@@ -653,9 +643,6 @@ useEffect(() => {
   const legendItemLabelGap = isExpanded ? '8px' : '10px';
   const legendDotSize = isExpanded ? '10px' : '12px';
   const legendLabelFontSize = isExpanded ? '13px' : '20px';
-  const legendWrapperPaddingTop = isExpanded ? '16px' : '50px';
-  const infoButtonTop = isExpanded ? '-2px' : '0px';
-  const infoButtonRight = isExpanded ? '-2px' : '0px';
   
   return (
     <div
@@ -685,14 +672,13 @@ useEffect(() => {
       }}
     >
       <button
-        className="pie-stay-info-button"
         type="button"
         aria-label="What am I seeing?"
         onClick={openInfoModal}
         style={{
           position: 'absolute',
-          top: infoButtonTop,
-          right: infoButtonRight,
+          top: '0px',
+          right: '2px',
           width: '32px',
           height: '32px',
           borderRadius: '999px',
@@ -725,56 +711,6 @@ useEffect(() => {
           }
           .responsive-chart-wrapper > div {
             flex-wrap: wrap !important;
-          }
-        }
-
-        /* Expanded pie container:
-           use available middle width for label room while keeping pie diameter stable via fixed height. */
-        .pie-stay-wrapper .pie-stay-chart-container--expanded {
-          flex: 1 1 0 !important;
-          width: 100% !important;
-          max-width: 100% !important;
-          height: 360px !important;
-          min-height: 360px !important;
-          max-height: 360px !important;
-          aspect-ratio: auto !important;
-          align-self: stretch !important;
-          margin: 0 !important;
-          padding: 4px !important;
-        }
-
-        .pie-stay-wrapper .pie-stay-chart-container--expanded canvas {
-          width: 100% !important;
-          height: 100% !important;
-          max-width: 100% !important;
-          max-height: 100% !important;
-          object-fit: contain !important;
-        }
-
-        /* Slightly shorter on smaller/medium screens (already working there). */
-        @media (max-width: 1400px) {
-          .pie-stay-wrapper .pie-stay-chart-container--expanded {
-            height: 300px !important;
-            min-height: 300px !important;
-            max-height: 300px !important;
-            margin: 0 8px !important;
-          }
-
-          /* Legend compaction for "smaller screens" that still keep 3-column layout. */
-          .pie-stay-wrapper .pie-stay-legend-wrapper {
-            padding-top: 12px !important;
-          }
-          .pie-stay-wrapper .pie-stay-legend-card {
-            margin-top: 8px !important;
-            padding: 8px 10px !important;
-            gap: 4px !important;
-          }
-          .pie-stay-wrapper .pie-stay-legend-title {
-            margin-bottom: 2px !important;
-            padding-bottom: 6px !important;
-          }
-          .pie-stay-wrapper .pie-stay-legend-item {
-            padding: 5px 9px !important;
           }
         }
         
@@ -816,7 +752,7 @@ useEffect(() => {
         width: '100%',
         height: isExpanded ? 'auto' : '100%',
         flex: isExpanded ? '0 0 auto' : '1 1 0',
-        justifyContent: isExpanded ? 'flex-start' : 'space-between',
+        justifyContent: 'space-between',
         flexWrap: isExpanded ? 'wrap' : 'nowrap',
         minHeight: isExpanded ? '0' : '520px',
         maxHeight: isExpanded ? 'none' : '640px',
@@ -1121,7 +1057,7 @@ useEffect(() => {
 
           {/* Center - Pie Chart */}
           <div 
-            className={`chart-container pie-stay-chart-container${isExpanded ? ' pie-stay-chart-container--expanded' : ''}`}
+            className="chart-container pie-stay-chart-container"
             style={{
               flex: isExpanded ? '0 1 auto' : '1 1 0',
               width: isExpanded ? 'clamp(220px, 28vw, 360px)' : '100%',
@@ -1155,11 +1091,9 @@ useEffect(() => {
           style={{ 
           flex: '0 0 auto',
           alignSelf: 'flex-start',
-          paddingTop: legendWrapperPaddingTop,
+          paddingTop: isExpanded ? '16px' : '50px',
         }}>
-        <div
-          className="pie-stay-legend-card"
-          style={{ 
+        <div style={{ 
           display: 'flex', 
           flexDirection: 'column', 
           gap: legendGap,
@@ -1174,9 +1108,7 @@ useEffect(() => {
             : '0 4px 16px rgba(0,0,0,0.08)',
           transition: 'background-color 0.3s ease, box-shadow 0.3s ease',
         }}>
-          <div
-            className="pie-stay-legend-title"
-            style={{
+          <div style={{
             fontSize: legendTitleFontSize,
             fontWeight: 700,
             color: isDarkMode ? '#e0e0e0' : '#333',
@@ -1197,7 +1129,6 @@ useEffect(() => {
 
             return (
               <div
-                className="pie-stay-legend-item"
                 key={idx}
                 onClick={() => {
                   if (isVisible) {
@@ -1250,7 +1181,6 @@ useEffect(() => {
                 {/* Left side - color dot + label */}
                 <div style={{ display: 'flex', alignItems: 'center', gap: legendItemLabelGap, flex: 1 }}>
                   <div
-                    className="pie-stay-legend-dot"
                     style={{
                       width: legendDotSize,
                       height: legendDotSize,
@@ -1260,9 +1190,7 @@ useEffect(() => {
                       flexShrink: 0,
                     }}
                   />
-                  <span
-                    className="pie-stay-legend-label"
-                    style={{ 
+                  <span style={{ 
                     fontSize: legendLabelFontSize, 
                     fontWeight: 600, 
                     color: isDarkMode ? '#e0e0e0' : '#333',
@@ -1282,7 +1210,7 @@ useEffect(() => {
           {}
       </div>
 
-      {loading && (
+      {loading && !hasLoadedOnce && (
         <div
           style={{
             position: 'absolute',
@@ -1322,23 +1250,18 @@ useEffect(() => {
             aria-modal="true"
             aria-label="Chart explanation"
             onClick={(e) => e.stopPropagation()}
-	            style={{
-	              width: 'clamp(320px, 90vw, 500px)',
-	              maxWidth: 'calc(100% - 20px)',
-	              maxHeight: 'calc(100% - 24px)',
-	              borderRadius: '16px',
-	              background: isDarkMode
-	                ? 'rgba(30, 35, 42, 0.70)'
-	                : 'rgba(255, 255, 255, 0.70)',
-	              backdropFilter: 'blur(16px) saturate(170%)',
-	              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-	              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
-	              boxShadow: isDarkMode
-	                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
-	                : '0 24px 52px rgba(24, 144, 255, 0.24)',
+            style={{
+              width: 'clamp(320px, 90vw, 500px)',
+              maxWidth: 'calc(100% - 20px)',
+              borderRadius: '16px',
+              background: isDarkMode
+                ? 'rgba(30, 35, 42, 0.92)'
+                : '#ffffff',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+              boxShadow: isDarkMode
+                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
+                : '0 24px 52px rgba(24, 144, 255, 0.24)',
               color: isDarkMode ? '#f0f0f0' : '#1f2937',
-              display: 'flex',
-              flexDirection: 'column',
               overflow: 'hidden',
               transformOrigin: 'top right',
               transform: infoPanelReady ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.38)',
@@ -1394,18 +1317,7 @@ useEffect(() => {
               </button>
             </div>
 
-            <div
-              style={{
-                padding: 'clamp(12px, 2.8vw, 16px)',
-                display: 'grid',
-                gap: 'clamp(10px, 2.5vw, 14px)',
-                flex: '1 1 auto',
-                minHeight: 0,
-                overflowY: 'auto',
-                overscrollBehavior: 'contain',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+            <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Pie slices (distribution)</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>

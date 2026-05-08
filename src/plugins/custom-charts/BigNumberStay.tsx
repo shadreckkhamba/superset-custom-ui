@@ -20,7 +20,7 @@ import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
 
-// Register components
+// Register Chart.js components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // CSS for responsive dashboard view switch
@@ -43,16 +43,8 @@ const responsiveSwitchStyles = `
     font-size: clamp(12px, 2.5vw, 14px) !important;
   }
   
-  /* Blue ring around the switch component only */
   [data-test="dashboard-view-switch"] .antd5-switch {
     transform: scale(clamp(0.9, 0.2vw + 0.9, 1.15)) !important;
-    box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.4) !important;
-    border-radius: 100px !important;
-  }
-  
-  /* Enhanced blue ring on hover */
-  [data-test="dashboard-view-switch"] .antd5-switch:hover {
-    box-shadow: 0 0 0 4px rgba(64, 169, 255, 0.5) !important;
   }
   
   /* Responsive adjustments for very small screens */
@@ -70,11 +62,6 @@ const responsiveSwitchStyles = `
     
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.85) !important;
-      box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.4) !important;
-    }
-    
-    [data-test="dashboard-view-switch"] .antd5-switch:hover {
-      box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.5) !important;
     }
   }
   
@@ -92,11 +79,6 @@ const responsiveSwitchStyles = `
     
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.95) !important;
-      box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.4) !important;
-    }
-    
-    [data-test="dashboard-view-switch"] .antd5-switch:hover {
-      box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.5) !important;
     }
   }
 `;
@@ -138,7 +120,6 @@ interface BigNumberStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   isExpanded?: boolean;
-  autoRefresh?: boolean;
 }
 type TrendDay = { day: string; avg_hours: number };
 // Synchronous fetch
@@ -159,7 +140,6 @@ export default function BigNumberStay({
   resetKey,
   isDarkMode = false,
   isExpanded = false,
-  autoRefresh = true,
 }: BigNumberStayProps): JSX.Element {
   const [bigNumber, setBigNumber] = useState<number | null>(null);
   const [animatedNumber, setAnimatedNumber] = useState<number>(0);
@@ -299,7 +279,7 @@ const loadData = async (resetToToday = false) => {
     const resp = await fetchStayTimes();
     if (!resp) return;
 
-    console.log('API Response:', resp); // Debug logging
+    console.log('API Response:', resp); // Debug log
 
     setStayData(resp);
 
@@ -438,10 +418,6 @@ useEffect(
 
 // Auto refresh every 60s - only when viewing today's data
 useEffect(() => {
-  if (!autoRefresh) {
-    return undefined;
-  }
-
   const intervalId = setInterval(() => {
     if (selectedIsToday) {
       loadData();
@@ -449,7 +425,7 @@ useEffect(() => {
   }, 60000);
 
   return () => clearInterval(intervalId);
-}, [autoRefresh, selectedIsToday]);
+}, [selectedIsToday]);
 
   // Graph options
   const gradientPlugin: Plugin<'line'> = {
@@ -545,17 +521,17 @@ useEffect(() => {
   return (
     <div
       ref={containerRef} 
-      className="responsive-chart-wrapper big-number-stay-wrapper"
+      className="responsive-chart-wrapper"
       style={{
         position: 'relative',
         width: '100%',
         height: '100%',
         maxHeight: isExpanded ? 'none' : '700px',
-        minHeight: isExpanded ? 'clamp(200px, 26vh, 300px)' : '500px',
+        minHeight: isExpanded ? 'clamp(300px, 36vh, 430px)' : '500px',
         display: 'flex',
         flexDirection: 'column',
         alignItems: 'stretch',
-        padding: isExpanded ? '12px 12px 0' : '28px 28px 0',
+        padding: isExpanded ? '14px 14px 0' : '28px 28px 0',
         backgroundColor: isDarkMode ? '#2d2d2d' : '#fafbfc',
         borderRadius: '20px',
         boxShadow: isDarkMode 
@@ -601,11 +577,11 @@ useEffect(() => {
     </button>
     <>
       <div
-        className="big-number-stay-content"
         style={{
           flex: '1 1 auto',
           minHeight: 0,
-          overflow: 'hidden',
+          overflowY: isExpanded ? 'auto' : 'visible',
+          overflowX: 'hidden',
           display: 'flex',
           flexDirection: 'column',
         }}
@@ -637,10 +613,10 @@ useEffect(() => {
         style={{
           position: 'relative',
           width: '100%',
-          marginBottom: isExpanded ? '0.6rem' : '1.4rem',
+          marginBottom: isExpanded ? '1.2rem' : '2rem',
           display: 'flex',
           justifyContent: 'center',
-          padding: isExpanded ? '4px 0' : '8px 0',
+          padding: '12px 8px',
           overflow: 'visible',
         }}
       >
@@ -660,42 +636,28 @@ useEffect(() => {
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              width: isExpanded ? 24 : 32,
-              height: isExpanded ? 24 : 32,
+              width: isExpanded ? 32 : 36,
+              height: isExpanded ? 32 : 36,
               borderRadius: '50%',
-              background: isDarkMode ? '#ffffff' : 'rgba(255, 255, 255, 0.6)',
-              border: isDarkMode ? '1px solid #e0e0e0' : '1px solid rgba(148, 163, 184, 0.25)',
-              boxShadow: isDarkMode
-                ? '0 2px 6px rgba(0, 0, 0, 0.1)'
-                : '0 6px 14px rgba(15, 23, 42, 0.12)',
-              backdropFilter: isDarkMode ? 'none' : 'blur(10px) saturate(160%)',
-              WebkitBackdropFilter: isDarkMode ? 'none' : 'blur(10px) saturate(160%)',
+              background: '#ffffff',
+              border: '1px solid #e0e0e0',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
               cursor: 'pointer',
-              fontSize: isExpanded ? 14 : 18,
+              fontSize: isExpanded ? 18 : 20,
               lineHeight: 1,
               padding: 0,
-              color: isDarkMode ? '#666' : '#475569',
+              color: '#666',
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#0f172a';
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 3px 8px rgba(0, 0, 0, 0.12)'
-                : '0 10px 22px rgba(15, 23, 42, 0.14)';
-              if (!isDarkMode) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-              }
+              e.currentTarget.style.color = '#1890ff';
+              e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.12)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              e.currentTarget.style.color = isDarkMode ? '#666' : '#475569';
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 2px 6px rgba(0, 0, 0, 0.1)'
-                : '0 8px 18px rgba(15, 23, 42, 0.12)';
-              if (!isDarkMode) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.75)';
-              }
+              e.currentTarget.style.color = '#666';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
             }}
           >
             ‹
@@ -705,23 +667,25 @@ useEffect(() => {
         {/* SCROLLING ROW */}
         <div
           ref={daysRef}
-          className="stay-day-scroller"
           style={{
             display: 'flex',
+            gap: isExpanded ? 8 : 10,
             overflowX: 'auto',
             scrollBehavior: 'smooth',
-            padding: isExpanded ? '2px' : '4px',
+            padding: isExpanded ? '6px' : '8px',
             msOverflowStyle: 'none',
             scrollbarWidth: 'none',
             justifyContent: 'center',
-            background: 'transparent',
-            backdropFilter: 'none',
-            WebkitBackdropFilter: 'none',
-            borderRadius: '12px',
-            boxShadow: 'none',
-            border: 'none',
-            transition: 'all 0.2s ease',
-            gap: isExpanded ? '6px' : '8px',
+            background: isDarkMode 
+              ? 'rgba(45, 55, 72, 0.95)' 
+              : 'rgba(240, 242, 245, 0.95)',
+            borderRadius: isExpanded ? '24px' : '28px',
+            boxShadow: isDarkMode 
+              ? 'inset 0 2px 8px rgba(0, 0, 0, 0.4), 0 0 24px rgba(59, 130, 246, 0.4), 0 4px 12px rgba(0, 0, 0, 0.3)' 
+              : 'inset 0 2px 6px rgba(0, 0, 0, 0.08), 0 2px 8px rgba(0, 0, 0, 0.04)',
+            border: isDarkMode ? '1px solid rgba(59, 130, 246, 0.3)' : '1px solid rgba(0, 0, 0, 0.06)',
+            transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+            gap: isExpanded ? '4px' : '6px',
           }}
         >
           {(() => {
@@ -821,40 +785,50 @@ useEffect(() => {
                   }}
                   style={{
                     flex: '0 0 auto',
-                    minWidth: isExpanded ? '40px' : '52px',
-                    padding: isExpanded ? '4px 8px' : '8px 12px',
-                    borderRadius: isExpanded ? '10px' : '12px',
+                    minWidth: isExpanded ? '50px' : '60px',
+                    padding: isExpanded ? '10px 14px' : '12px 18px',
+                    borderRadius: isExpanded ? '18px' : '20px',
                     cursor: isFuture ? 'not-allowed' : 'pointer',
                     fontWeight: isSelected ? 700 : 500,
                     fontSize: isExpanded
-                      ? 'clamp(0.8rem, 1.1vw, 0.95rem)'
+                      ? 'clamp(0.9rem, 1.3vw, 1.05rem)'
                       : 'clamp(1.05rem, 1.8vw, 1.3rem)',
                     color: isFuture 
-                      ? (isDarkMode ? '#555' : '#cbd5e1')
+                      ? (isDarkMode ? '#555' : '#ccc')
                       : isSelected 
-                        ? (isDarkMode ? '#ffffff' : '#0f172a')
-                        : (isDarkMode ? '#9ca3af' : '#475569'),
-                    background: 'transparent',
+                        ? (isDarkMode ? '#ffffff' : '#ffffff')
+                        : (isDarkMode ? '#9ca3af' : '#6b7280'),
+                    background: isSelected 
+                      ? (isDarkMode 
+                        ? 'rgba(255, 255, 255, 0.12)'
+                        : 'rgba(0, 0, 0, 0.08)')
+                      : 'transparent',
                     border: 'none',
                     textAlign: 'center',
-                    boxShadow: 'none',
+                    boxShadow: isSelected 
+                      ? (isDarkMode 
+                        ? '0 0 20px rgba(59, 130, 246, 0.6), 0 4px 12px rgba(59, 130, 246, 0.4), 0 2px 4px rgba(0, 0, 0, 0.3)'
+                        : '0 4px 12px rgba(59, 130, 246, 0.3), 0 2px 4px rgba(0, 0, 0, 0.1)')
+                      : 'none',
                     zIndex: isSelected ? 2 : 1,
                     whiteSpace: 'nowrap',
                     opacity: isFuture ? 0.3 : 1,
                     letterSpacing: '0.02em',
                     transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-                    transform: 'none',
-                    backdropFilter: 'none',
-                    WebkitBackdropFilter: 'none',
+                    transform: isSelected ? 'scale(1)' : 'scale(0.95)',
                   }}
                   onMouseEnter={(e) => {
                     if (!isFuture && !isSelected) {
-                      e.currentTarget.style.color = isDarkMode ? '#e5e7eb' : '#1f2937';
+                      e.currentTarget.style.background = isDarkMode 
+                        ? 'rgba(255, 255, 255, 0.08)' 
+                        : 'rgba(0, 0, 0, 0.04)';
+                      e.currentTarget.style.transform = 'scale(0.98)';
                     }
                   }}
                   onMouseLeave={(e) => {
                     if (!isFuture && !isSelected) {
-                      e.currentTarget.style.color = isDarkMode ? '#9ca3af' : '#475569';
+                      e.currentTarget.style.background = 'transparent';
+                      e.currentTarget.style.transform = 'scale(0.95)';
                     }
                   }}
                 >
@@ -884,39 +858,25 @@ useEffect(() => {
               width: isExpanded ? 32 : 36,
               height: isExpanded ? 32 : 36,
               borderRadius: '50%',
-              background: isDarkMode ? '#ffffff' : 'rgba(255, 255, 255, 0.75)',
-              border: isDarkMode ? '1px solid #e0e0e0' : '1px solid rgba(148, 163, 184, 0.35)',
-              boxShadow: isDarkMode
-                ? '0 2px 6px rgba(0, 0, 0, 0.1)'
-                : '0 8px 18px rgba(15, 23, 42, 0.12)',
-              backdropFilter: isDarkMode ? 'none' : 'blur(10px) saturate(160%)',
-              WebkitBackdropFilter: isDarkMode ? 'none' : 'blur(10px) saturate(160%)',
+              background: '#ffffff',
+              border: '1px solid #e0e0e0',
+              boxShadow: '0 2px 6px rgba(0, 0, 0, 0.1)',
               cursor: 'pointer',
               fontSize: isExpanded ? 18 : 20,
               lineHeight: 1,
               padding: 0,
-              color: isDarkMode ? '#666' : '#475569',
+              color: '#666',
               transition: 'all 0.2s ease',
             }}
             onMouseEnter={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1.05)';
-              e.currentTarget.style.color = isDarkMode ? '#1890ff' : '#0f172a';
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 3px 8px rgba(0, 0, 0, 0.12)'
-                : '0 10px 22px rgba(15, 23, 42, 0.14)';
-              if (!isDarkMode) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.9)';
-              }
+              e.currentTarget.style.color = '#1890ff';
+              e.currentTarget.style.boxShadow = '0 3px 8px rgba(0, 0, 0, 0.12)';
             }}
             onMouseLeave={(e) => {
               e.currentTarget.style.transform = 'translateY(-50%) scale(1)';
-              e.currentTarget.style.color = isDarkMode ? '#666' : '#475569';
-              e.currentTarget.style.boxShadow = isDarkMode
-                ? '0 2px 6px rgba(0, 0, 0, 0.1)'
-                : '0 8px 18px rgba(15, 23, 42, 0.12)';
-              if (!isDarkMode) {
-                e.currentTarget.style.background = 'rgba(255, 255, 255, 0.75)';
-              }
+              e.currentTarget.style.color = '#666';
+              e.currentTarget.style.boxShadow = '0 2px 6px rgba(0, 0, 0, 0.1)';
             }}
           >
             ›
@@ -929,17 +889,17 @@ useEffect(() => {
         style={{
           fontSize: isExpanded
             ? bigNumber === null
-              ? 'clamp(1.6rem, 3.6vw, 3.6rem)'
-              : 'clamp(2.6rem, 6vw, 6.6rem)'
-            : 'clamp(3.6rem, 9vw, 9rem)',
+              ? 'clamp(1.9rem, 4.6vw, 4.6rem)'
+              : 'clamp(3.2rem, 8vw, 8.6rem)'
+            : 'clamp(4rem, 10vw, 10rem)',
           fontWeight: 800,
-          marginBottom: '0.6rem',
+          marginBottom: '1rem',
           textAlign: 'center',
           background: 'linear-gradient(135deg, #1890ff 0%, #096dd9 100%)',
           WebkitBackgroundClip: 'text',
           WebkitTextFillColor: 'transparent',
           backgroundClip: 'text',
-          lineHeight: 1.08,
+          lineHeight: 1.2,
           overflow: 'visible',
           minHeight: '1rem',
           display: 'flex',
@@ -956,11 +916,11 @@ useEffect(() => {
       <div
         style={{
           textAlign: 'center',
-          marginBottom: '0.4rem',
+          marginBottom: '0.5rem',
           display: 'flex',
           flexDirection: 'column',
           alignItems: 'center',
-          gap: '0.2rem',
+          gap: '0.25rem',
         }}
       >
         {(() => {
@@ -971,8 +931,8 @@ useEffect(() => {
         <div
           style={{
             color: isNegative ? '#52c41a' : isPositive ? '#ff4d4f' : isDarkMode ? '#b0b0b0' : '#8c8c8c',
-          fontSize: isExpanded
-              ? 'clamp(1.05rem, 1.5vw, 1.8rem)'
+            fontSize: isExpanded
+              ? 'clamp(1.2rem, 1.7vw, 2rem)'
               : 'clamp(1.4rem, 3vw, 2.4rem)',
             fontWeight: 600,
             display: 'flex',
@@ -999,7 +959,7 @@ useEffect(() => {
             style={{
               color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
               fontSize: isExpanded
-                ? 'clamp(0.85rem, 1.2vw, 1.1rem)'
+                ? 'clamp(0.9rem, 1.3vw, 1.2rem)'
                 : 'clamp(1.2rem, 2.5vw, 2rem)',
               marginLeft: '0.5rem',
               fontWeight: 400,
@@ -1023,7 +983,7 @@ useEffect(() => {
             padding: '0.25rem 0.5rem',
             borderRadius: '0.5rem',
             fontSize: isExpanded
-              ? 'clamp(0.85rem, 1.15vw, 1.05rem)'
+              ? 'clamp(0.9rem, 1.25vw, 1.15rem)'
               : 'clamp(1.2rem, 2.5vw, 2rem)',
             fontWeight: 500,
             overflow: 'hidden',
@@ -1056,19 +1016,19 @@ useEffect(() => {
         className={`heatmap-container ${heatmapMounted ? 'mounted' : ''}`}
         style={{ 
           width: '100%',
-          minHeight: 'clamp(76px, 9vh, 92px)',
+          minHeight: 'clamp(104px, 13vh, 124px)',
           flex: '0 0 auto',
           marginTop: 'auto',
           marginLeft: 0,
           marginRight: 0,
-          marginBottom: '-6px',
+          marginBottom: '-26px',
           background: isDarkMode ? 'rgba(64, 64, 64, 0.4)' : 'rgba(255, 255, 255, 0.4)',
-          borderRadius: '12px 12px 0 0',
-          padding: '6px 10px 6px',
+          borderRadius: '12px 12px 20px 20px',
+          padding: '8px 12px',
           border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.04)',
           display: 'flex',
           flexDirection: 'column',
-          gap: '3px',
+          gap: '5px',
           overflow: 'hidden',
           transition: 'background 0.3s ease, border-color 0.3s ease',
         }}
@@ -1077,24 +1037,19 @@ useEffect(() => {
           const normalizedDayKey = selectedDayKey || stayData?.today?.date || toDateKey(new Date());
           const filteredDistribution = stayDistributionByDay[normalizedDayKey] || [];
 
-          // Fixed grid layout: 4 visible rows to keep all buckets on-screen
-          const rows = 4;
+          // Fixed grid layout: 6 rows x 50 columns = 300 boxes
+          const rows = 6;
           const cols = 50;
           const totalBoxes = rows * cols;
           
-          const maxHours = 5;
-          const intervalMinutes = (maxHours * 60) / totalBoxes; // ~1 minute per box
-          const clampedMaxHours = maxHours - Number.EPSILON;
-          const normalizedDistribution = filteredDistribution.map(d => ({
-            ...d,
-            hours: Math.min(d.hours, clampedMaxHours),
-          }));
+          const maxHours = 10;
+          const intervalMinutes = (maxHours * 60) / totalBoxes; // ~1.2 minutes per box
           
           // Raw (discrete) counts per bucket for tooltip display
           const rawCounts = Array.from({ length: totalBoxes }, (_, i) => {
             const startHours = (i * intervalMinutes) / 60;
             const endHours = ((i + 1) * intervalMinutes) / 60;
-            return normalizedDistribution.filter(
+            return filteredDistribution.filter(
               d => d.hours >= startHours && d.hours < endHours
             ).reduce((sum, d) => sum + d.count, 0);
           });
@@ -1102,7 +1057,7 @@ useEffect(() => {
           // Create smoothed counts by distributing each patient across nearby buckets
           const smoothedCounts = Array.from({ length: totalBoxes }, () => 0);
           const radius = 2; // buckets on each side
-          normalizedDistribution.forEach((d) => {
+          filteredDistribution.forEach((d) => {
             if (d.count <= 0) return;
             const position = (d.hours * 60) / intervalMinutes; // in bucket units
             const center = Math.floor(position);
@@ -1152,67 +1107,33 @@ useEffect(() => {
               intensity: maxCount > 0 ? count / maxCount : 0,
             };
           });
-
-          // Render grid column-major so each column maps to a contiguous time window.
-          // This makes hover ranges visually align with the x-axis time markers.
-          const gridBuckets = Array.from({ length: totalBoxes }, (_, gridIdx) => {
-            const row = Math.floor(gridIdx / cols);
-            const col = gridIdx % cols;
-            const bucket = buckets[col * rows + row];
-            return { row, col, bucket };
-          });
-
-          const markerStepMinutes = 20;
-          const timeMarkers = Array.from(
-            { length: Math.floor((maxHours * 60) / markerStepMinutes) + 1 },
-            (_, idx) => {
-              const minutes = idx * markerStepMinutes;
-              const hoursPart = Math.floor(minutes / 60);
-              const minutesPart = minutes % 60;
-              const label =
-                minutes === 0
-                  ? '0'
-                  : hoursPart === 0
-                  ? `${minutes}m`
-                  : minutesPart === 0
-                  ? `${hoursPart}h`
-                  : `${hoursPart}h${minutesPart}`;
-              return { label, minutes };
-            },
-          );
           
           return (
             <>
               {/* Time indicators */}
               <div className="heatmap-time-indicators" style={{ 
-                position: 'relative',
-                width: '100%',
-                height: 'clamp(22px, 2.8vh, 28px)',
+                display: 'flex', 
+                justifyContent: 'space-between',
                 fontSize: 'clamp(0.82rem, 1.05vw, 0.96rem)',
                 color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
                 fontWeight: 600,
+                paddingLeft: '2px',
+                paddingRight: '2px',
               }}>
-                {timeMarkers.map((marker) => {
-                  const markerPercent = (marker.minutes / (maxHours * 60)) * 100;
-                  const markerPositionStyle =
-                    marker.minutes <= 0
-                      ? { left: '0%', transform: 'translateX(0)' }
-                      : marker.minutes >= maxHours * 60
-                      ? { left: '100%', transform: 'translateX(-100%)' }
-                      : { left: `${markerPercent}%`, transform: 'translateX(-50%)' };
-
-                  return (
+                {[
+                  '10m','20m','30m','40m','50m',
+                  '1h','2h','3h','4h','5h',
+                  '6h','7h','8h','9h','10h',
+                ].map((label) => (
                   <div
-                    key={marker.label}
+                    key={label}
                     style={{
-                      position: 'absolute',
-                      top: 0,
+                      position: 'relative',
                       display: 'flex',
                       flexDirection: 'column',
                       alignItems: 'center',
                       gap: '2px',
                       minWidth: '14px',
-                      ...markerPositionStyle,
                     }}
                   >
                     <div
@@ -1224,18 +1145,9 @@ useEffect(() => {
                         boxShadow: '0 1px 3px rgba(24, 144, 255, 0.35)',
                       }}
                     />
-                    <span
-                      style={{
-                        whiteSpace: 'nowrap',
-                        fontSize: 'clamp(0.68rem, 0.86vw, 0.86rem)',
-                        lineHeight: 1,
-                      }}
-                    >
-                      {marker.label}
-                    </span>
+                    <span>{label}</span>
                   </div>
-                  );
-                })}
+                ))}
               </div>
               
               {/* Heatmap boxes */}
@@ -1245,12 +1157,12 @@ useEffect(() => {
                 gridTemplateRows: `repeat(${rows}, 1fr)`,
                 gap: '1px',
                 width: '100%',
-                height: 'clamp(48px, 6.2vh, 60px)',
-                maxHeight: 'clamp(48px, 6.2vh, 60px)',
+                height: 'clamp(52px, 7vh, 66px)',
+                maxHeight: 'clamp(52px, 7vh, 66px)',
                 overflow: 'hidden',
                 borderRadius: '6px',
               }}>
-                {gridBuckets.map(({ bucket }, idx) => {
+                {buckets.map((bucket, idx) => {
                   // Color intensity based on count
                   const baseColor = { r: 24, g: 144, b: 255 }; // #1890ff
                   const alpha = bucket.count === 0 
@@ -1270,6 +1182,7 @@ useEffect(() => {
                       key={idx}
                       className="heatmap-box"
                       style={{
+                        aspectRatio: '1',
                         backgroundColor: `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${alpha})`,
                         borderRadius: '2px',
                         border: isDarkMode 
@@ -1347,23 +1260,18 @@ useEffect(() => {
             aria-modal="true"
             aria-label="Chart explanation"
             onClick={(e) => e.stopPropagation()}
-	            style={{
-	              width: 'clamp(320px, 90vw, 500px)',
-	              maxWidth: 'calc(100% - 20px)',
-	              maxHeight: 'calc(100% - 24px)',
-	              borderRadius: '16px',
-	              background: isDarkMode
-	                ? 'rgba(30, 35, 42, 0.70)'
-	                : 'rgba(255, 255, 255, 0.70)',
-	              backdropFilter: 'blur(16px) saturate(170%)',
-	              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
-	              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
-	              boxShadow: isDarkMode
-	                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
-	                : '0 24px 52px rgba(24, 144, 255, 0.24)',
+            style={{
+              width: 'clamp(320px, 90vw, 500px)',
+              maxWidth: 'calc(100% - 20px)',
+              borderRadius: '16px',
+              background: isDarkMode
+                ? 'rgba(30, 35, 42, 0.92)'
+                : '#ffffff',
+              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+              boxShadow: isDarkMode
+                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
+                : '0 24px 52px rgba(24, 144, 255, 0.24)',
               color: isDarkMode ? '#f0f0f0' : '#1f2937',
-              display: 'flex',
-              flexDirection: 'column',
               overflow: 'hidden',
               transformOrigin: 'top right',
               transform: infoPanelReady ? 'translateY(0) scale(1)' : 'translateY(-10px) scale(0.38)',
@@ -1418,18 +1326,7 @@ useEffect(() => {
                 <X size={18} />
               </button>
             </div>
-            <div
-              style={{
-                padding: 'clamp(12px, 2.8vw, 16px)',
-                display: 'grid',
-                gap: 'clamp(10px, 2.5vw, 14px)',
-                flex: '1 1 auto',
-                minHeight: 0,
-                overflowY: 'auto',
-                overscrollBehavior: 'contain',
-                WebkitOverflowScrolling: 'touch',
-              }}
-            >
+            <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>
                   Main value (average stay time)
@@ -1473,20 +1370,18 @@ useEffect(() => {
             transform: 'translateY(-50%)',
             background: isDarkMode ? '#2d2d2d' : '#ffffff',
             color: isDarkMode ? '#e0e0e0' : '#262626',
-            padding: 'clamp(10px, 1.6vw, 16px) clamp(12px, 2.2vw, 20px)',
-            borderRadius: 'clamp(10px, 1.8vw, 12px)',
-            fontSize: 'clamp(0.85rem, 1.6vw, 1.15rem)',
+            padding: '16px 20px',
+            borderRadius: '12px',
+            fontSize: '1.15rem',
             fontWeight: 500,
             boxShadow: isDarkMode 
               ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)' 
               : '0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
             pointerEvents: 'none',
             zIndex: 10000,
-            whiteSpace: 'normal',
+            whiteSpace: 'nowrap',
             border: isDarkMode ? '1px solid rgba(255, 255, 255, 0.1)' : '1px solid rgba(0, 0, 0, 0.08)',
-            minWidth: 'clamp(160px, 28vw, 220px)',
-            maxWidth: 'min(280px, 80vw)',
-            lineHeight: 1.3,
+            minWidth: '200px',
           }}
         >
           {(() => {
@@ -1502,7 +1397,7 @@ useEffect(() => {
                 }}>
                   Stay Duration
                 </div>
-                <div style={{ fontSize: 'clamp(1.05rem, 2.2vw, 1.5rem)', fontWeight: 700, color: isDarkMode ? '#ffffff' : '#262626' }}>
+                <div style={{ fontSize: '1.5rem', fontWeight: 700, color: isDarkMode ? '#ffffff' : '#262626' }}>
                   {timeRange}
                 </div>
                 <div style={{ 
@@ -1510,7 +1405,7 @@ useEffect(() => {
                   paddingTop: '10px',
                   borderTop: isDarkMode ? '2px solid #404040' : '2px solid #f0f0f0',
                   color: isDarkMode ? '#b0b0b0' : '#595959',
-                  fontSize: 'clamp(0.9rem, 1.7vw, 1.2rem)',
+                  fontSize: '1.2rem',
                   fontWeight: 600,
                 }}>
                   {patients}

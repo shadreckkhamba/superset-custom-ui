@@ -118,5 +118,64 @@ export default styled.div`
     table .right-border-only:last-child {
       border-right: none;
     }
+
+    body.dark-theme &,
+    [data-theme='dark'] & {
+      color: #dce8ec;
+    }
+
+    body.dark-theme & table,
+    [data-theme='dark'] & table {
+      background: linear-gradient(180deg, #0b1820 0%, #0a141b 100%);
+      color: #dce8ec;
+      border-radius: ${theme.gridUnit * 3}px;
+      overflow: hidden;
+      box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.18),
+        0 10px 24px rgba(0, 0, 0, 0.3);
+    }
+
+    body.dark-theme & thead > tr > th,
+    [data-theme='dark'] & thead > tr > th {
+      background: linear-gradient(180deg, #12303c 0%, #0f2730 100%);
+      color: #8fd8f2;
+      border-color: #2f5667;
+    }
+
+    body.dark-theme & tbody > tr > td,
+    [data-theme='dark'] & tbody > tr > td {
+      background: #10222b;
+      color: #dce8ec;
+      border-color: #274453;
+    }
+
+    body.dark-theme & tbody > tr:nth-child(even) > td,
+    [data-theme='dark'] & tbody > tr:nth-child(even) > td {
+      background: #0e1e26;
+    }
+
+    body.dark-theme & .dt-is-null,
+    [data-theme='dark'] & .dt-is-null {
+      color: #9fb2b9;
+    }
+
+    body.dark-theme & td.dt-is-filter:hover,
+    [data-theme='dark'] & td.dt-is-filter:hover {
+      background-color: #173543;
+    }
+
+    body.dark-theme & td.dt-is-active-filter,
+    body.dark-theme & td.dt-is-active-filter:hover,
+    [data-theme='dark'] & td.dt-is-active-filter,
+    [data-theme='dark'] & td.dt-is-active-filter:hover {
+      background: linear-gradient(180deg, #165064 0%, #133f50 100%);
+      color: #e8f7f6;
+    }
+
+    body.dark-theme & .pagination > li > span,
+    [data-theme='dark'] & .pagination > li > span {
+      background: #253237;
+      border-color: #3b4c53;
+      color: #dce8ec;
+    }
   `}
 `;

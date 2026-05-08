@@ -296,6 +296,7 @@ export default function transformProps(
     : {};
 
   const { onContextMenu } = hooks;
+  const onRefresh = (hooks as { onRefresh?: () => void })?.onRefresh;
 
   return {
     width,
@@ -323,6 +324,7 @@ export default function transformProps(
     trendLineData,
     echartOptions,
     onContextMenu,
+    onRefresh,
     xValueFormatter: formatTime,
     refs,
   };

@@ -101,6 +101,7 @@ export default function transformProps(
       : numberFormatter;
 
   const { onContextMenu } = hooks;
+  const onRefresh = (hooks as { onRefresh?: () => void })?.onRefresh;
 
   const defaultColorFormatters = [] as ColorFormatters;
 
@@ -117,6 +118,7 @@ export default function transformProps(
     subtitleFontSize: formattedSubtitleFontSize,
     subtitle: formattedSubtitle,
     onContextMenu,
+    onRefresh,
     refs,
     colorThresholdFormatters,
     metricName: originalLabel,

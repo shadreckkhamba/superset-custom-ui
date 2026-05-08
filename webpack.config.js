@@ -35,28 +35,7 @@ const parsedArgs = require('yargs').argv;
 const Visualizer = require('webpack-visualizer-plugin2');
 const getProxyConfig = require('./webpack.proxy-config');
 const packageConfig = require('./package');
-
-// Optional local env config (not committed). Use this to avoid hardcoding
-// developer-specific IPs/ports in this file.
-const envConfigPath = path.resolve(__dirname, 'src/config/env.config.js');
-let envConfig = {};
-try {
-  if (fs.existsSync(envConfigPath)) {
-    // eslint-disable-next-line global-require, import/no-dynamic-require
-    envConfig = require(envConfigPath);
-  }
-} catch (error) {
-  envConfig = {};
-}
-
-const DEV_SERVER_HOST =
-  process.env.DEV_SERVER_HOST || envConfig.DEV_SERVER_HOST || 'localhost';
-const DEV_SERVER_PORT = Number(
-  process.env.DEV_SERVER_PORT || envConfig.DEV_SERVER_PORT || 9000,
-);
-
-const BACKEND_HOST = process.env.BACKEND_HOST || envConfig.BACKEND_HOST || '';
-const BACKEND_PORT = process.env.BACKEND_PORT || envConfig.BACKEND_PORT || '';
+const envConfig = require('./src/config/env.config');
 
 // input dir
 const APP_DIR = path.resolve(__dirname, './');
@@ -69,13 +48,12 @@ const ROOT_DIR = path.resolve(__dirname, '..');
 // any url prefix.
 const MINI_CSS_EXTRACT_PUBLICPATH = './';
 
-let {
+const {
   mode = 'development',
-  devserverPort,
+  devserverPort = envConfig.DEV_SERVER_PORT,
   measure = false,
   nameChunks = false,
 } = parsedArgs;
-devserverPort = Number(devserverPort || DEV_SERVER_PORT);
 const isDevMode = mode !== 'production';
 const isDevServer = process.argv[1].includes('webpack-dev-server');
 
@@ -193,7 +171,7 @@ if (isDevMode) {
   // otherwise the websocket client will initialize twice, creating two sockets.
   // Ref: https://github.com/gaearon/react-hot-loader/issues/141
   PREAMBLE.unshift(
-    `webpack-dev-server/client?ws://${DEV_SERVER_HOST}:${devserverPort}`,
+    `webpack-dev-server/client?ws://localhost:${devserverPort}`,
   );
 }
 
@@ -592,7 +570,7 @@ if (isDevMode) {
       },
       logging: 'error',
       webSocketURL: {
-        hostname: DEV_SERVER_HOST,
+        hostname: envConfig.DEV_SERVER_HOST,
         port: devserverPort,
         protocol: 'ws',
       },
@@ -602,11 +580,7 @@ if (isDevMode) {
     },
     
     headers: {
-      'Content-Security-Policy': `default-src 'self'; connect-src 'self'${
-        BACKEND_HOST && BACKEND_PORT
-          ? ` http://${BACKEND_HOST}:${BACKEND_PORT}`
-          : ''
-      } https://api.mapbox.com https://events.mapbox.com;`,
+      'Content-Security-Policy': `default-src 'self'; connect-src 'self' ${envConfig.getBackendUrl()} https://api.mapbox.com https://events.mapbox.com;`,
     },
   };
 
