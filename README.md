@@ -1,3 +1,8 @@
+<<<<<<< HEAD
+# Health Data Dashboard (Apache Superset)
+
+This project showcases interactive dashboards developed using Apache Superset to support data-driven decision-making in healthcare settings. The dashboards visualize patient data, service delivery metrics, and operational performance for facilities.
+=======
  # Superset Dashboard with Custom Charts
 
 ## How to use this repo
@@ -52,3 +57,4 @@
    ```
    mysql+mysqldb://superset:XXXXXXXXXX@172.17.0.1:3306/billing_import.
   ```
+>>>>>>> feature/chart-changes
