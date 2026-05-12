@@ -21,7 +21,6 @@ import Handlebars from 'handlebars';
 import dayjs from 'dayjs';
 import { useMemo, useState } from 'react';
 import { isPlainObject } from 'lodash';
-import Helpers from 'just-handlebars-helpers';
 import HandlebarsGroupBy from 'handlebars-group-by';
 
 export interface HandlebarsViewerProps {
@@ -112,5 +111,4 @@ Handlebars.registerHelper('parseJson', (jsonString: string) => {
   }
 });
 
-Helpers.registerHelpers(Handlebars);
 HandlebarsGroupBy.register(Handlebars);

@@ -29,50 +29,6 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
       );
       background-size: 1000px 100%;
     }
-
-    .pie-shimmer-container {
-      display: flex;
-      align-items: stretch;
-      gap: 10px;
-      padding: 8px 10px;
-      box-sizing: border-box;
-      flex-wrap: wrap;
-    }
-
-    @media (max-width: 768px) {
-      .pie-shimmer-container {
-        flex-direction: column !important;
-        gap: 16px !important;
-      }
-      
-      .pie-shimmer-center {
-        order: 1 !important;
-        margin: 0 !important;
-        padding: 15px !important;
-      }
-      
-      .pie-shimmer-center .shimmer {
-        width: clamp(120px, 28vw, 220px) !important;
-        max-width: min(100%, 220px) !important;
-      }
-      
-      .pie-shimmer-legend {
-        order: 2 !important;
-        align-self: center !important;
-        margin-left: 0 !important;
-      }
-    }
-
-    @media (max-width: 480px) {
-      .pie-shimmer-center {
-        padding: 10px !important;
-      }
-      
-      .pie-shimmer-center .shimmer {
-        width: clamp(100px, 35vw, 160px) !important;
-        max-width: min(100%, 160px) !important;
-      }
-    }
   `;
 
   if (type === 'bignumber') {
@@ -147,9 +103,14 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
 
   if (type === 'pie') {
     return (
-      <div className="pie-shimmer-container" style={{ 
+      <div style={{ 
         width: '100%', 
-        height: '100%'
+        height: '100%', 
+        display: 'flex', 
+        alignItems: 'stretch',
+        gap: '10px',
+        padding: '8px 10px',
+        boxSizing: 'border-box'
       }}>
         <style>{shimmerStyle}</style>
         
@@ -157,7 +118,7 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
         <div style={{ 
           flex: '1 1 0',
           minWidth: 'clamp(120px, 12vw, 180px)',
-          maxWidth: 'clamp(230px, 16vw, 280px)',
+          maxWidth: 'clamp(160px, 16vw, 220px)',
           display: 'flex', 
           flexDirection: 'column', 
           gap: 'clamp(8px, 1vh, 14px)',
@@ -199,34 +160,35 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
         </div>
 
         {/* Center - Pie chart shimmer */}
-        <div className="pie-shimmer-center" style={{ 
+        <div style={{ 
           flex: '1 1 0',
           minWidth: 0,
-          maxWidth: '100%',
+          maxWidth: 'none',
           width: '100%',
           height: '100%',
           display: 'flex', 
           justifyContent: 'center', 
           alignItems: 'center',
           margin: '0 6px',
-          padding: '12px',
+          padding: 0,
           overflow: 'hidden',
           boxSizing: 'border-box'
         }}>
           <div
             className="shimmer"
             style={{
-              width: 'clamp(160px, 22vw, 320px)',
-              maxWidth: 'min(100%, 320px)',
-              aspectRatio: '1 / 1',
-              height: 'auto',
+              width: '100%',
+              height: '100%',
+              maxWidth: 'clamp(220px, 30vw, 360px)',
+              maxHeight: 'clamp(220px, 30vw, 360px)',
               borderRadius: '50%',
+              aspectRatio: '1',
             }}
           />
         </div>
 
         {/* Right - Legend shimmer */}
-        <div className="pie-shimmer-legend" style={{ 
+        <div style={{ 
           flex: '0 0 auto',
           alignSelf: 'flex-start',
           paddingTop: '16px',
@@ -236,8 +198,8 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
             display: 'flex', 
             flexDirection: 'column', 
             gap: '6px',
-            minWidth: 'clamp(60px, 8vw, 100px)',
-            maxWidth: 'clamp(100px, 12vw, 150px)',
+            minWidth: '60px',
+            maxWidth: '100px',
             marginTop: '8px',
             padding: '10px',
             backgroundColor: isDarkMode ? '#1a1a1a' : '#fff',
@@ -271,8 +233,17 @@ export const ShimmerLoader: React.FC<ShimmerLoaderProps> = ({ type = 'bignumber'
 
   if (type === 'line') {
     return (
-      <div style={{ width: '100%', height: '100%', padding: '10px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+      <div style={{ width: '100%', height: '100%', padding: '18px', boxSizing: 'border-box', display: 'flex', flexDirection: 'column', gap: '12px' }}>
         <style>{shimmerStyle}</style>
+        {/* Title */}
+        <div
+          className="shimmer"
+          style={{
+            width: '55%',
+            height: '18px',
+            borderRadius: '6px',
+          }}
+        />
 
         {/* Date navigation bar */}
         <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
