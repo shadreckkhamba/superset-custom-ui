@@ -6,9 +6,12 @@ echo "📝 Latest commit: $(git log --oneline -1)"
 echo ""
 
 # Confirm we're on the right branch
-if [ "$(git branch --show-current)" != "combined-dashboard-work" ]; then
-    echo "❌ ERROR: Not on combined-dashboard-work branch!"
-    echo "   Run: git checkout combined-dashboard-work"
+EXPECTED_BRANCH="combined-features-clean"
+CURRENT_BRANCH=$(git branch --show-current)
+if [ "$CURRENT_BRANCH" != "$EXPECTED_BRANCH" ]; then
+    echo "❌ ERROR: Not on $EXPECTED_BRANCH branch!"
+    echo "   Current branch: $CURRENT_BRANCH"
+    echo "   Run: git checkout $EXPECTED_BRANCH"
     exit 1
 fi
 

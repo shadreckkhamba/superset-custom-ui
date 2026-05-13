@@ -1,6 +1,5 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import launcherHtml from '../../../launcher.html';
 
 const RECONNECT_DELAY_MS = 2000;
 const POLL_INTERVAL_MS = 3000;
@@ -86,7 +85,44 @@ const NetworkStatusOverlay: React.FC = () => {
       }}
     >
       <iframe
-        srcDoc={launcherHtml}
+        srcDoc={`
+          <!DOCTYPE html>
+          <html>
+            <head>
+              <style>
+                body {
+                  margin: 0;
+                  padding: 0;
+                  display: flex;
+                  align-items: center;
+                  justify-content: center;
+                  height: 100vh;
+                  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+                  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                }
+                .message {
+                  text-align: center;
+                  color: white;
+                  padding: 2rem;
+                }
+                .message h1 {
+                  font-size: 3rem;
+                  margin: 0 0 1rem 0;
+                }
+                .message p {
+                  font-size: 1.2rem;
+                  opacity: 0.9;
+                }
+              </style>
+            </head>
+            <body>
+              <div class="message">
+                <h1>Connection Lost</h1>
+                <p>Attempting to reconnect...</p>
+              </div>
+            </body>
+          </html>
+        `}
         title="Offline"
         onLoad={() => setIframeLoaded(true)}
         style={{
