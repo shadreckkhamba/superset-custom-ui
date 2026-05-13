@@ -51,26 +51,263 @@ const Styles = styled.div<PivotTableStylesProps>`
       width: ${
         typeof width === 'string' ? parseInt(width, 10) : width - margin * 2
       }px;
- `}
+  `}
+  
+  // Enhanced visual styling for the pivot table
+  .pvtTable {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
+    border-collapse: separate !important;
+    border-spacing: 0;
+    border-radius: 12px;
+    overflow: hidden;
+    box-shadow: 0 4px 20px rgba(0, 0, 0, 0.08);
+    
+    thead tr:nth-child(1) th {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      font-weight: 600;
+      padding: 14px 16px !important;
+      border-bottom: 2px solid rgba(255, 255, 255, 0.3) !important;
+      text-shadow: 0 1px 2px rgba(0, 0, 0, 0.1);
+      letter-spacing: 0.3px;
+    }
+    
+    thead tr:nth-child(2) th {
+      background: linear-gradient(135deg, #f5f7fa 0%, #e4e8ec 100%) !important;
+      color: #2d3748 !important;
+      font-weight: 600;
+      padding: 12px 14px !important;
+      border-bottom: 1px solid #e2e8f0 !important;
+    }
+    
+    tbody tr {
+      transition: all 0.2s ease;
+      
+      &:hover {
+        background: linear-gradient(135deg, #ebf4ff 0%, #e6fffa 100%) !important;
+        transform: scale(1.001);
+        box-shadow: 0 2px 8px rgba(102, 126, 234, 0.15);
+      }
+      
+      &:nth-child(even) {
+        background: #f8fafc !important;
+        
+        &:hover {
+          background: linear-gradient(135deg, #ebf4ff 0%, #e6fffa 100%) !important;
+        }
+      }
+    }
+    
+    td {
+      padding: 12px 14px !important;
+      border: 1px solid #edf2f7 !important;
+      color: #4a5568;
+      font-size: 13px;
+      transition: all 0.15s ease;
+      
+      &:hover {
+        background: #fff !important;
+        box-shadow: inset 0 0 0 2px rgba(102, 126, 234, 0.3);
+        border-color: #667eea !important;
+      }
+    }
+    
+    .pvtTotal, .pvtGrandTotal {
+      font-weight: 700;
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+      color: #92400e !important;
+      
+      &:hover {
+        background: linear-gradient(135deg, #fde68a 0%, #fcd34d 100%) !important;
+      }
+    }
+    
+    // Corner cell styling
+    .pvtCorner {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+      color: white !important;
+      font-weight: 600;
+    }
+    
+    // Dropdown arrows
+    .pvtArrow {
+      color: #667eea !important;
+      font-size: 10px;
+    }
+    
+    // Filter icon
+    .pvtFilter {
+      color: #a0aec0 !important;
+      
+      &:hover {
+        color: #667eea !important;
+      }
+    }
+    
+    // Horizontal and vertical attribute labels
+    .pvtAttr {
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
+      color: #2d3748 !important;
+      padding: 8px 12px !important;
+      border-radius: 6px;
+      font-weight: 500;
+      margin: 4px;
+      box-shadow: 0 2px 4px rgba(0, 0, 0, 0.06);
+      
+      &:hover {
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%) !important;
+        color: white !important;
+      }
+    }
+    
+    // Axis container
+    .pvtAxisContainer, .pvtVals {
+      background: #fafbfc !important;
+      border-radius: 8px;
+      padding: 12px !important;
+      border: 1px solid #e2e8f0 !important;
+      box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.03);
+    }
+    
+    .pvtHorizList li, .pvtVertList li {
+      background: linear-gradient(135deg, #edf2f7 0%, #e2e8f0 100%) !important;
+      border-radius: 6px;
+      padding: 6px 10px !important;
+    }
+    
+    // Dropdown select
+    select.pvtAggregator {
+      border-radius: 8px;
+      border: 2px solid #e2e8f0 !important;
+      padding: 8px 12px;
+      font-weight: 500;
+      color: #2d3748;
+      background: white;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+      }
+    }
+    
+    // Renderer select
+    select.pvtRenderer {
+      border-radius: 8px;
+      border: 2px solid #e2e8f0 !important;
+      padding: 8px 12px;
+      font-weight: 500;
+      color: #2d3748;
+      background: white;
+      transition: all 0.2s ease;
+      
+      &:focus {
+        border-color: #667eea !important;
+        box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        outline: none;
+      }
+    }
+    
+    // Drag handle
+    .pvtDragHandle {
+      color: #667eea !important;
+      
+      &:hover {
+        color: #764ba2 !important;
+      }
+    }
+    
+    // Triangle icons for ordering
+    .pvtTriangle {
+      color: #667eea !important;
+    }
+    
+    // Unused attribute
+    .pvtUnused {
+      background: #f1f5f9 !important;
+      border-radius: 8px;
+      padding: 8px !important;
+    }
+    
+    // Value cell rendering
+    .pvtVal {
+      text-align: center;
+      font-weight: 500;
+    }
+    
+    // Subtotal cells
+    .pvtSubtotal-1, .pvtSubtotal-2 {
+      background: linear-gradient(135deg, #fef3c7 0%, #fde68a 100%) !important;
+      font-weight: 600;
+      color: #92400e;
+    }
+  }
 `;
 
 const PivotTableWrapper = styled.div`
   height: 100%;
   max-width: inherit;
   overflow: auto;
+  border-radius: 12px;
+  
+  // Custom scrollbar styling for better visual appeal
+  &::-webkit-scrollbar {
+    width: 10px;
+    height: 10px;
+  }
+  
+  &::-webkit-scrollbar-track {
+    background: #f1f5f9;
+    border-radius: 10px;
+    box-shadow: inset 0 2px 4px rgba(0, 0, 0, 0.05);
+  }
+  
+  &::-webkit-scrollbar-thumb {
+    background: linear-gradient(135deg, #cbd5e1 0%, #94a3b8 100%);
+    border-radius: 10px;
+    border: 2px solid #f1f5f9;
+    transition: all 0.2s ease;
+    
+    &:hover {
+      background: linear-gradient(135deg, #94a3b8 0%, #64748b 100%);
+    }
+  }
+  
+  &::-webkit-scrollbar-corner {
+    background: #f1f5f9;
+  }
+  
+  // Firefox scrollbar
+  scrollbar-width: thin;
+  scrollbar-color: #94a3b8 #f1f5f9;
 `;
 
 const METRIC_KEY = t('Metric');
 const vals = ['value'];
 
 const StyledPlusSquareOutlined = styled(PlusSquareOutlined)`
-  stroke: ${({ theme }) => theme.colors.grayscale.light2};
+  stroke: #667eea;
   stroke-width: 16px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  
+  &:hover {
+    stroke: #764ba2;
+    transform: scale(1.1);
+  }
 `;
 
 const StyledMinusSquareOutlined = styled(MinusSquareOutlined)`
-  stroke: ${({ theme }) => theme.colors.grayscale.light2};
+  stroke: #667eea;
   stroke-width: 16px;
+  transition: all 0.2s ease;
+  font-size: 14px;
+  
+  &:hover {
+    stroke: #764ba2;
+    transform: scale(1.1);
+  }
 `;
 
 const aggregatorsFactory = (formatter: NumberFormatter) => ({
