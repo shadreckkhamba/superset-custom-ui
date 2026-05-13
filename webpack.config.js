@@ -425,7 +425,13 @@ const config = {
       },
       {
         test: /\.html$/,
-        type: 'asset/source',
+        exclude: /node_modules/,
+        use: {
+          loader: 'html-loader',
+          options: {
+            minimize: !isDevMode,
+          },
+        },
       },
       {
         test: /\.css$/,
