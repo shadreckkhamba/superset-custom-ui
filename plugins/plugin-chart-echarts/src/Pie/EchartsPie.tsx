@@ -595,6 +595,10 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
   );
+  
+  // Filter data for pie/donut chart - exclude zero values from slices and labels
+  const filteredChartDataForPie = chartData.filter(item => Number(item.value) > 0);
+  
   const hasData = chartData.some(item => Number(item.value) > 0);
 
   const [showSkeleton, setShowSkeleton] = useState(chartData.length === 0);
@@ -638,8 +642,9 @@ export default function EchartsPie(props: PieChartTransformedProps) {
       const cos = Math.cos(angle);
       const sin = Math.sin(angle);
       const isRightSide = cos >= 0;
+      // Use filteredChartDataForPie for correct index lookup (excludes zero values)
       const slicePercentage =
-        chartData[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
+        filteredChartDataForPie[index]?.percentage ?? (total > 0 ? ((value / total) * 100).toFixed(1) : '0.0');
       const labelText = `${slicePercentage}%`;
       const radialStart = outerRadius;
       const radialBend = outerRadius + (mode === 'pie' ? 10 : 8);
@@ -733,7 +738,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 14, right: 64, bottom: 18, left: 30 }}>
                   <Pie
-                    data={chartData}
+                    data={filteredChartDataForPie}
                     cx="46%"
                     cy="48%"
                     outerRadius="80%"
@@ -744,7 +749,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     labelLine={false}
                     label={renderSliceLabel('pie')}
                   >
-                    {chartData.map(
+                    {filteredChartDataForPie.map(
                       (
                         entry: { name: string; value: number; color: string },
                         index: number,
@@ -806,7 +811,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 8, right: 16, bottom: 8, left: 16 }}>
                   <Pie
-                    data={chartData}
+                    data={filteredChartDataForPie}
                     cx="50%"
                     cy="50%"
                     innerRadius="63%"
@@ -819,7 +824,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                     labelLine={false}
                     label={renderSliceLabel('donut')}
                   >
-                    {chartData.map(
+                    {filteredChartDataForPie.map(
                       (
                         entry: { name: string; value: number; color: string },
                         index: number,
