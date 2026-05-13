@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { PureComponent, MouseEvent, createRef, CSSProperties } from 'react';
+import { PureComponent, MouseEvent, createRef } from 'react';
 import {
   t,
   getNumberFormatter,
@@ -35,10 +35,10 @@ const defaultNumberFormatter = getNumberFormatter();
 
 const PROPORTION = {
   // text size: proportion of the chart container sans trendline
-  METRIC_NAME: 0.18,
-  KICKER: 0.15,
-  HEADER: 0.55,
-  SUBHEADER: 0.18,
+  METRIC_NAME: 0.125,
+  KICKER: 0.1,
+  HEADER: 0.3,
+  SUBHEADER: 0.125,
   // trendline size: proportion of the whole chart container
   TRENDLINE: 0.3,
 };
@@ -46,7 +46,6 @@ const PROPORTION = {
 type BigNumberVisState = {
   elementsRendered: boolean;
   recalculateTrigger: boolean;
-  isRefreshing: boolean;
 };
 
 class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
@@ -81,7 +80,6 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   state = {
     elementsRendered: false,
     recalculateTrigger: false,
-    isRefreshing: false,
   };
 
   componentDidMount() {
@@ -92,15 +90,6 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   }
 
   componentDidUpdate(prevProps: BigNumberVizProps) {
-    if (
-      this.state.isRefreshing &&
-      (prevProps.bigNumber !== this.props.bigNumber ||
-        prevProps.timestamp !== this.props.timestamp ||
-        prevProps.subtitle !== this.props.subtitle)
-    ) {
-      this.setState({ isRefreshing: false });
-    }
-
     if (
       prevProps.height !== this.props.height ||
       prevProps.showTrendLine !== this.props.showTrendLine
@@ -215,24 +204,14 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
   }
 
   renderHeader(maxHeight: number) {
-    const {
-      bigNumber,
-      headerFormatter,
-      width,
-      colorThresholdFormatters,
-      showTrendLine,
-    } = this.props;
+    const { bigNumber, headerFormatter, width, colorThresholdFormatters } =
+      this.props;
     // @ts-ignore
     const text = bigNumber === null ? t('No data') : headerFormatter(bigNumber);
 
     const hasThresholdColorFormatter =
       Array.isArray(colorThresholdFormatters) &&
       colorThresholdFormatters.length > 0;
-    const isDarkMode =
-      typeof document !== 'undefined' &&
-      (document.body.classList.contains('dark-theme') ||
-        document.body.getAttribute('data-theme') === 'dark' ||
-        document.documentElement.getAttribute('data-theme') === 'dark');
 
     let numberColor;
     if (hasThresholdColorFormatter) {
@@ -245,18 +224,14 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
         }
       });
     } else {
-      numberColor = isDarkMode ? '#eef8fa' : 'black';
+      numberColor = 'black';
     }
-
-    const maxHeaderWidth = showTrendLine
-      ? width * 0.9
-      : Math.max(Math.min(width * 0.42, 180), 84);
 
     const container = this.createTemporaryContainer();
     document.body.append(container);
     const fontSize = computeMaxFontSize({
       text,
-      maxWidth: maxHeaderWidth,
+      maxWidth: width * 0.9, // reduced it's max width
       maxHeight,
       className: 'header-line',
       container,
@@ -447,53 +422,17 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
     return totalHeight > availableHeight;
   }
 
-  handleRefreshClick = () => {
-    const { onRefresh } = this.props;
-    if (this.state.isRefreshing) return;
-
-    this.setState({ isRefreshing: true });
-    if (onRefresh) {
-      onRefresh();
-    } else {
-      // Fallback interaction path when chart hook doesn't expose onRefresh.
-      // Keeps the icon interactive and gives visual feedback.
-      this.setState(prevState => ({
-        recalculateTrigger: !prevState.recalculateTrigger,
-      }));
-      window.dispatchEvent(new CustomEvent('superset:refresh-chart'));
-      window.dispatchEvent(new CustomEvent('superset:dashboard-refresh'));
-    }
-
-    // Fallback so the icon never gets stuck spinning if refresh callback
-    // doesn't emit a value update for any reason.
-    window.setTimeout(() => {
-      this.setState(prevState =>
-        prevState.isRefreshing ? { isRefreshing: false } : null,
-      );
-    }, onRefresh ? 2200 : 900);
-  };
-
   render() {
     const {
       showTrendLine,
       height,
-      width,
       kickerFontSize,
       headerFontSize,
       subtitleFontSize,
       metricNameFontSize,
       subheaderFontSize,
-      metricName,
-      subtitle,
-      bigNumber,
-      trendLineData,
-      bigNumberFallback,
     } = this.props;
-    const isLoading =
-      bigNumber === undefined &&
-      !bigNumberFallback &&
-      !(trendLineData && trendLineData.length > 0);
-    const className = `${this.getClassName()}${isLoading ? ' is-loading' : ''}`;
+    const className = this.getClassName();
 
     if (showTrendLine) {
       const chartHeight = Math.floor(PROPORTION.TRENDLINE * height);
@@ -545,38 +484,14 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
       );
     }
     const shouldApplyOverflow = this.shouldApplyOverflow(height);
-    const metricLabelText = metricName ? String(metricName) : '';
-    const subtitleText = subtitle ? String(subtitle).trim() : '';
-    const hasBigNumberValue =
-      typeof bigNumber === 'number' && Number.isFinite(bigNumber);
-    const emptyStateText = 'No data available';
-    
-    const fallbackFromBigNumber = hasBigNumberValue
-      ? defaultNumberFormatter(bigNumber)
-      : emptyStateText;
-    
-    const safeWidth = Number.isFinite(width) ? width : 320;
-    const fontSize = Math.max(
-      Math.min(safeWidth * 0.3, height * 0.5, 180),
-      42,
-    );
-    const noTrendlineStyle: CSSProperties = {
-      height,
-    } as CSSProperties;
-
     return (
       <div
         className={className}
         style={{
-          ...noTrendlineStyle,
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          justifyContent: 'center',
-          padding: '20px',
+          height,
           ...(shouldApplyOverflow
             ? {
-                display: 'flex',
+                display: 'block',
                 boxSizing: 'border-box',
                 overflowX: 'hidden',
                 overflowY: 'auto',
@@ -585,50 +500,15 @@ class BigNumberVis extends PureComponent<BigNumberVizProps, BigNumberVisState> {
             : {}),
         }}
       >
-        <div
-          className="text-container--kpi"
-          style={{
-            display: 'flex',
-            flexDirection: 'column',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: '16px',
-            width: '100%',
-            height: '100%',
-          }}
-        >
-          <div
-            className="header-line"
-            style={{
-              fontSize: hasBigNumberValue
-                ? `clamp(${Math.round(fontSize * 0.5)}px, ${fontSize}px, ${fontSize}px)`
-                : `clamp(20px, ${Math.max(Math.min(safeWidth * 0.07, 32), 20)}px, 32px)`,
-              fontWeight: 800,
-              color: '#15333a',
-              textAlign: 'center',
-              lineHeight: 1.05,
-              fontFamily: "'Inter', 'Segoe UI', -apple-system, BlinkMacSystemFont, sans-serif",
-              maxWidth: '100%',
-              overflowWrap: 'anywhere',
-            }}
-          >
-            {fallbackFromBigNumber}
-          </div>
-          {!hasBigNumberValue && (
-            <div
-              className="subtitle-line subheader-line"
-              style={{
-                fontSize: 'clamp(13px, 2vw, 18px)',
-                fontWeight: 600,
-                color: '#5d7079',
-                textAlign: 'center',
-                maxWidth: '100%',
-              }}
-            >
-              {subtitleText ||
-                'No records were returned for the selected time range.'}
-            </div>
+        <div className="text-container">
+          {this.renderFallbackWarning()}
+          {this.renderMetricName((metricNameFontSize || 0) * height)}
+          {this.renderKicker((kickerFontSize || 0) * height)}
+          {this.renderHeader(Math.ceil(headerFontSize * height))}
+          {this.rendermetricComparisonSummary(
+            Math.ceil(subheaderFontSize * height),
           )}
+          {this.renderSubtitle(Math.ceil(subtitleFontSize * height))}
         </div>
       </div>
     );
@@ -643,66 +523,6 @@ export default styled(BigNumberVis)`
     flex-direction: column;
     justify-content: center;
     align-items: flex-start;
-
-    body.theme-transitioning & {
-      position: relative;
-      overflow: hidden;
-    }
-
-    body.theme-transitioning & > * {
-      opacity: 0 !important;
-    }
-
-    body.theme-transitioning &::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: ${theme.gridUnit * 3}px;
-      background: linear-gradient(
-        90deg,
-        rgba(130, 152, 164, 0.16) 0%,
-        rgba(130, 152, 164, 0.32) 45%,
-        rgba(130, 152, 164, 0.16) 100%
-      );
-      background-size: 220% 100%;
-      animation: bigNumberThemeSkeletonShimmer 1.1s linear infinite;
-      z-index: 3;
-    }
-
-    &.is-loading {
-      position: relative;
-      overflow: hidden;
-    }
-
-    &.is-loading > * {
-      opacity: 0;
-      pointer-events: none;
-    }
-
-    &.is-loading::after {
-      content: '';
-      position: absolute;
-      inset: 0;
-      border-radius: ${theme.gridUnit * 3}px;
-      background: linear-gradient(
-        90deg,
-        rgba(130, 152, 164, 0.16) 0%,
-        rgba(130, 152, 164, 0.32) 45%,
-        rgba(130, 152, 164, 0.16) 100%
-      );
-      background-size: 220% 100%;
-      animation: bigNumberThemeSkeletonShimmer 1.1s linear infinite;
-      z-index: 3;
-    }
-
-    @keyframes bigNumberThemeSkeletonShimmer {
-      0% {
-        background-position: 100% 0;
-      }
-      100% {
-        background-position: -100% 0;
-      }
-    }
 
     &.no-trendline .subheader-line {
       padding-bottom: 0.3em;
@@ -723,247 +543,14 @@ export default styled(BigNumberVis)`
       }
     }
 
-    &.no-trendline {
-      --kpi-panel-radius: ${theme.gridUnit * 4}px;
-      justify-content: flex-start;
-      align-items: center;
-      width: 100%;
-      height: 100%;
-      box-sizing: border-box;
-      padding: ${theme.gridUnit * 4}px ${theme.gridUnit * 4}px
-        ${theme.gridUnit * 2}px;
-      background: #F6F8FA;
-      border-radius: var(--kpi-panel-radius);
-      overflow: hidden;
-    }
-
-    @media (max-width: 768px) {
-      &.no-trendline {
-        padding: ${theme.gridUnit * 2}px ${theme.gridUnit * 2}px;
-      }
-
-      &.no-trendline .text-container--kpi {
-        gap: ${theme.gridUnit * 2}px;
-      }
-    }
-
-    &.no-trendline .text-container--kpi {
-      flex: 1;
-      justify-content: center;
-      align-items: center;
-      gap: ${theme.gridUnit * 4}px;
-      width: 100%;
-      height: 100%;
-      background: #F6F8FA;
-      border-top-left-radius: var(--kpi-panel-radius);
-      border-top-right-radius: var(--kpi-panel-radius);
-      border-bottom-left-radius: var(--kpi-panel-radius);
-      border-bottom-right-radius: var(--kpi-panel-radius);
-      overflow: hidden;
-    }
-
-    &.no-trendline .kpi-circle {
-      position: relative;
-      width: var(--kpi-circle-size, 172px);
-      height: var(--kpi-circle-size, 172px);
-      border-radius: 50%;
-      border: ${theme.gridUnit * 2}px solid #d5e2e5;
-      background: transparent;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-    }
-
-    &.no-trendline .kpi-circle-cap {
-      position: absolute;
-      top: -${theme.gridUnit * 1.25}px;
-      left: 50%;
-      transform: translateX(-50%);
-      width: ${theme.gridUnit * 5}px;
-      height: ${theme.gridUnit * 2.2}px;
-      border-radius: ${theme.gridUnit * 2}px;
-      background: #19353c;
-    }
-
-    &.no-trendline .kpi-circle-inner {
-      width: 100%;
-      height: 100%;
-      border-radius: 50%;
-      background: transparent;
-      display: flex;
-      flex-direction: column;
-      align-items: center;
-      justify-content: center;
-      gap: ${theme.gridUnit * 1.1}px;
-    }
-
-    &.no-trendline .kpi-circle-icon {
-      line-height: 1;
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: clamp(${theme.gridUnit * 8}px, 7vw, ${theme.gridUnit * 10}px);
-      height: clamp(${theme.gridUnit * 8}px, 7vw, ${theme.gridUnit * 10}px);
-      border-radius: 999px;
-      border: 1px solid transparent;
-      background: transparent;
-      padding: 0;
-      font-size: ${theme.typography.sizes.xxl}px;
-      font-weight: ${theme.typography.weights.bold};
-      color: #5b7d85;
-      transition: transform 0.2s ease, background-color 0.2s ease,
-        border-color 0.2s ease, color 0.2s ease;
-      -webkit-tap-highlight-color: transparent;
-    }
-
-    &.no-trendline .kpi-circle-icon.is-clickable {
-      cursor: pointer;
-    }
-
-    &.no-trendline .kpi-circle-icon.is-clickable:hover {
-      background: rgba(22, 82, 99, 0.09);
-      border-color: rgba(22, 82, 99, 0.2);
-      transform: scale(1.06);
-    }
-
-    &.no-trendline .kpi-circle-icon.is-clickable:active {
-      transform: scale(0.98);
-    }
-
-    &.no-trendline .kpi-circle-icon.is-refreshing {
-      animation: bigNumberRefreshSpin 0.95s linear infinite;
-    }
-
-    @keyframes bigNumberRefreshSpin {
-      from {
-        transform: rotate(0deg);
-      }
-      to {
-        transform: rotate(360deg);
-      }
-    }
-
-    &.no-trendline .header-line {
-      margin-bottom: 0;
-      color: #15333a;
-      font-weight: ${theme.typography.weights.bold};
-      line-height: 0.92em;
-      max-width: 78%;
-      overflow: hidden;
-      text-overflow: clip;
-      justify-content: center;
-    }
-
-    &.no-trendline .kpi-footer {
-      width: 100%;
-      max-width: 360px;
-      border-radius: ${theme.gridUnit * 3.5}px;
-      background: #cfe8e6;
-      border: 1px solid #c2e2df;
-      padding: ${theme.gridUnit * 2.3}px ${theme.gridUnit * 3.2}px;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-      gap: ${theme.gridUnit * 2}px;
-    }
-
-    &.no-trendline .kpi-footer-label {
-      color: #4b6fa0;
-      font-size: ${theme.typography.sizes.xl}px;
-      font-weight: ${theme.typography.weights.bold};
-      letter-spacing: 0.1em;
-      text-transform: uppercase;
-      white-space: nowrap;
-      overflow: hidden;
-      text-overflow: ellipsis;
-    }
-
-    &.no-trendline .kpi-footer-value {
-      color: #00a99d;
-      font-size: ${theme.typography.sizes.xxl * 1.2}px;
-      font-weight: ${theme.typography.weights.bold};
-      white-space: nowrap;
-    }
-
-    body.dark-theme &.no-trendline,
-    [data-theme='dark'] &.no-trendline {
-      background: #0a0a0a;
-      border: none;
-      box-shadow: inset 0 0 0 1px rgba(80, 140, 165, 0.15),
-        0 4px 12px rgba(0, 0, 0, 0.3);
-    }
-
-    body.dark-theme &.no-trendline .kpi-circle,
-    [data-theme='dark'] &.no-trendline .kpi-circle {
-      border-color: #1d3b4a;
-      box-shadow: inset 0 0 0 1px rgba(105, 176, 199, 0.15);
-    }
-
-    body.dark-theme &.no-trendline .kpi-circle-cap,
-    [data-theme='dark'] &.no-trendline .kpi-circle-cap {
-      background: #ecf8fb;
-    }
-
-    body.dark-theme &.no-trendline .kpi-circle-icon,
-    [data-theme='dark'] &.no-trendline .kpi-circle-icon {
-      color: #77cbe5;
-    }
-
-    body.dark-theme &.no-trendline .header-line,
-    [data-theme='dark'] &.no-trendline .header-line {
-      color: #ffffff;
-    }
-
-    body.dark-theme &.no-trendline .kpi-footer,
-    [data-theme='dark'] &.no-trendline .kpi-footer {
-      background: linear-gradient(180deg, #12343f 0%, #0f2c35 100%);
-      border-color: #2f5667;
-      box-shadow: 0 8px 18px rgba(0, 0, 0, 0.35);
-    }
-
-    body.dark-theme &.no-trendline .text-container--kpi,
-    [data-theme='dark'] &.no-trendline .text-container--kpi {
-      background: transparent;
-    }
-
-    body.dark-theme &.no-trendline .kpi-footer-label,
-    [data-theme='dark'] &.no-trendline .kpi-footer-label {
-      color: #8fd8f2;
-    }
-
-    body.dark-theme &.no-trendline .kpi-footer-value,
-    [data-theme='dark'] &.no-trendline .kpi-footer-value {
-      color: #51f0dc;
-    }
-
-    body.dark-theme & .metric-name,
-    [data-theme='dark'] & .metric-name,
-    body.dark-theme & .kicker,
-    [data-theme='dark'] & .kicker,
-    body.dark-theme & .subheader-line,
-    [data-theme='dark'] & .subheader-line,
-    body.dark-theme & .subtitle-line,
-    [data-theme='dark'] & .subtitle-line {
-      color: #d8e7ea;
-    }
-
-    body.dark-theme & .text-container .alert,
-    [data-theme='dark'] & .text-container .alert {
-      background: #2f3f43;
-      border-color: #40565c;
-      color: #d8e7ea;
-    }
-
     .kicker {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.semibold};
     }
 
     .metric-name {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.bold};
     }
 
     .header-line {
@@ -971,7 +558,6 @@ export default styled(BigNumberVis)`
       line-height: 1em;
       white-space: nowrap;
       margin-bottom:${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.bold};
       span {
         position: absolute;
         bottom: 0;
@@ -981,13 +567,11 @@ export default styled(BigNumberVis)`
     .subheader-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.semibold};
     }
 
     .subtitle-line {
       line-height: 1em;
       margin-bottom: ${theme.gridUnit * 2}px;
-      font-weight: ${theme.typography.weights.semibold};
     }
 
     &.is-fallback-value {
