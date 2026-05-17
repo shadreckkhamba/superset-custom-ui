@@ -2062,15 +2062,27 @@ const handleSaveAsImage = async () => {
           style={{
             position: 'relative',
             zIndex: 111,
-            height: isHeaderCollapsed ? '0px' : '48px',
+            height: isHeaderCollapsed ? '0px' : '56px',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'flex-start',
-            padding: '0 20px',
-            backgroundColor: isDarkMode ? '#2a313a' : '#eceff3',
+            padding: '0 24px',
+            background: isDarkMode 
+              ? 'linear-gradient(180deg, rgba(15, 23, 42, 0.96) 0%, rgba(30, 41, 59, 0.92) 100%)'
+              : 'linear-gradient(180deg, rgba(248, 250, 252, 0.96) 0%, rgba(241, 245, 249, 0.94) 100%)',
+            backdropFilter: 'blur(10px) saturate(120%)',
+            WebkitBackdropFilter: 'blur(10px) saturate(120%)',
             borderTop: isHeaderCollapsed
               ? 'none'
-              : `1px solid ${isDarkMode ? 'rgba(240, 240, 240, 0.2)' : theme.colors.grayscale.light3}`,
+              : `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.1)' : 'rgba(203, 213, 225, 0.4)'}`,
+            borderBottom: isHeaderCollapsed
+              ? 'none'
+              : `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.06)' : 'rgba(203, 213, 225, 0.3)'}`,
+            boxShadow: isHeaderCollapsed
+              ? 'none'
+              : isDarkMode
+              ? '0 2px 12px rgba(0, 0, 0, 0.2)'
+              : '0 2px 12px rgba(15, 23, 42, 0.04)',
             opacity: isHeaderCollapsed ? 0 : 1,
             transform: isHeaderCollapsed ? 'translateY(-100%)' : 'translateY(0)',
             transition:
@@ -2086,14 +2098,16 @@ const handleSaveAsImage = async () => {
             style={{
               display: 'inline-flex',
               alignItems: 'center',
-              gap: '10px',
-              padding: 0,
-              borderRadius: 0,
-              backgroundColor: 'transparent',
-              border: 'none',
-              boxShadow: 'none',
-              borderBottom: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.25)' : theme.colors.grayscale.light2}`,
-              paddingBottom: '4px',
+              gap: '6px',
+              padding: '5px',
+              borderRadius: '12px',
+              background: isDarkMode
+                ? 'rgba(30, 41, 59, 0.5)'
+                : 'rgba(255, 255, 255, 0.6)',
+              border: `1px solid ${isDarkMode ? 'rgba(148, 163, 184, 0.12)' : 'rgba(203, 213, 225, 0.5)'}`,
+              boxShadow: isDarkMode
+                ? '0 4px 16px rgba(0, 0, 0, 0.2), inset 0 1px 0 rgba(255, 255, 255, 0.04)'
+                : '0 4px 16px rgba(15, 23, 42, 0.06), inset 0 1px 0 rgba(255, 255, 255, 0.8)',
               opacity: isHeaderCollapsed ? 0 : 1,
               transform: isHeaderCollapsed ? 'translateY(-8px)' : 'translateY(0)',
               transition:
@@ -2121,42 +2135,50 @@ const handleSaveAsImage = async () => {
                 aria-selected={tab.active}
                 onClick={tab.onClick}
                 style={{
+                  position: 'relative',
                   border: 'none',
-                  backgroundColor: tab.active
+                  background: tab.active
                     ? isDarkMode
-                      ? 'rgba(15, 23, 42, 0.88)'
-                      : '#ffffff'
-                    : isDarkMode
-                    ? 'rgba(51, 65, 85, 0.7)'
-                    : '#e5e7eb',
-                  backgroundImage: tab.active
-                    ? isDarkMode
-                      ? 'linear-gradient(90deg, #fbbf24, #f97316)'
-                      : 'linear-gradient(90deg, #f59e0b, #f97316)'
-                    : 'linear-gradient(90deg, transparent, transparent)',
-                  backgroundRepeat: 'no-repeat',
-                  backgroundPosition: '0 100%',
-                  backgroundSize: tab.active ? '100% 2px' : '0% 2px',
+                      ? 'linear-gradient(135deg, rgba(59, 130, 246, 0.85) 0%, rgba(37, 99, 235, 0.85) 100%)'
+                      : 'linear-gradient(135deg, rgba(59, 130, 246, 0.9) 0%, rgba(37, 99, 235, 0.9) 100%)'
+                    : 'transparent',
                   color: tab.active
-                    ? isDarkMode
-                      ? '#f8fafc'
-                      : theme.colors.grayscale.dark1
+                    ? '#ffffff'
                     : isDarkMode
-                    ? '#e2e8f0'
-                    : theme.colors.grayscale.dark2,
-                  fontSize: '14px',
-                  fontWeight: tab.active ? 700 : 600,
-                  letterSpacing: '0.02em',
-                  padding: '8px 14px',
-                  borderRadius: '8px',
+                    ? 'rgba(226, 232, 240, 0.75)'
+                    : 'rgba(51, 65, 85, 0.75)',
+                  fontSize: '13px',
+                  fontWeight: tab.active ? 600 : 500,
+                  letterSpacing: '0.01em',
+                  padding: '8px 16px',
+                  borderRadius: '9px',
                   boxShadow: tab.active
                     ? isDarkMode
-                      ? '0 6px 16px rgba(15, 23, 42, 0.45)'
-                      : '0 6px 16px rgba(15, 23, 42, 0.12)'
+                      ? '0 4px 12px rgba(59, 130, 246, 0.25), 0 1px 4px rgba(0, 0, 0, 0.15), inset 0 1px 0 rgba(255, 255, 255, 0.12)'
+                      : '0 4px 12px rgba(59, 130, 246, 0.18), 0 1px 4px rgba(37, 99, 235, 0.1), inset 0 1px 0 rgba(255, 255, 255, 0.3)'
                     : 'none',
                   cursor: tab.active ? 'default' : 'pointer',
-                  transition: 'color 0.25s ease, background-size 0.55s cubic-bezier(0.22, 1, 0.36, 1)',
+                  transition: 'all 0.25s cubic-bezier(0.4, 0, 0.2, 1)',
                   whiteSpace: 'nowrap',
+                  transform: tab.active ? 'translateY(-0.5px)' : 'translateY(0)',
+                }}
+                onMouseEnter={(e) => {
+                  if (!tab.active) {
+                    e.currentTarget.style.background = isDarkMode
+                      ? 'rgba(51, 65, 85, 0.4)'
+                      : 'rgba(241, 245, 249, 0.7)';
+                    e.currentTarget.style.color = isDarkMode
+                      ? 'rgba(248, 250, 252, 0.9)'
+                      : 'rgba(30, 41, 59, 0.9)';
+                  }
+                }}
+                onMouseLeave={(e) => {
+                  if (!tab.active) {
+                    e.currentTarget.style.background = 'transparent';
+                    e.currentTarget.style.color = isDarkMode
+                      ? 'rgba(226, 232, 240, 0.75)'
+                      : 'rgba(51, 65, 85, 0.75)';
+                  }
                 }}
               >
                 {tab.label}
