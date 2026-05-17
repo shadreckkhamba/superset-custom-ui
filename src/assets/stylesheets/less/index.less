@@ -676,3 +676,34 @@ div[class*='dashboard'] .header-title {
   padding-top: 0 !important;
   align-items: flex-start !important;
 }
+
+/* Standalone dashboard date range pill */
+.date-range-badge {
+  position: absolute;
+  top: 14px;
+  right: 14px;
+  z-index: 999;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 30px;
+  max-width: none;
+  padding: 6px 15px 5px;
+  border: 1px solid #d9dce1;
+  border-radius: 999px;
+  background: #f8f8f8;
+  color: #6b6f76;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.08);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.date-range-badge span {
+  flex-grow: 1;
+  text-align: center;
+}

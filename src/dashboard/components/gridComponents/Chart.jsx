@@ -519,37 +519,13 @@ const Chart = props => {
         height={getHeaderHeight()}
       />
 
-      {/* 📅 Date range badge aligned with chart title */}
+      {/* Date range badge aligned with chart title */}
       { isStandalone && (
-        <div className="date-range-badge"
-        style={{
-          position: 'absolute',
-          top: '0px',
-          right: '0px',
-          transform: 'translate(10px, -12px)',
-          background: 'rgb(227, 251, 255)',
-          color: '#003366',
-          fontSize: '24px',
-          fontWeight: 500,
-          padding: '8px 12px 6px 14px',
-          borderRadius: '12px',
-          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.15)',
-          zIndex: 999,
-          maxWidth: 'none',
-          whiteSpace: 'nowrap',
-          overflow: 'hidden',
-          textOverflow: 'ellipsis',
-          pointerEvents: 'none',
-          display: 'flex',
-          alignItems: 'center',
-          gap: '6px',
-          justifyContent: 'space-between',
-          lineHeight: '1.2',
-          minHeight: '32px',
-        }}
+        <div
+          className="date-range-badge"
           title={dateRangeLabel}
         >
-          <span style={{ flexGrow: 1, textAlign: 'right' }}>{dateRangeLabel}</span>
+          <span>{dateRangeLabel}</span>
         </div>
       )}
 
