@@ -872,21 +872,29 @@ export default function RunChartStay({
     });
   }, [isNextWeekFuture]);
 
-  const { maxPatients, patientTickStep } = useMemo(() => {
+  const observedMaxDuration = useMemo(() => {
+    const visibleDurations = dailyAverages
+      .filter(day => day.dayIndex <= lastVisibleDayIndex)
+      .map(day => Math.min(day.avg ?? 0, maxDuration));
+
+    return Math.max(...visibleDurations, 0);
+  }, [dailyAverages, lastVisibleDayIndex, maxDuration]);
+
+  const { maxPatients, patientTickStep, observedMaxPatients } = useMemo(() => {
     const visiblePatientCounts = dailyAverages
       .filter(day => day.dayIndex <= lastVisibleDayIndex)
       .map(day => day.total_patients ?? 0);
-    const observedMax = Math.max(...visiblePatientCounts, 0);
+    const observedMaxPatients = Math.max(...visiblePatientCounts, 0);
 
     // Keep the right axis aligned to the left axis (0..5 => 6 grid lines):
     // Choose a tick step so that maxPatients = step * 5, with a minimum of 150.
-    const targetMax = Math.max(150, observedMax);
+    const targetMax = Math.max(150, observedMaxPatients);
     const stepCandidates = [30, 40, 50, 60, 75, 80, 100, 125, 150, 200, 250, 300, 400, 500, 750, 1000];
     const step =
       stepCandidates.find(s => s * 5 >= targetMax) ??
       Math.ceil(Math.ceil(targetMax / 5) / 50) * 50;
 
-    return { maxPatients: step * 5, patientTickStep: step };
+    return { maxPatients: step * 5, patientTickStep: step, observedMaxPatients };
   }, [dailyAverages, lastVisibleDayIndex]);
 
   // ---- Chart Data ----
@@ -997,6 +1005,8 @@ export default function RunChartStay({
     },
   }), [chartSurfaceBg]);
 
+  const axisNeutralTickColor = isDarkMode ? "#e0e0e0" : "#262626";
+
   const options: ChartOptions<"bar" | "line"> = useMemo(
     () => ({
       responsive: true,
@@ -1063,7 +1073,10 @@ export default function RunChartStay({
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
-            color: isDarkMode ? "#e0e0e0" : "#262626",
+            color: (context: any) =>
+              Number(context.tick?.value ?? 0) <= observedMaxDuration
+                ? "#1890ff"
+                : axisNeutralTickColor,
             font: { size: yAxisTickFontSize, weight: 600 },
             stepSize: 1,
             precision: 0,
@@ -1090,7 +1103,10 @@ export default function RunChartStay({
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
-            color: isDarkMode ? "#e0e0e0" : "#262626",
+            color: (context: any) =>
+              Number(context.tick?.value ?? 0) <= observedMaxPatients
+                ? "#52c487"
+                : axisNeutralTickColor,
             font: { size: y1AxisTickFontSize, weight: 600 },
             stepSize: patientTickStep,
             autoSkip: false,
@@ -1317,9 +1333,12 @@ export default function RunChartStay({
       },
     }),
     [
+      axisNeutralTickColor,
       compact,
       maxDuration,
       maxPatients,
+      observedMaxDuration,
+      observedMaxPatients,
       patientTickStep,
       dailyAverages,
       isDarkMode,
