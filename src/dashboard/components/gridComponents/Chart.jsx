@@ -24,6 +24,11 @@ import { debounce } from 'lodash';
 import { useHistory } from 'react-router-dom';
 import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
+import {
+  fetchDateRanges,
+  getDateRangeForChart,
+  getFallbackDateRange,
+} from 'src/utils/dateRangeUtils';
 
 import { exportChart, mountExploreUrl } from 'src/explore/exploreUtils';
 import ChartContainer from 'src/components/Chart/ChartContainer';
@@ -191,6 +196,7 @@ const Chart = props => {
   const [descriptionHeight, setDescriptionHeight] = useState(0);
   const [height, setHeight] = useState(props.height);
   const [width, setWidth] = useState(props.width);
+  const [dateRanges, setDateRanges] = useState(null);
   const history = useHistory();
   const resize = useCallback(
     debounce(() => {
@@ -225,6 +231,53 @@ const Chart = props => {
       setDescriptionHeight(descriptionHeight);
     }
   }, [isExpanded]);
+
+  useEffect(() => {
+    if (!isStandalone) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    fetchDateRanges()
+      .then(data => {
+        if (isMounted) {
+          setDateRanges(data);
+        }
+      })
+      .catch(error => {
+        logging.warn('Failed to fetch dashboard date ranges', error);
+        if (isMounted) {
+          setDateRanges(null);
+        }
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, []);
+
+  useEffect(() => {
+    if (!isStandalone || !chart.chartUpdateEndTime) {
+      return undefined;
+    }
+
+    let isMounted = true;
+
+    fetchDateRanges(true)
+      .then(data => {
+        if (isMounted) {
+          setDateRanges(data);
+        }
+      })
+      .catch(error => {
+        logging.warn('Failed to refresh dashboard date ranges', error);
+      });
+
+    return () => {
+      isMounted = false;
+    };
+  }, [chart.chartUpdateEndTime]);
 
   useEffect(
     () => () => {
@@ -457,22 +510,23 @@ const Chart = props => {
 
  
   const dateRangeLabel = useMemo(() => {
-   const today = new Date();
-   const todayDay = today.getDate();
+    const apiDateRange = getDateRangeForChart(dateRanges, {
+      sliceName: slice.slice_name,
+      datasourceName: slice.datasource_name,
+      vizType: slice.viz_type,
+      datasource,
+      formData: chart.form_data,
+    });
 
-   const startOfMonth = new Date(today.getFullYear(), today.getMonth(), 1);
-
-   const options = { day: 'numeric', month: 'short', year: 'numeric' };
-
-   const from = startOfMonth.toLocaleDateString('en-GB', options);
-   const to = today.toLocaleDateString('en-GB', options);
-
-   if (todayDay === 1) {
-     return `Today, ${from}`;
-   }
-
-   return `${from} - ${to}`;
-  }, []);
+    return apiDateRange || getFallbackDateRange();
+  }, [
+    chart.form_data,
+    datasource,
+    dateRanges,
+    slice.datasource_name,
+    slice.slice_name,
+    slice.viz_type,
+  ]);
 
   return (
     <SliceContainer
@@ -520,9 +574,10 @@ const Chart = props => {
       />
 
       {/* Date range badge aligned with chart title */}
-      { isStandalone && (
+      {isStandalone && dateRangeLabel && (
         <div
           className="date-range-badge"
+          data-chart-id={props.id}
           title={dateRangeLabel}
         >
           <span>{dateRangeLabel}</span>

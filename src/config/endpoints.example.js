@@ -28,6 +28,7 @@ export const ENDPOINTS = {
   STAY_TIMES_DISTRIBUTION: `${BASE_URLS.PRIMARY}/wandikweza/stay_times_distribution`,
   STAY_TIMES_TREND: `${BASE_URLS.PRIMARY}/wandikweza/stay_times_trend`,
   PATIENT_RECORDS: `${BASE_URLS.PRIMARY}/wandikweza/patient_records`,
+  DATE_RANGES: `${BASE_URLS.PRIMARY}/wandikweza/date_ranges`,
   LAST_UPDATE_STATUS: `${BASE_URLS.STATUS_PRIMARY}/wandikweza/last_update_status`,
   LAST_UPDATE_STATUS_SECONDARY: `${BASE_URLS.STATUS_SECONDARY}/wandikweza/last_update_status`
 };

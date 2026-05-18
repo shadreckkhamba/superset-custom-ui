@@ -18,6 +18,8 @@ export interface Endpoints {
   DAILY_AVERAGE_STAY: string;
   STAY_TIMES_DISTRIBUTION: string;
   STAY_TIMES_TREND: string;
+  PATIENT_RECORDS: string;
+  DATE_RANGES: string;
   LAST_UPDATE_STATUS: string;
   LAST_UPDATE_STATUS_SECONDARY: string;
 }

@@ -50,53 +50,125 @@ export const clearDateRangesCache = () => {
  */
 export const formatDate = (dateString) => {
   const date = new Date(dateString);
+  if (Number.isNaN(date.getTime())) {
+    return dateString;
+  }
   const options = { day: 'numeric', month: 'short', year: 'numeric' };
   return date.toLocaleDateString('en-GB', options);
+};
+
+const normalize = value =>
+  String(value || '')
+    .toLowerCase()
+    .replace(/[_-]+/g, ' ')
+    .replace(/\s+/g, ' ')
+    .trim();
+
+const getDateRangeTables = dateRanges => {
+  if (!dateRanges) {
+    return {};
+  }
+
+  return dateRanges.date_ranges || dateRanges.ranges || dateRanges;
+};
+
+const getChartCandidates = chart => {
+  if (!chart) {
+    return [];
+  }
+
+  if (typeof chart === 'string') {
+    return [chart];
+  }
+
+  return [
+    chart.sliceName,
+    chart.slice_name,
+    chart.chartName,
+    chart.chart_name,
+    chart.datasourceName,
+    chart.datasource_name,
+    chart.datasource?.table_name,
+    chart.datasource?.datasource_name,
+    chart.datasource?.name,
+    chart.datasource?.table,
+    chart.formData?.datasource,
+    chart.form_data?.datasource,
+    chart.vizType,
+    chart.viz_type,
+  ].filter(Boolean);
 };
 
 /**
  * Get date range for a specific table/chart
  */
-export const getDateRangeForChart = (dateRanges, chartName) => {
-  if (!dateRanges || !chartName) return null;
+export const getDateRangeForChart = (dateRanges, chart) => {
+  const tables = getDateRangeTables(dateRanges);
+  const candidates = getChartCandidates(chart);
+  if (!tables || !Object.keys(tables).length || !candidates.length) return null;
   
-  // Convert chart name to lowercase and look for keywords to map to tables
-  const lowerChartName = chartName.toLowerCase();
+  const tableKeys = Object.keys(tables);
+  const normalizedTableByKey = tableKeys.reduce((acc, key) => {
+    acc[key] = normalize(key);
+    return acc;
+  }, {});
   
   let tableName = null;
-  
-  // Map based on keywords in chart names
-  if (lowerChartName.includes('age') || lowerChartName.includes('category')) {
-    tableName = 'patient_age_categories';
-  } else if (lowerChartName.includes('gender')) {
-    tableName = 'patient_gender_counts';
-  } else if (lowerChartName.includes('location') || lowerChartName.includes('county')) {
-    tableName = 'patient_location_counts';
-  } else if (lowerChartName.includes('refund')) {
-    tableName = 'patient_refund_count';
-  } else if (lowerChartName.includes('stay') || lowerChartName.includes('time')) {
-    tableName = 'patient_stay_times';
+
+  // Prefer exact/direct matches from datasource metadata or table-like chart names.
+  for (const candidate of candidates) {
+    const normalizedCandidate = normalize(candidate);
+    if (!normalizedCandidate) continue;
+
+    const directMatch = tableKeys.find(key => {
+      const normalizedKey = normalizedTableByKey[key];
+      return (
+        normalizedCandidate === normalizedKey ||
+        normalizedCandidate.includes(normalizedKey) ||
+        normalizedKey.includes(normalizedCandidate)
+      );
+    });
+
+    if (directMatch) {
+      tableName = directMatch;
+      break;
+    }
   }
   
-  // If no keyword match, try direct table name match
-  if (!tableName) {
-    const directMatch = Object.keys(dateRanges).find(key => 
-      lowerChartName.includes(key.toLowerCase()) || 
-      key.toLowerCase().includes(lowerChartName)
-    );
-    tableName = directMatch;
+  // Map based on keywords in chart names as a fallback.
+  const searchableText = normalize(candidates.join(' '));
+  if (!tableName && (searchableText.includes('age') || searchableText.includes('category'))) {
+    tableName = 'patient_age_categories';
+  } else if (!tableName && searchableText.includes('gender')) {
+    tableName = 'patient_gender_counts';
+  } else if (!tableName && (searchableText.includes('location') || searchableText.includes('county'))) {
+    tableName = 'patient_location_counts';
+  } else if (!tableName && searchableText.includes('refund')) {
+    tableName = 'patient_refund_count';
+  } else if (!tableName && (searchableText.includes('stay') || searchableText.includes('time'))) {
+    tableName = 'patient_stay_times';
   }
   
   if (!tableName) return null;
   
-  const tableData = dateRanges[tableName];
-  if (!tableData || !tableData.start_date || !tableData.end_date) return null;
+  const tableData = tables[tableName];
+  const rawStartDate =
+    tableData?.start_date ||
+    tableData?.min_date ||
+    tableData?.first_date ||
+    tableData?.from;
+  const rawEndDate =
+    tableData?.end_date ||
+    tableData?.max_date ||
+    tableData?.last_date ||
+    tableData?.to;
+  if (!tableData || !rawStartDate || !rawEndDate) return null;
   
-  const startDate = formatDate(tableData.start_date);
-  const endDate = formatDate(tableData.end_date);
+  const startDate = formatDate(rawStartDate);
+  const endDate = formatDate(rawEndDate);
   
   // If start and end dates are the same, show only one date
-  if (tableData.start_date === tableData.end_date) {
+  if (rawStartDate === rawEndDate) {
     return startDate;
   }
   
