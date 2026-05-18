@@ -174,7 +174,7 @@ body {
   position: absolute !important;
   top: 14px !important;
   right: 14px !important;
-  z-index: 999 !important;
+  z-index: 2 !important;
   display: inline-flex !important;
   align-items: center !important;
   justify-content: center !important;
