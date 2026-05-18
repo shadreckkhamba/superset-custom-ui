@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import React, { useEffect, useLayoutEffect, useState, useMemo, useCallback, useRef } from "react";
 import { createPortal } from "react-dom";
 import {
   Chart as ChartJS,
@@ -14,12 +14,42 @@ import {
   Filler,
 } from "chart.js";
 import { Chart } from "react-chartjs-2";
-import { ChevronLeft, ChevronRight, Info, X } from "lucide-react";
+import { Calendar, ChevronLeft, ChevronRight, Info, X } from "lucide-react";
+import type { Dayjs } from "dayjs";
+import { DatePicker } from "src/components/DatePicker";
+import { extendedDayjs } from "src/utils/dates";
 import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
 
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, BarElement, Title, Tooltip, Legend, Filler);
+
+const toDateKey = (d: Date) =>
+  `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
+    d.getDate()
+  ).padStart(2, "0")}`;
+
+const getMondayForDate = (date: Date) => {
+  const nextDate = new Date(date);
+  nextDate.setHours(0, 0, 0, 0);
+  const day = nextDate.getDay();
+  const diff = day === 0 ? -6 : 1 - day;
+  nextDate.setDate(nextDate.getDate() + diff);
+  return nextDate;
+};
+
+const getWeekOffsetForDate = (date: Date) => {
+  const selectedMonday = getMondayForDate(date);
+  const currentMonday = getMondayForDate(new Date());
+  const dayMs = 24 * 60 * 60 * 1000;
+  return Math.round((selectedMonday.getTime() - currentMonday.getTime()) / (7 * dayMs));
+};
+
+const getWeekStartForOffset = (offset: number) => {
+  const monday = getMondayForDate(new Date());
+  monday.setDate(monday.getDate() + offset * 7);
+  return monday;
+};
 
 // CSS for responsive dashboard view switch
 const responsiveSwitchStyles = `
@@ -227,6 +257,8 @@ export default function RunChartStay({
 }: RunChartStayProps): JSX.Element {
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
+  const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
+  const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const [loading, setLoading] = useState(true);
@@ -238,6 +270,42 @@ export default function RunChartStay({
   const nextWeekBtnRef = useRef<HTMLButtonElement | null>(null);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAnimatedOnViewRef = useRef(false);
+
+  const [datePickerPopupStyle, setDatePickerPopupStyle] = useState<React.CSSProperties>({});
+  const datePickerShellRef = useRef<HTMLDivElement | null>(null);
+
+  useLayoutEffect(() => {
+    if (typeof window === 'undefined' || !isDatePickerOpen) return undefined;
+
+    const updateDatePickerPosition = () => {
+      const shell = datePickerShellRef.current;
+      if (!shell) return;
+      const rect = shell.getBoundingClientRect();
+      const isCompactViewport = window.innerWidth < 1100;
+      const gap = 12;
+      const popupWidth = Math.min(isCompactViewport ? 256 : 320, window.innerWidth - 24);
+      const maxLeft = window.innerWidth - popupWidth - 12;
+      const preferredLeft = isCompactViewport ? rect.left : rect.right + gap;
+      const left = Math.max(12, Math.min(preferredLeft, maxLeft));
+      const popupHeight = isCompactViewport ? 292 : 360;
+      const preferredTop = isCompactViewport ? rect.bottom + gap : rect.top;
+      const maxTop = window.innerHeight - popupHeight - 12;
+      const top = Math.max(12, Math.min(preferredTop, maxTop));
+
+      setDatePickerPopupStyle({
+        position: 'fixed',
+        left: `${left}px`,
+        top: `${top}px`,
+        width: `${popupWidth}px`,
+        zIndex: 2000,
+      });
+    };
+
+    updateDatePickerPosition();
+    window.addEventListener('resize', updateDatePickerPosition);
+    return () => window.removeEventListener('resize', updateDatePickerPosition);
+  }, [isDatePickerOpen]);
+
   const noDataPlugin = useMemo(() => createNoDataPlugin(isDarkMode), [isDarkMode]);
   const dataLabelsPlugin = useMemo(() => createDataLabelsPlugin(isDarkMode, compact), [isDarkMode, compact]);
   const chartSurfaceBg = isDarkMode ? "#1a1a1a" : "#ffffff";
@@ -311,21 +379,10 @@ export default function RunChartStay({
   }, []);
 
   const getWeekDateRange = useCallback((offset: number) => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = day === 0 ? -6 : 1 - day; // Monday-start week
-
-    const startDate = new Date(today);
-    startDate.setHours(0, 0, 0, 0);
-    startDate.setDate(today.getDate() + diff + offset * 7);
+    const startDate = getWeekStartForOffset(offset);
 
     const endDate = new Date(startDate);
     endDate.setDate(startDate.getDate() + 6);
-
-    const toDateKey = (d: Date) =>
-      `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, "0")}-${String(
-        d.getDate()
-      ).padStart(2, "0")}`;
 
     return {
       startDate: toDateKey(startDate),
@@ -374,9 +431,11 @@ export default function RunChartStay({
       if (resetToCurrentWeek) {
         // Reset to current week; fetch immediately only if we're already on current week.
         if (weekOffset === 0) {
+          setSelectedDate(toDateKey(new Date()));
           await fetchData(0);
           return;
         }
+        setSelectedDate(toDateKey(new Date()));
         setWeekOffset(0);
         return;
       }
@@ -723,11 +782,7 @@ export default function RunChartStay({
 
   // Week Range text
   const weekRange = useMemo(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const monday = new Date(today);
-    monday.setDate(today.getDate() + diff + weekOffset * 7);
+    const monday = getWeekStartForOffset(weekOffset);
     const saturday = new Date(monday);
     saturday.setDate(monday.getDate() + 6);
 
@@ -739,12 +794,7 @@ export default function RunChartStay({
 
   // Prevent future week navigation
   const isNextWeekFuture = useMemo(() => {
-    const today = new Date();
-    const day = today.getDay();
-    const diff = day === 0 ? -6 : 1 - day;
-    const mondayNext = new Date(today);
-    mondayNext.setDate(today.getDate() + diff + (weekOffset + 1) * 7);
-    mondayNext.setHours(0, 0, 0, 0);
+    const mondayNext = getWeekStartForOffset(weekOffset + 1);
     return mondayNext > new Date();
   }, [weekOffset]);
 
@@ -757,6 +807,40 @@ export default function RunChartStay({
     const today = new Date();
     return today.getDay() === 0 ? 6 : today.getDay() - 1;
   }, [weekOffset]);
+
+  const handleWeekDateChange = useCallback((date: Dayjs | null) => {
+    if (!date) {
+      return;
+    }
+
+    const nextDateKey = date.format("YYYY-MM-DD");
+    const pickedDate = new Date(`${nextDateKey}T00:00:00`);
+
+    setSelectedDate(nextDateKey);
+    setWeekOffset(getWeekOffsetForDate(pickedDate));
+    setIsDatePickerOpen(false);
+  }, []);
+
+  const goToPreviousWeek = useCallback(() => {
+    setWeekOffset(w => {
+      const nextOffset = w - 1;
+      setSelectedDate(toDateKey(getWeekStartForOffset(nextOffset)));
+      return nextOffset;
+    });
+  }, []);
+
+  const goToNextWeek = useCallback(() => {
+    if (isNextWeekFuture) {
+      return;
+    }
+
+    setWeekOffset(w => {
+      const nextOffset = w + 1;
+      setSelectedDate(toDateKey(getWeekStartForOffset(nextOffset)));
+      return nextOffset;
+    });
+  }, [isNextWeekFuture]);
+
   const { maxPatients, patientTickStep } = useMemo(() => {
     const visiblePatientCounts = dailyAverages
       .filter(day => day.dayIndex <= lastVisibleDayIndex)
@@ -1280,7 +1364,7 @@ export default function RunChartStay({
       >
         {/* Left Button */}
         <button
-          onClick={() => setWeekOffset((w) => w - 1)}
+          onClick={goToPreviousWeek}
           style={{
             display: "flex",
             alignItems: "center",
@@ -1378,7 +1462,98 @@ export default function RunChartStay({
               />
 
               {/* Week text */}
-              <div style={{ position: "relative", zIndex: 1 }}>{weekRange}</div>
+              <div
+                style={{
+                  position: "relative",
+                  zIndex: 1,
+                  display: "inline-flex",
+                  alignItems: "center",
+                  justifyContent: "center",
+                  gap: compact ? "8px" : "12px",
+                  flexWrap: "wrap",
+                }}
+              >
+                <span>{weekRange}</span>
+                <div
+                  style={{
+                    width: compact ? "34px" : "38px",
+                    height: compact ? "34px" : "38px",
+                    position: "relative",
+                    display: "inline-flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                  }}
+                ref={datePickerShellRef}
+                >
+                  <DatePicker
+                    allowClear={false}
+                    className="run-stay-week-date-picker"
+                    popupClassName="run-stay-week-date-picker-dropdown"
+                    open={isDatePickerOpen}
+                    placement="bottomLeft"
+                    inputReadOnly
+                    value={extendedDayjs(selectedDate)}
+                    format="MMM D, YYYY"
+                    popupStyle={{
+                      ...datePickerPopupStyle,
+                      zIndex: 2000,
+                    }}
+                    disabledDate={(current: Dayjs) =>
+                      current ? current.isAfter(extendedDayjs(), "day") : false
+                    }
+                    getPopupContainer={() => document.body}
+                    onOpenChange={setIsDatePickerOpen}
+                    onChange={handleWeekDateChange}
+                    panelRender={originPanel => (
+                      <div className="run-stay-week-date-picker-popup-shell">
+                        <div className="run-stay-week-date-picker-popup-header">
+                          <span>Select date</span>
+                          <button
+                            type="button"
+                            aria-label="Close calendar"
+                            className="run-stay-week-date-picker-popup-close"
+                            onMouseDown={e => e.preventDefault()}
+                            onClick={() => setIsDatePickerOpen(false)}
+                          >
+                            <X size={12} strokeWidth={2.6} />
+                          </button>
+                        </div>
+                        {originPanel}
+                      </div>
+                    )}
+                    suffixIcon={null}
+                    style={{
+                      position: "absolute",
+                      inset: 0,
+                      width: "100%",
+                      height: "100%",
+                      opacity: 0,
+                      cursor: "pointer",
+                    }}
+                  />
+                  <button
+                    type="button"
+                    aria-label="Pick week by date"
+                    title="Pick week by date"
+                    onClick={() => setIsDatePickerOpen(open => !open)}
+                    style={{
+                      width: "100%",
+                      height: "100%",
+                      borderRadius: "999px",
+                      border: isDarkMode ? "1px solid rgba(148, 163, 184, 0.34)" : "1px solid rgba(24, 144, 255, 0.24)",
+                      background: isDarkMode ? "rgba(15, 23, 42, 0.35)" : "rgba(255, 255, 255, 0.62)",
+                      color: "#1890ff",
+                      display: "inline-flex",
+                      alignItems: "center",
+                      justifyContent: "center",
+                      cursor: "pointer",
+                      boxShadow: isDarkMode ? "0 3px 8px rgba(0,0,0,0.24)" : "0 3px 8px rgba(24,144,255,0.12)",
+                    }}
+                  >
+                    <Calendar size={compact ? 17 : 19} strokeWidth={2.4} />
+                  </button>
+                </div>
+              </div>
             </div>
           );
         })()}
@@ -1387,9 +1562,7 @@ export default function RunChartStay({
         <div style={{ position: "relative" }}>
           <button
             ref={nextWeekBtnRef}
-            onClick={() => {
-              if (!isNextWeekFuture) setWeekOffset((w) => w + 1);
-            }}
+            onClick={goToNextWeek}
             onMouseEnter={() => {
               if (isNextWeekFuture && nextWeekBtnRef.current) {
                 const rect = nextWeekBtnRef.current.getBoundingClientRect();
@@ -1579,6 +1752,362 @@ export default function RunChartStay({
           .run-stay-responsive-wrapper {
             max-width: 100% !important;
             overflow: hidden !important;
+          }
+
+          .run-stay-week-date-picker.ant-picker,
+          .run-stay-week-date-picker.antd5-picker {
+            border-radius: 999px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown {
+            border-radius: 22px !important;
+            overflow: hidden !important;
+            will-change: opacity, transform;
+            max-width: calc(100vw - 24px) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown.ant-slide-up-appear,
+          .run-stay-week-date-picker-dropdown.ant-slide-up-enter,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-appear,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-enter {
+            opacity: 0;
+            transform: translateX(-18px) translateY(0px) scale(0.98) !important;
+            transform-origin: left center;
+          }
+
+          .run-stay-week-date-picker-dropdown.ant-slide-up-appear.ant-slide-up-appear-active,
+          .run-stay-week-date-picker-dropdown.ant-slide-up-enter.ant-slide-up-enter-active,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-appear.antd5-slide-up-appear-active,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-enter.antd5-slide-up-enter-active {
+            opacity: 1;
+            transform: translateX(0px) translateY(0px) scale(1) !important;
+            transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .run-stay-week-date-picker-dropdown.ant-slide-up-leave,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-leave {
+            opacity: 1;
+            transform: translateX(0px) translateY(0px) scale(1) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown.ant-slide-up-leave.ant-slide-up-leave-active,
+          .run-stay-week-date-picker-dropdown.antd5-slide-up-leave.antd5-slide-up-leave-active {
+            opacity: 0;
+            transform: translateX(-18px) translateY(0px) scale(0.98) !important;
+            transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .run-stay-week-date-picker-popup-shell {
+            display: flex;
+            flex-direction: column;
+            width: 100%;
+            min-width: 0;
+          }
+
+          .run-stay-week-date-picker-popup-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 12px;
+            padding: 13px 14px 11px 14px;
+            border-bottom: 1px solid rgba(60, 60, 67, 0.08);
+            background: linear-gradient(180deg, rgba(255, 255, 255, 0.96) 0%, rgba(247, 248, 250, 0.78) 100%);
+            color: rgba(60, 60, 67, 0.68);
+            font-size: 11px;
+            font-weight: 600;
+            letter-spacing: 0.04em;
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-popup-header,
+          .dark-theme .run-stay-week-date-picker-popup-header {
+            border-bottom-color: rgba(255, 255, 255, 0.08);
+            background: linear-gradient(180deg, rgba(32, 32, 34, 0.98) 0%, rgba(24, 24, 26, 0.94) 100%);
+            color: rgba(235, 235, 245, 0.7);
+          }
+
+          .run-stay-week-date-picker-popup-close {
+            width: 22px;
+            height: 22px;
+            border-radius: 999px;
+            border: none;
+            background: rgba(120, 120, 128, 0.14);
+            color: rgba(60, 60, 67, 0.72);
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            padding: 0;
+            transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, color 160ms ease;
+            box-shadow: none;
+            flex: 0 0 auto;
+          }
+
+          .run-stay-week-date-picker-popup-close:hover {
+            transform: scale(1.04);
+            background: rgba(120, 120, 128, 0.18);
+            color: rgba(60, 60, 67, 0.92);
+          }
+
+          .run-stay-week-date-picker-popup-close:focus-visible {
+            outline: none;
+            box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.14);
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-popup-close,
+          .dark-theme .run-stay-week-date-picker-popup-close {
+            background: rgba(255, 255, 255, 0.10);
+            color: rgba(235, 235, 245, 0.72);
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-popup-close:hover,
+          .dark-theme .run-stay-week-date-picker-popup-close:hover {
+            background: rgba(255, 255, 255, 0.16);
+            color: rgba(255, 255, 255, 0.9);
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-panel-container,
+          .run-stay-week-date-picker-dropdown .antd5-picker-panel-container {
+            width: 100% !important;
+            max-width: 280px !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+            border: 1px solid rgba(60, 60, 67, 0.12) !important;
+            background: #fff !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-panel-container,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-panel-container,
+          .dark-theme .run-stay-week-date-picker-dropdown .ant-picker-panel-container,
+          .dark-theme .run-stay-week-date-picker-dropdown .antd5-picker-panel-container {
+            border-color: rgba(255, 255, 255, 0.08) !important;
+            background: #1a1a1a !important;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-header,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header {
+            padding: 8px 10px 6px !important;
+            border-bottom: 1px solid rgba(60, 60, 67, 0.08) !important;
+            border-radius: 8px 8px 0 0 !important;
+            background: transparent !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn {
+            width: 24px !important;
+            height: 24px !important;
+            border-radius: 4px !important;
+            border: none !important;
+            background: transparent !important;
+            color: #666 !important;
+            display: inline-flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+            transition: background 150ms ease !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn:hover,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn:hover,
+          .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn:hover,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn:hover,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
+          .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn:hover {
+            background: rgba(0, 0, 0, 0.04) !important;
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn,
+          .dark-theme .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn {
+            color: #999 !important;
+          }
+          
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn:hover {
+            background: rgba(255, 255, 255, 0.08) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-body,
+          .run-stay-week-date-picker-dropdown .antd5-picker-body {
+            padding: 8px 10px 10px !important;
+          }
+          
+          .run-stay-week-date-picker-dropdown .ant-picker-content th,
+          .run-stay-week-date-picker-dropdown .antd5-picker-content th {
+            font-size: 12px !important;
+            font-weight: 500 !important;
+            height: 28px !important;
+            color: #666 !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-cell-inner,
+          .run-stay-week-date-picker-dropdown .antd5-picker-cell-inner {
+            min-width: 28px !important;
+            height: 28px !important;
+            line-height: 28px !important;
+            border-radius: 6px !important;
+            font-size: 13px !important;
+            transition: background 150ms ease !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-cell:hover .ant-picker-cell-inner,
+          .run-stay-week-date-picker-dropdown .antd5-picker-cell:hover .antd5-picker-cell-inner {
+            background: rgba(24, 144, 255, 0.1) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
+          .run-stay-week-date-picker-dropdown .antd5-picker-cell-selected .antd5-picker-cell-inner {
+            background: #1890ff !important;
+            color: #fff !important;
+          }
+          
+          .run-stay-week-date-picker-dropdown .ant-picker-cell-today .ant-picker-cell-inner,
+          .run-stay-week-date-picker-dropdown .antd5-picker-cell-today .antd5-picker-cell-inner {
+            border: 1px solid #1890ff !important;
+          }
+
+          .run-stay-week-date-picker-dropdown .ant-picker-today-btn,
+          .run-stay-week-date-picker-dropdown .antd5-picker-today-btn {
+            color: #1890ff !important;
+            font-size: 13px !important;
+          }
+          
+          .run-stay-week-date-picker-dropdown .ant-picker-footer,
+          .run-stay-week-date-picker-dropdown .antd5-picker-footer {
+            padding: 8px 10px !important;
+            border-top: 1px solid rgba(60, 60, 67, 0.08) !important;
+          }
+
+          @media (max-width: 768px) {
+            .run-stay-week-date-picker-dropdown {
+              width: min(90vw, 280px) !important;
+            }
+
+            .run-stay-week-date-picker-popup-header {
+              padding: 8px 10px !important;
+              font-size: 11px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-header,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header {
+              padding: 6px 8px 4px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-body,
+            .run-stay-week-date-picker-dropdown .antd5-picker-body {
+              padding: 6px 8px 8px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-content,
+            .run-stay-week-date-picker-dropdown .antd5-picker-content {
+              width: 100% !important;
+            }
+            
+            .run-stay-week-date-picker-dropdown .ant-picker-panel,
+            .run-stay-week-date-picker-dropdown .antd5-picker-panel,
+            .run-stay-week-date-picker-dropdown .ant-picker-date-panel,
+            .run-stay-week-date-picker-dropdown .antd5-picker-date-panel {
+              width: 100% !important;
+            }
+            
+            .run-stay-week-date-picker-dropdown .ant-picker-content th,
+            .run-stay-week-date-picker-dropdown .antd5-picker-content th {
+              font-size: 11px !important;
+              height: 24px !important;
+            }
+            
+            .run-stay-week-date-picker-dropdown .ant-picker-cell-inner,
+            .run-stay-week-date-picker-dropdown .antd5-picker-cell-inner {
+              min-width: 26px !important;
+              height: 26px !important;
+              line-height: 26px !important;
+              font-size: 12px !important;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .run-stay-week-date-picker-dropdown {
+              width: min(90vw, 260px) !important;
+            }
+
+            .run-stay-week-date-picker-popup-header {
+              padding: 7px 9px !important;
+              font-size: 10px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-header,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header {
+              padding: 5px 7px 3px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-body,
+            .run-stay-week-date-picker-dropdown .antd5-picker-body {
+              padding: 5px 7px 7px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-cell,
+            .run-stay-week-date-picker-dropdown .antd5-picker-cell {
+              padding: 0 !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-cell-inner,
+            .run-stay-week-date-picker-dropdown .antd5-picker-cell-inner {
+              min-width: 24px !important;
+              height: 24px !important;
+              line-height: 24px !important;
+              border-radius: 5px !important;
+              font-size: 11px !important;
+            }
+
+            .run-stay-week-date-picker-dropdown .ant-picker-header-super-prev-btn,
+            .run-stay-week-date-picker-dropdown .ant-picker-header-prev-btn,
+            .run-stay-week-date-picker-dropdown .ant-picker-header-super-next-btn,
+            .run-stay-week-date-picker-dropdown .ant-picker-header-next-btn,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header-prev-btn,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header-super-next-btn,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header-next-btn {
+              width: 24px !important;
+              height: 24px !important;
+            }
+            
+            .run-stay-week-date-picker-dropdown .ant-picker-content th,
+            .run-stay-week-date-picker-dropdown .antd5-picker-content th {
+              font-size: 10px !important;
+              height: 20px !important;
+            }
+            
+            .run-stay-week-date-picker-dropdown .ant-picker-header-view button,
+            .run-stay-week-date-picker-dropdown .antd5-picker-header-view button {
+              font-size: 12px !important;
+            }
           }
           
           /* Dark mode menu button fix */

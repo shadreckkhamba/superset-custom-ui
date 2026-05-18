@@ -26,22 +26,22 @@ const responsiveSwitchStyles = `
     gap: clamp(8px, 2vw, 12px) !important;
     margin-left: clamp(20px, 4vw, 45px) !important;
     border-width: clamp(1px, 0.2vw, 2px) !important;
-    box-shadow: rgba(15, 23, 42, 0.15) 0px clamp(6px, 1.5vw, 12px) clamp(20px, 5vw, 40px), 
+    box-shadow: rgba(15, 23, 42, 0.15) 0px clamp(6px, 1.5vw, 12px) clamp(20px, 5vw, 40px),
                 rgba(15, 23, 42, 0.1) 0px clamp(2px, 0.5vw, 4px) clamp(6px, 1.5vw, 12px) !important;
   }
-  
+
   [data-test="dashboard-view-switch"] > div {
     gap: clamp(8px, 2vw, 12px) !important;
   }
-  
+
   [data-test="dashboard-view-switch"] span {
     font-size: clamp(12px, 2.5vw, 14px) !important;
   }
-  
+
   [data-test="dashboard-view-switch"] .antd5-switch {
     transform: scale(clamp(0.9, 0.2vw + 0.9, 1.15)) !important;
   }
-  
+
   /* Responsive adjustments for very small screens */
   @media (max-width: 480px) {
     [data-test="dashboard-view-switch"] {
@@ -50,16 +50,16 @@ const responsiveSwitchStyles = `
       gap: 6px !important;
       margin-left: 20px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] span {
       font-size: 11px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.85) !important;
     }
   }
-  
+
   /* Responsive adjustments for medium screens */
   @media (min-width: 481px) and (max-width: 768px) {
     [data-test="dashboard-view-switch"] {
@@ -67,11 +67,11 @@ const responsiveSwitchStyles = `
       gap: 8px !important;
       margin-left: 30px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] span {
       font-size: 12px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.95) !important;
     }
@@ -143,8 +143,10 @@ export default function StayTimePie({
   const selectedSliceIndexesRef = useRef<number[]>([]);
   const wrapperRef = useRef<HTMLDivElement | null>(null);
   const filterMenuButtonRef = useRef<HTMLButtonElement | null>(null);
+  const filterMenuPanelRef = useRef<HTMLDivElement | null>(null);
   const datePickerShellRef = useRef<HTMLDivElement | null>(null);
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
+  const [isDatePickerSidecar, setIsDatePickerSidecar] = useState(false);
   const [datePickerPopupStyle, setDatePickerPopupStyle] =
     useState<React.CSSProperties>({});
   const [filterMenuPopupStyle, setFilterMenuPopupStyle] =
@@ -152,7 +154,6 @@ export default function StayTimePie({
   const todayKey = toDateKey(new Date());
   const selectedDateLabel = extendedDayjs(selectedDate).format('MMM D, YYYY');
   const isSelectedDateToday = selectedDate === todayKey;
-  const closeDatePicker = () => setIsDatePickerOpen(false);
 
   useEffect(() => {
     selectedSliceIndexesRef.current = selectedSliceIndexes;
@@ -203,7 +204,12 @@ export default function StayTimePie({
   useEffect(() => {
     if (!showFilterMenu) {
       setIsDatePickerOpen(false);
+      const sidecarResetTimer = window.setTimeout(() => {
+        setIsDatePickerSidecar(false);
+      }, 220);
+      return () => window.clearTimeout(sidecarResetTimer);
     }
+    return undefined;
   }, [showFilterMenu]);
 
   const isSlideshowMode =
@@ -216,6 +222,17 @@ export default function StayTimePie({
     !isExpanded && componentWidth > 0 && componentWidth <= 420;
   const shouldFloatFilterMenu =
     isViewportCompact || isNarrowCardLayout || isCompactFilterLayout;
+  const shouldUseCompactDatePicker =
+    isCompactFilterLayout || (viewportWidth > 0 && viewportWidth <= 480);
+  const datePickerDropdownClassName = [
+    'pie-stay-reference-date-picker-dropdown',
+    isDatePickerSidecar &&
+      'pie-stay-reference-date-picker-dropdown--sidecar',
+    shouldUseCompactDatePicker &&
+      'pie-stay-reference-date-picker-dropdown--compact',
+  ]
+    .filter(Boolean)
+    .join(' ');
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined' || !showFilterMenu || !isDatePickerOpen) {
@@ -224,34 +241,77 @@ export default function StayTimePie({
 
     const updateDatePickerPosition = () => {
       const shell = datePickerShellRef.current;
+      const filterPanel = filterMenuPanelRef.current;
       if (!shell) {
         return;
       }
 
-      const rect = shell.getBoundingClientRect();
+      const shellRect = shell.getBoundingClientRect();
+      const panelRect = filterPanel?.getBoundingClientRect();
       const isCompactViewport = window.innerWidth < 1100;
+      const isTinyViewport = window.innerWidth < 480;
+      const shouldUseCompactPopup = isTinyViewport || isCompactFilterLayout;
       const gap = 12;
-      const popupWidth = Math.min(
-        isCompactViewport ? 300 : isExpanded ? 360 : 340,
-        window.innerWidth - 24,
+      const availableViewportWidth = window.innerWidth - 24;
+      const sidecarWidth = Math.min(
+        Math.max(panelRect?.width ?? 280, 280),
+        isExpanded ? 320 : 300,
+        availableViewportWidth,
       );
+      const canUseSidecar =
+        panelRect !== undefined &&
+        !shouldUseCompactPopup &&
+        panelRect.right + gap + sidecarWidth <= window.innerWidth - 12;
+      const sidecarLeft = panelRect
+        ? panelRect.right + gap
+        : shellRect.right + gap;
+      const sidecarTop = panelRect ? panelRect.top : shellRect.top;
+      const popupWidth = canUseSidecar
+        ? sidecarWidth
+        : Math.min(
+            shouldUseCompactPopup
+              ? 256
+              : isCompactViewport
+                ? 280
+                : isExpanded
+                  ? 320
+                  : 300,
+            availableViewportWidth,
+          );
       const maxLeft = window.innerWidth - popupWidth - 12;
-      const preferredLeft = isCompactViewport ? rect.left : rect.right + gap;
+      const preferredLeft = canUseSidecar
+        ? sidecarLeft
+        : isCompactViewport
+          ? shellRect.left
+          : shellRect.right + gap;
       const left = Math.max(12, Math.min(preferredLeft, maxLeft));
-      const popupHeight = isCompactViewport ? 380 : 420;
-      const preferredTop = isCompactViewport ? rect.bottom + gap : rect.top;
+      const sidecarHeight = Math.min(
+        Math.max(panelRect?.height ?? 386, 386),
+        window.innerHeight - 24,
+      );
+      const popupHeight = canUseSidecar
+        ? sidecarHeight
+        : shouldUseCompactPopup
+          ? 292
+          : isCompactViewport
+            ? 330
+            : 360;
+      const preferredTop = canUseSidecar
+        ? sidecarTop
+        : isCompactViewport
+          ? shellRect.bottom + gap
+          : shellRect.top;
       const maxTop = window.innerHeight - popupHeight - 12;
       const top = Math.max(12, Math.min(preferredTop, maxTop));
 
+      setIsDatePickerSidecar(canUseSidecar);
       setDatePickerPopupStyle({
         position: 'fixed',
         left: `${left}px`,
         top: `${top}px`,
         width: `${popupWidth}px`,
-        maxHeight: `calc(100vh - 24px)`,
-        overflowY: 'auto',
+        height: `${popupHeight}px`,
         margin: 0,
-        transform: 'none',
         zIndex: 2000,
       });
     };
@@ -264,7 +324,12 @@ export default function StayTimePie({
       window.removeEventListener('resize', updateDatePickerPosition);
       window.removeEventListener('scroll', updateDatePickerPosition, true);
     };
-  }, [showFilterMenu, isDatePickerOpen, isExpanded]);
+  }, [
+    showFilterMenu,
+    isDatePickerOpen,
+    isExpanded,
+    isCompactFilterLayout,
+  ]);
 
   useLayoutEffect(() => {
     if (
@@ -1098,10 +1163,60 @@ export default function StayTimePie({
             min-width: 0 !important;
           }
           .pie-stay-reference-date-picker-dropdown {
-            width: min(92vw, 360px) !important;
+            width: min(92vw, 280px) !important;
             max-width: calc(100vw - 24px) !important;
             margin-left: 0 !important;
             margin-top: 0 !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .pie-stay-reference-date-picker-dropdown {
+            width: min(92vw, 256px) !important;
+          }
+
+          .pie-stay-reference-date-picker-popup-header {
+            padding: 10px 12px 9px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
+            padding: 9px 10px 6px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-body,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-body {
+            padding: 8px 10px 10px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content {
+            width: 100% !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-cell,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-cell {
+            padding: 1px 0 !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-cell-inner,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-inner {
+            min-width: 26px !important;
+            height: 26px !important;
+            line-height: 26px !important;
+            border-radius: 9px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
+            width: 24px !important;
+            height: 24px !important;
           }
         }
 
@@ -1250,27 +1365,80 @@ export default function StayTimePie({
         }
 
         .pie-stay-reference-date-picker-dropdown.ant-slide-up-appear,
-        .pie-stay-reference-date-picker-dropdown.ant-slide-up-enter {
+        .pie-stay-reference-date-picker-dropdown.ant-slide-up-enter,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-appear,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-enter {
           opacity: 0;
-          transform: translateX(12px) scale(0.985);
+          transform: translateX(-18px) translateY(0px) scale(0.98) !important;
+          transform-origin: left center;
         }
 
         .pie-stay-reference-date-picker-dropdown.ant-slide-up-appear.ant-slide-up-appear-active,
-        .pie-stay-reference-date-picker-dropdown.ant-slide-up-enter.ant-slide-up-enter-active {
+        .pie-stay-reference-date-picker-dropdown.ant-slide-up-enter.ant-slide-up-enter-active,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-appear.antd5-slide-up-appear-active,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-enter.antd5-slide-up-enter-active {
           opacity: 1;
-          transform: translateX(0) scale(1);
-          transition: opacity 160ms ease, transform 220ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform: translateX(0px) translateY(0px) scale(1) !important;
+          transition: opacity 200ms cubic-bezier(0.22, 1, 0.36, 1), transform 250ms cubic-bezier(0.22, 1, 0.36, 1);
         }
 
-        .pie-stay-reference-date-picker-dropdown.ant-slide-up-leave {
+        .pie-stay-reference-date-picker-dropdown.ant-slide-up-leave,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-leave {
           opacity: 1;
-          transform: translateX(0) scale(1);
+          transform: translateX(0px) translateY(0px) scale(1) !important;
         }
 
-        .pie-stay-reference-date-picker-dropdown.ant-slide-up-leave.ant-slide-up-leave-active {
+        .pie-stay-reference-date-picker-dropdown.ant-slide-up-leave.ant-slide-up-leave-active,
+        .pie-stay-reference-date-picker-dropdown.antd5-slide-up-leave.antd5-slide-up-leave-active {
           opacity: 0;
-          transform: translateX(12px) scale(0.985);
-          transition: opacity 140ms ease, transform 180ms cubic-bezier(0.22, 1, 0.36, 1);
+          transform: translateX(-18px) translateY(0px) scale(0.98) !important;
+          transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        @keyframes pieStayCalendarSlideOut {
+          from {
+            opacity: 0;
+            transform: translateX(-32px) scale(0.985);
+          }
+          to {
+            opacity: 1;
+            transform: translateX(0) scale(1);
+          }
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar.ant-slide-up-appear,
+        .pie-stay-reference-date-picker-dropdown--sidecar.ant-slide-up-enter,
+        .pie-stay-reference-date-picker-dropdown--sidecar.antd5-slide-up-appear,
+        .pie-stay-reference-date-picker-dropdown--sidecar.antd5-slide-up-enter {
+          opacity: 0;
+          transform: translateX(-16px) scale(0.985) !important;
+          transform-origin: left center;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar.ant-slide-up-appear.ant-slide-up-appear-active,
+        .pie-stay-reference-date-picker-dropdown--sidecar.ant-slide-up-enter.ant-slide-up-enter-active,
+        .pie-stay-reference-date-picker-dropdown--sidecar.antd5-slide-up-appear.antd5-slide-up-appear-active,
+        .pie-stay-reference-date-picker-dropdown--sidecar.antd5-slide-up-enter.antd5-slide-up-enter-active {
+          opacity: 1;
+          transform: translateX(0) scale(1) !important;
+          transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1), transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar.ant-slide-up-leave.ant-slide-up-leave-active,
+        .pie-stay-reference-date-picker-dropdown--sidecar.antd5-slide-up-leave.antd5-slide-up-leave-active {
+          opacity: 0;
+          transform: translateX(0) scale(0.985) !important;
+          transition: opacity 140ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar {
+          background: #f7f8fa !important;
+          border-radius: 8px !important;
+          overflow: hidden !important;
+        }
+
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown--sidecar {
+          background: #1a1a1a !important;
         }
 
         .pie-stay-reference-date-picker-popup-shell {
@@ -1341,28 +1509,148 @@ export default function StayTimePie({
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container {
-          border-radius: 20px !important;
+          width: 100% !important;
+          max-width: 280px !important;
+          border-radius: 8px !important;
           overflow: hidden !important;
           border: 1px solid rgba(60, 60, 67, 0.12) !important;
-          background: linear-gradient(160deg, rgba(255, 255, 255, 0.98) 0%, rgba(248, 249, 251, 0.94) 100%) !important;
-          box-shadow: 0 30px 70px rgba(15, 23, 42, 0.16), 0 8px 18px rgba(15, 23, 42, 0.08) !important;
-          backdrop-filter: blur(16px) saturate(130%) !important;
-          -webkit-backdrop-filter: blur(16px) saturate(130%) !important;
+          background: #fff !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1) !important;
         }
 
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container,
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container {
           border-color: rgba(255, 255, 255, 0.08) !important;
-          background: linear-gradient(160deg, rgba(32, 32, 34, 0.98) 0%, rgba(24, 24, 26, 0.96) 100%) !important;
-          box-shadow: 0 30px 70px rgba(0, 0, 0, 0.38), 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+          background: #1a1a1a !important;
+          box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel-container {
+          max-width: none !important;
+          height: 100% !important;
+          display: flex !important;
+          flex-direction: column !important;
+          background: #f7f8fa !important;
+          transform-origin: left center !important;
+          animation: pieStayCalendarSlideOut 440ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+        }
+
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel-container,
+        [data-theme='dark'] .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel-container {
+          background: #1a1a1a !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .pie-stay-reference-date-picker-popup-shell,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel {
+          flex: 1 1 auto !important;
+          min-height: 0 !important;
+          width: 100% !important;
+          height: auto !important;
+          background: transparent !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-date-panel {
+          height: 100% !important;
+          width: 100% !important;
+          min-width: 0 !important;
+          min-height: 0 !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-date-panel {
+          display: flex !important;
+          flex-direction: column !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-body {
+          flex: 1 1 auto !important;
+          display: flex !important;
+          align-items: stretch !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-content,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-content {
+          height: 100% !important;
+          table-layout: fixed !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header {
+          min-height: 30px !important;
+          padding: 4px 7px 3px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-view,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-view {
+          line-height: 22px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-view button,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-view button {
+          font-size: 12px !important;
+          line-height: 22px !important;
+          padding: 0 2px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header-next-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header-next-btn {
+          width: 20px !important;
+          height: 20px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-body {
+          padding: 4px 8px 5px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-content th,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-content th {
+          height: 20px !important;
+          font-size: 10px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-cell-inner {
+          min-width: 24px !important;
+          height: 24px !important;
+          line-height: 24px !important;
+          font-size: 11px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-footer {
+          flex: 0 0 auto !important;
+          min-height: 34px !important;
+          padding: 4px 8px 6px !important;
+          line-height: 24px !important;
+          display: flex !important;
+          align-items: center !important;
+          justify-content: center !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-today-btn,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-today-btn {
+          font-size: 12px !important;
+          line-height: 24px !important;
+          min-height: 24px !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-header,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
-          padding: 12px 14px 8px !important;
+          padding: 8px 10px 6px !important;
           border-bottom: 1px solid rgba(60, 60, 67, 0.08) !important;
-          border-radius: 20px 20px 0 0 !important;
-          background: linear-gradient(180deg, rgba(255, 255, 255, 0.92) 0%, rgba(247, 248, 250, 0.64) 100%) !important;
+          border-radius: 8px 8px 0 0 !important;
+          background: transparent !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
@@ -1373,16 +1661,16 @@ export default function StayTimePie({
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
-          width: 28px !important;
-          height: 28px !important;
-          border-radius: 999px !important;
-          border: 1px solid rgba(24, 144, 255, 0.14) !important;
-          background: linear-gradient(180deg, rgba(24, 144, 255, 0.10) 0%, rgba(24, 144, 255, 0.04) 100%) !important;
-          color: #1890ff !important;
+          width: 24px !important;
+          height: 24px !important;
+          border-radius: 4px !important;
+          border: none !important;
+          background: transparent !important;
+          color: #666 !important;
           display: inline-flex !important;
           align-items: center !important;
           justify-content: center !important;
-          transition: transform 160ms ease, box-shadow 160ms ease, background 160ms ease, border-color 160ms ease !important;
+          transition: background 150ms ease !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
@@ -1393,22 +1681,7 @@ export default function StayTimePie({
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:hover {
-          transform: translateY(-1px);
-          border-color: rgba(24, 144, 255, 0.28) !important;
-          background: linear-gradient(180deg, rgba(24, 144, 255, 0.16) 0%, rgba(24, 144, 255, 0.10) 100%) !important;
-          box-shadow: 0 8px 18px rgba(24, 144, 255, 0.14) !important;
-        }
-
-        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:active,
-        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn:active,
-        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn:active,
-        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn:active,
-        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn:active,
-        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:active,
-        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:active,
-        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:active {
-          transform: translateY(0);
-          box-shadow: 0 4px 10px rgba(24, 144, 255, 0.10) !important;
+          background: rgba(0, 0, 0, 0.04) !important;
         }
 
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
@@ -1419,10 +1692,7 @@ export default function StayTimePie({
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
-          border-color: rgba(24, 144, 255, 0.24) !important;
-          background: linear-gradient(180deg, rgba(24, 144, 255, 0.18) 0%, rgba(24, 144, 255, 0.10) 100%) !important;
-          color: #46a6ff !important;
-          box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.08) !important;
+          color: #999 !important;
         }
 
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
@@ -1433,38 +1703,291 @@ export default function StayTimePie({
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
         [data-theme='dark'] .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:hover {
-          border-color: rgba(70, 166, 255, 0.38) !important;
-          background: linear-gradient(180deg, rgba(24, 144, 255, 0.24) 0%, rgba(24, 144, 255, 0.14) 100%) !important;
-          box-shadow: 0 8px 18px rgba(0, 0, 0, 0.18) !important;
+          background: rgba(255, 255, 255, 0.08) !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-body,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-body {
-          padding: 12px 14px 14px !important;
+          padding: 8px 10px 10px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-content th,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-content th {
+          font-size: 12px !important;
+          font-weight: 500 !important;
+          height: 28px !important;
+          color: #666 !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-cell-inner,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-inner {
-          border-radius: 12px !important;
-          transition: transform 140ms ease, background 140ms ease, box-shadow 140ms ease !important;
+          min-width: 28px !important;
+          height: 28px !important;
+          line-height: 28px !important;
+          border-radius: 6px !important;
+          font-size: 13px !important;
+          transition: background 150ms ease !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-cell:hover .ant-picker-cell-inner,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-cell:hover .antd5-picker-cell-inner {
-          transform: translateY(-1px);
+          background: rgba(24, 144, 255, 0.1) !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-selected .antd5-picker-cell-inner {
-          background: linear-gradient(135deg, #1890ff 0%, #096dd9 100%) !important;
-          box-shadow: 0 8px 18px rgba(24, 144, 255, 0.28) !important;
+          background: #1890ff !important;
           color: #fff !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-today .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-today .antd5-picker-cell-inner {
+          border: 1px solid #1890ff !important;
         }
 
         .pie-stay-reference-date-picker-dropdown .ant-picker-today-btn,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-today-btn {
-          border-radius: 999px !important;
-          padding: 0 12px !important;
+          color: #1890ff !important;
+          font-size: 13px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-footer {
+          padding: 8px 10px !important;
+          border-top: 1px solid rgba(60, 60, 67, 0.08) !important;
+        }
+
+        @media (max-width: 768px) {
+          .pie-stay-reference-date-picker-dropdown {
+            width: min(90vw, 280px) !important;
+          }
+
+          .pie-stay-reference-date-picker-popup-header {
+            padding: 8px 10px !important;
+            font-size: 11px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
+            padding: 6px 8px 4px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-body,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-body {
+            padding: 6px 8px 8px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content {
+            width: 100% !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-panel,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-panel,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-date-panel,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-date-panel {
+            width: 100% !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content th,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content th {
+            font-size: 11px !important;
+            height: 24px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-cell-inner,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-inner {
+            min-width: 26px !important;
+            height: 26px !important;
+            line-height: 26px !important;
+            font-size: 12px !important;
+          }
+        }
+
+        @media (max-width: 480px) {
+          .pie-stay-reference-date-picker-dropdown {
+            width: min(90vw, 260px) !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-panel,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-panel,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-date-panel,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-date-panel {
+            width: 260px !important;
+            min-width: 0 !important;
+          }
+
+          .pie-stay-reference-date-picker-popup-header {
+            padding: 7px 9px !important;
+            font-size: 10px !important;
+          }
+
+          .pie-stay-reference-date-picker-popup-close {
+            width: 20px !important;
+            height: 20px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
+            padding: 5px 7px 3px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-body,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-body {
+            padding: 5px 7px 7px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content {
+            width: 100% !important;
+            table-layout: fixed !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-cell,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-cell {
+            padding: 0 !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content th,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content th {
+            height: 20px !important;
+            font-size: 10px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-cell-inner,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-inner {
+            min-width: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            border-radius: 5px !important;
+            font-size: 11px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn,
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
+            width: 24px !important;
+            height: 24px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-content th,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-content th {
+            font-size: 10px !important;
+            height: 20px !important;
+          }
+
+          .pie-stay-reference-date-picker-dropdown .ant-picker-header-view button,
+          .pie-stay-reference-date-picker-dropdown .antd5-picker-header-view button {
+            font-size: 12px !important;
+          }
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact {
+          width: min(90vw, 260px) !important;
+          max-width: calc(100vw - 24px) !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-panel,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-panel,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-date-panel {
+          width: 260px !important;
+          min-width: 0 !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .pie-stay-reference-date-picker-popup-header {
+          padding: 7px 9px !important;
+          font-size: 10px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .pie-stay-reference-date-picker-popup-close {
+          width: 20px !important;
+          height: 20px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header {
+          padding: 5px 7px 3px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-body {
+          padding: 5px 7px 7px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-content,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-content {
+          width: 100% !important;
+          table-layout: fixed !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-content th,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-content th {
+          height: 20px !important;
+          font-size: 10px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-cell-inner {
+          min-width: 24px !important;
+          height: 24px !important;
+          line-height: 24px !important;
+          border-radius: 5px !important;
+          font-size: 11px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-next-btn {
+          width: 22px !important;
+          height: 20px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-view button,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-view button {
+          font-size: 11px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-cell,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-cell {
+          padding: 0 !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-cell-inner {
+          min-width: 22px !important;
+          height: 22px !important;
+          line-height: 22px !important;
+          border-radius: 8px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-header-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-header-next-btn {
+          width: 22px !important;
+          height: 22px !important;
+        }
+
+        .pie-stay-reference-date-picker-dropdown--compact .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown--compact .antd5-picker-footer {
+          line-height: 28px !important;
         }
 
         /* Dark mode menu button fix */
@@ -1475,7 +1998,7 @@ export default function StayTimePie({
           border-color: rgba(64, 64, 64, 0.8) !important;
           color: #e0e0e0 !important;
         }
-        
+
         [data-theme="dark"] .antd5-btn.antd5-btn-default.antd5-btn-color-default.antd5-btn-variant-outlined:hover,
         [data-theme="dark"] .superset-button.superset-button-tertiary:hover,
         [data-theme="dark"] button[data-test="actions-trigger"]:hover {
@@ -1483,13 +2006,13 @@ export default function StayTimePie({
           border-color: rgba(96, 96, 96, 0.9) !important;
           color: #ffffff !important;
         }
-        
+
         /* Scrollbar fixes */
         .dashboard-component-tabs-content,
         .dashboard-component-chart-holder {
           overflow: visible !important;
         }
-        
+
         .dashboard-grid {
           overflow-y: auto !important;
           overflow-x: hidden !important;
@@ -1662,6 +2185,7 @@ export default function StayTimePie({
               </button>
               {/* Custom Filter Menu */}
               <div
+                ref={filterMenuPanelRef}
                 style={{
                   position: shouldFloatFilterMenu ? 'fixed' : 'absolute',
                   right: shouldFloatFilterMenu ? 'auto' : 0,
@@ -1814,10 +2338,13 @@ export default function StayTimePie({
                   <DatePicker
                     allowClear={false}
                     className="pie-stay-reference-date-picker"
-                    popupClassName="pie-stay-reference-date-picker-dropdown"
+                    popupClassName={datePickerDropdownClassName}
                     open={showFilterMenu && isDatePickerOpen}
                     placement="bottomLeft"
-                    popupStyle={datePickerPopupStyle}
+                    popupStyle={{
+                      ...datePickerPopupStyle,
+                      zIndex: 2000,
+                    }}
                     inputReadOnly
                     value={extendedDayjs(selectedDate)}
                     format="MMM D, YYYY"
@@ -1828,23 +2355,6 @@ export default function StayTimePie({
                     onOpenChange={nextOpen => {
                       setIsDatePickerOpen(nextOpen);
                     }}
-                    panelRender={originPanel => (
-                      <div className="pie-stay-reference-date-picker-popup-shell">
-                        <div className="pie-stay-reference-date-picker-popup-header">
-                          <span>Select date</span>
-                          <button
-                            type="button"
-                            aria-label="Close calendar"
-                            className="pie-stay-reference-date-picker-popup-close"
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={closeDatePicker}
-                          >
-                            <X size={12} strokeWidth={2.6} />
-                          </button>
-                        </div>
-                        {originPanel}
-                      </div>
-                    )}
                     onChange={date => {
                       if (!date) {
                         return;
