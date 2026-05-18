@@ -272,7 +272,20 @@ export default function RunChartStay({
   const hasAnimatedOnViewRef = useRef(false);
 
   const [datePickerPopupStyle, setDatePickerPopupStyle] = useState<React.CSSProperties>({});
+  const [isDatePickerSidecar, setIsDatePickerSidecar] = useState(false);
   const datePickerShellRef = useRef<HTMLDivElement | null>(null);
+  const datePickerToggleMouseDownRef = useRef(false);
+
+  useEffect(() => {
+    if (isDatePickerOpen) {
+      return undefined;
+    }
+
+    const sidecarResetTimer = window.setTimeout(() => {
+      setIsDatePickerSidecar(false);
+    }, 220);
+    return () => window.clearTimeout(sidecarResetTimer);
+  }, [isDatePickerOpen]);
 
   useLayoutEffect(() => {
     if (typeof window === 'undefined' || !isDatePickerOpen) return undefined;
@@ -282,21 +295,39 @@ export default function RunChartStay({
       if (!shell) return;
       const rect = shell.getBoundingClientRect();
       const isCompactViewport = window.innerWidth < 1100;
+      const isTinyViewport = window.innerWidth < 480;
       const gap = 12;
-      const popupWidth = Math.min(isCompactViewport ? 256 : 320, window.innerWidth - 24);
+      const availableViewportWidth = window.innerWidth - 24;
+      const sidecarWidth = Math.min(compact ? 280 : 300, availableViewportWidth);
+      const canUseSidecar =
+        !isTinyViewport &&
+        rect.right + gap + sidecarWidth <= window.innerWidth - 12;
+      const popupWidth = canUseSidecar
+        ? sidecarWidth
+        : Math.min(isCompactViewport ? 256 : 300, availableViewportWidth);
       const maxLeft = window.innerWidth - popupWidth - 12;
-      const preferredLeft = isCompactViewport ? rect.left : rect.right + gap;
+      const preferredLeft = canUseSidecar
+        ? rect.right + gap
+        : isCompactViewport
+          ? rect.left
+          : rect.right + gap;
       const left = Math.max(12, Math.min(preferredLeft, maxLeft));
-      const popupHeight = isCompactViewport ? 292 : 360;
-      const preferredTop = isCompactViewport ? rect.bottom + gap : rect.top;
+      const popupHeight = canUseSidecar ? 386 : isCompactViewport ? 292 : 360;
+      const preferredTop = canUseSidecar
+        ? rect.top
+        : isCompactViewport
+          ? rect.bottom + gap
+          : rect.top;
       const maxTop = window.innerHeight - popupHeight - 12;
       const top = Math.max(12, Math.min(preferredTop, maxTop));
 
+      setIsDatePickerSidecar(canUseSidecar);
       setDatePickerPopupStyle({
         position: 'fixed',
         left: `${left}px`,
         top: `${top}px`,
         width: `${popupWidth}px`,
+        height: `${popupHeight}px`,
         zIndex: 2000,
       });
     };
@@ -304,7 +335,7 @@ export default function RunChartStay({
     updateDatePickerPosition();
     window.addEventListener('resize', updateDatePickerPosition);
     return () => window.removeEventListener('resize', updateDatePickerPosition);
-  }, [isDatePickerOpen]);
+  }, [isDatePickerOpen, compact]);
 
   const noDataPlugin = useMemo(() => createNoDataPlugin(isDarkMode), [isDarkMode]);
   const dataLabelsPlugin = useMemo(() => createDataLabelsPlugin(isDarkMode, compact), [isDarkMode, compact]);
@@ -1485,10 +1516,16 @@ export default function RunChartStay({
                   }}
                 ref={datePickerShellRef}
                 >
-                  <DatePicker
+                <DatePicker
                     allowClear={false}
                     className="run-stay-week-date-picker"
-                    popupClassName="run-stay-week-date-picker-dropdown"
+                    popupClassName={[
+                      "run-stay-week-date-picker-dropdown",
+                      isDatePickerSidecar &&
+                        "run-stay-week-date-picker-dropdown--sidecar",
+                    ]
+                      .filter(Boolean)
+                      .join(" ")}
                     open={isDatePickerOpen}
                     placement="bottomLeft"
                     inputReadOnly
@@ -1504,23 +1541,6 @@ export default function RunChartStay({
                     getPopupContainer={() => document.body}
                     onOpenChange={setIsDatePickerOpen}
                     onChange={handleWeekDateChange}
-                    panelRender={originPanel => (
-                      <div className="run-stay-week-date-picker-popup-shell">
-                        <div className="run-stay-week-date-picker-popup-header">
-                          <span>Select date</span>
-                          <button
-                            type="button"
-                            aria-label="Close calendar"
-                            className="run-stay-week-date-picker-popup-close"
-                            onMouseDown={e => e.preventDefault()}
-                            onClick={() => setIsDatePickerOpen(false)}
-                          >
-                            <X size={12} strokeWidth={2.6} />
-                          </button>
-                        </div>
-                        {originPanel}
-                      </div>
-                    )}
                     suffixIcon={null}
                     style={{
                       position: "absolute",
@@ -1528,17 +1548,33 @@ export default function RunChartStay({
                       width: "100%",
                       height: "100%",
                       opacity: 0,
-                      cursor: "pointer",
+                      pointerEvents: "none",
                     }}
                   />
                   <button
                     type="button"
                     aria-label="Pick week by date"
                     title="Pick week by date"
-                    onClick={() => setIsDatePickerOpen(open => !open)}
+                    onMouseDown={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      datePickerToggleMouseDownRef.current = true;
+                      setIsDatePickerOpen(open => !open);
+                    }}
+                    onClick={e => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      if (datePickerToggleMouseDownRef.current) {
+                        datePickerToggleMouseDownRef.current = false;
+                        return;
+                      }
+                      setIsDatePickerOpen(open => !open);
+                    }}
                     style={{
                       width: "100%",
                       height: "100%",
+                      position: "relative",
+                      zIndex: 1,
                       borderRadius: "999px",
                       border: isDarkMode ? "1px solid rgba(148, 163, 184, 0.34)" : "1px solid rgba(24, 144, 255, 0.24)",
                       background: isDarkMode ? "rgba(15, 23, 42, 0.35)" : "rgba(255, 255, 255, 0.62)",
@@ -1797,6 +1833,53 @@ export default function RunChartStay({
             transition: opacity 160ms cubic-bezier(0.22, 1, 0.36, 1), transform 200ms cubic-bezier(0.22, 1, 0.36, 1);
           }
 
+          @keyframes runStayCalendarSlideOut {
+            from {
+              opacity: 0;
+              transform: translateX(-32px) scale(0.985);
+            }
+            to {
+              opacity: 1;
+              transform: translateX(0) scale(1);
+            }
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar.ant-slide-up-appear,
+          .run-stay-week-date-picker-dropdown--sidecar.ant-slide-up-enter,
+          .run-stay-week-date-picker-dropdown--sidecar.antd5-slide-up-appear,
+          .run-stay-week-date-picker-dropdown--sidecar.antd5-slide-up-enter {
+            opacity: 0;
+            transform: translateX(-16px) scale(0.985) !important;
+            transform-origin: left center;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar.ant-slide-up-appear.ant-slide-up-appear-active,
+          .run-stay-week-date-picker-dropdown--sidecar.ant-slide-up-enter.ant-slide-up-enter-active,
+          .run-stay-week-date-picker-dropdown--sidecar.antd5-slide-up-appear.antd5-slide-up-appear-active,
+          .run-stay-week-date-picker-dropdown--sidecar.antd5-slide-up-enter.antd5-slide-up-enter-active {
+            opacity: 1;
+            transform: translateX(0) scale(1) !important;
+            transition: opacity 260ms cubic-bezier(0.22, 1, 0.36, 1), transform 420ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar.ant-slide-up-leave.ant-slide-up-leave-active,
+          .run-stay-week-date-picker-dropdown--sidecar.antd5-slide-up-leave.antd5-slide-up-leave-active {
+            opacity: 0;
+            transform: translateX(0) scale(0.985) !important;
+            transition: opacity 140ms ease, transform 160ms cubic-bezier(0.22, 1, 0.36, 1);
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar {
+            background: #f7f8fa !important;
+            border-radius: 8px !important;
+            overflow: hidden !important;
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown--sidecar,
+          .dark-theme .run-stay-week-date-picker-dropdown--sidecar {
+            background: #1a1a1a !important;
+          }
+
           .run-stay-week-date-picker-popup-shell {
             display: flex;
             flex-direction: column;
@@ -1883,6 +1966,120 @@ export default function RunChartStay({
             border-color: rgba(255, 255, 255, 0.08) !important;
             background: #1a1a1a !important;
             box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4) !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-panel-container,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-panel-container {
+            max-width: none !important;
+            height: 100% !important;
+            display: flex !important;
+            flex-direction: column !important;
+            background: #f7f8fa !important;
+            transform-origin: left center !important;
+            animation: runStayCalendarSlideOut 440ms cubic-bezier(0.22, 1, 0.36, 1) both !important;
+          }
+
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown--sidecar .ant-picker-panel-container,
+          [data-theme='dark'] .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-panel-container,
+          .dark-theme .run-stay-week-date-picker-dropdown--sidecar .ant-picker-panel-container,
+          .dark-theme .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-panel-container {
+            background: #1a1a1a !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .run-stay-week-date-picker-popup-shell,
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-panel,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-panel {
+            flex: 1 1 auto !important;
+            min-height: 0 !important;
+            width: 100% !important;
+            height: auto !important;
+            background: transparent !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-date-panel,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-date-panel {
+            height: 100% !important;
+            width: 100% !important;
+            min-width: 0 !important;
+            min-height: 0 !important;
+            display: flex !important;
+            flex-direction: column !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-body,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-body {
+            flex: 1 1 auto !important;
+            display: flex !important;
+            align-items: stretch !important;
+            padding: 4px 8px 5px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-content,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-content {
+            height: 100% !important;
+            table-layout: fixed !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header {
+            min-height: 30px !important;
+            padding: 4px 7px 3px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-view,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-view {
+            line-height: 22px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-view button,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-view button {
+            font-size: 12px !important;
+            line-height: 22px !important;
+            padding: 0 2px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-super-prev-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-prev-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-super-next-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-header-next-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-super-prev-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-prev-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-super-next-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-header-next-btn {
+            width: 20px !important;
+            height: 20px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-content th,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-content th {
+            height: 20px !important;
+            font-size: 10px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-cell-inner,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-cell-inner {
+            min-width: 24px !important;
+            height: 24px !important;
+            line-height: 24px !important;
+            font-size: 11px !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-footer,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-footer {
+            flex: 0 0 auto !important;
+            min-height: 34px !important;
+            padding: 4px 8px 6px !important;
+            line-height: 24px !important;
+            display: flex !important;
+            align-items: center !important;
+            justify-content: center !important;
+          }
+
+          .run-stay-week-date-picker-dropdown--sidecar .ant-picker-today-btn,
+          .run-stay-week-date-picker-dropdown--sidecar .antd5-picker-today-btn {
+            font-size: 12px !important;
+            line-height: 24px !important;
+            min-height: 24px !important;
           }
 
           .run-stay-week-date-picker-dropdown .ant-picker-header,
