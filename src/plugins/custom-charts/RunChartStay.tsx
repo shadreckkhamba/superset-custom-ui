@@ -1,4 +1,5 @@
 import React, { useEffect, useState, useMemo, useCallback, useRef } from "react";
+import { createPortal } from "react-dom";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -194,6 +195,7 @@ interface RunChartStayProps {
   resetKey?: number;
   isDarkMode?: boolean;
   compact?: boolean;
+  autoRefresh?: boolean;
 }
 
 const createNoDataPlugin = (isDarkMode: boolean) => ({
@@ -211,7 +213,7 @@ const createNoDataPlugin = (isDarkMode: boolean) => ({
     ctx.textBaseline = "middle";
     ctx.fillStyle = isDarkMode ? "#b0b0b0" : "#999";
     ctx.font = "bold 18px sans-serif";
-    ctx.fillText("No patient data available for this week", width / 2, height / 2);
+    ctx.fillText("No patient data available", width / 2, height / 2);
     ctx.restore();
   },
 });
@@ -221,15 +223,19 @@ export default function RunChartStay({
   resetKey,
   isDarkMode = false,
   compact = false,
+  autoRefresh = true,
 }: RunChartStayProps): JSX.Element {
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
   const [showTooltip, setShowTooltip] = useState(false);
+  const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const [chartContainerWidth, setChartContainerWidth] = useState(0);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const chartRef = useRef<ChartJS<"bar" | "line"> | null>(null);
   const chartContainerRef = useRef<HTMLDivElement | null>(null);
+  const nextWeekBtnRef = useRef<HTMLButtonElement | null>(null);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const hasAnimatedOnViewRef = useRef(false);
   const noDataPlugin = useMemo(() => createNoDataPlugin(isDarkMode), [isDarkMode]);
@@ -250,12 +256,20 @@ export default function RunChartStay({
   const chartAreaMaxHeight = compact ? "none" : "560px";
   const infoButtonSize = compact ? "34px" : "52px";
   const infoIconSize = compact ? 20 : 30;
-  const tooltipOffsetTop = compact ? "56px" : "90px";
-  const tooltipOffsetRight = compact ? "-18px" : "-40px";
   const animationTrigger = useMemo(
     () => `${weekOffset}-${refreshKey ?? 0}-${resetKey ?? 0}`,
     [weekOffset, refreshKey, resetKey],
   );
+  const useCompactDesktopAxisSizing =
+    compact &&
+    (chartContainerWidth >= 520 ||
+      (typeof window !== "undefined" && window.innerWidth >= 1100));
+  const xAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 18 : 14) : 32;
+  const xAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 14 : 11) : 20;
+  const yAxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 38;
+  const yAxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
+  const y1AxisTitleFontSize = compact ? (useCompactDesktopAxisSizing ? 22 : 16) : 42;
+  const y1AxisTickFontSize = compact ? (useCompactDesktopAxisSizing ? 13 : 10) : 20;
 
   const animateBarsIn = useCallback(() => {
     const chart = chartRef.current;
@@ -391,12 +405,12 @@ export default function RunChartStay({
   useEffect(() => {
     fetchData();
     // Only auto-refresh if viewing current week (weekOffset === 0)
-    if (weekOffset === 0) {
+    if (autoRefresh && weekOffset === 0) {
       const id = setInterval(fetchData, 60000);
       return () => clearInterval(id);
     }
     return undefined;
-  }, [fetchData, weekOffset]);
+  }, [autoRefresh, fetchData, weekOffset]);
 
   // Force chart to fully re-measure modal container after mount/render transitions.
   useEffect(() => {
@@ -572,7 +586,14 @@ export default function RunChartStay({
     const el = chartContainerRef.current;
     if (!el) return undefined;
 
+    const syncChartContainerWidth = () => {
+      setChartContainerWidth(el.clientWidth);
+    };
+
+    syncChartContainerWidth();
+
     const resizeObserver = new ResizeObserver(() => {
+      syncChartContainerWidth();
       runChartResize();
     });
 
@@ -897,13 +918,13 @@ export default function RunChartStay({
           title: {
             display: true,
             text: "Week Days",
-            font: { size: compact ? 14 : 32, weight: 700 },
+            font: { size: xAxisTitleFontSize, weight: 700 },
             color: "#297acb",
             padding: { top: 8, bottom: 2 },
           },
           ticks: { 
             color: isDarkMode ? "#e0e0e0" : "#262626", 
-            font: { size: compact ? 11 : 20, weight: 700 },
+            font: { size: xAxisTickFontSize, weight: 700 },
             padding: compact ? 8 : 10,
             autoSkip: compact,
           },
@@ -922,13 +943,13 @@ export default function RunChartStay({
           title: {
             display: true,
             text: "Average Stay (hours)",
-            font: { size: compact ? 16 : 38, weight: 700 },
+            font: { size: yAxisTitleFontSize, weight: 700 },
             color: "#1890ff",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: yAxisTickFontSize, weight: 600 },
             stepSize: 1,
             precision: 0,
             autoSkip: false,
@@ -949,13 +970,13 @@ export default function RunChartStay({
           title: {
             display: true,
             text: "Total Patients",
-            font: { size: compact ? 16 : 42, weight: 700 },
+            font: { size: y1AxisTitleFontSize, weight: 700 },
             color: "#52c487",
             padding: { top: 0, bottom: compact ? 8 : 10 },
           },
           ticks: {
             color: isDarkMode ? "#e0e0e0" : "#262626",
-            font: { size: compact ? 10 : 20, weight: 600 },
+            font: { size: y1AxisTickFontSize, weight: 600 },
             stepSize: patientTickStep,
             autoSkip: false,
             padding: compact ? 10 : 15,
@@ -1014,6 +1035,8 @@ export default function RunChartStay({
               tooltipEl.style.willChange = "transform, opacity";
               tooltipEl.style.opacity = "0";
               tooltipEl.style.transform = "translateY(12px) scale(0.9)";
+              tooltipEl.style.borderRadius = "12px";
+              tooltipEl.style.setProperty("overflow", "visible", "important");
               tooltipEl.dataset.visible = "false";
               tooltipEl.dataset.dayIndex = "-1";
               parent.appendChild(tooltipEl);
@@ -1077,10 +1100,12 @@ export default function RunChartStay({
               <div style="
                 background: ${tooltipBackground};
                 border-radius: 12px;
+                overflow: hidden;
                 padding: ${tooltipPadding};
                 box-shadow: ${tooltipShadow};
                 border: ${tooltipBorder};
                 min-width: ${tooltipMinWidth}px;
+                background-clip: padding-box;
               ">
                 <div style="display: flex; flex-direction: column; gap: ${tooltipGap}px;">
                   <div style="display: flex; align-items: center; gap: ${tooltipGap}px;">
@@ -1176,7 +1201,20 @@ export default function RunChartStay({
 
       },
     }),
-    [compact, maxDuration, maxPatients, patientTickStep, dailyAverages, isDarkMode]
+    [
+      compact,
+      maxDuration,
+      maxPatients,
+      patientTickStep,
+      dailyAverages,
+      isDarkMode,
+      xAxisTitleFontSize,
+      xAxisTickFontSize,
+      yAxisTitleFontSize,
+      yAxisTickFontSize,
+      y1AxisTitleFontSize,
+      y1AxisTickFontSize,
+    ]
   );
 
   if (loading) {
@@ -1184,6 +1222,12 @@ export default function RunChartStay({
   }
 
   const openInfoModal = () => {
+    if (
+      typeof window !== 'undefined' &&
+      new URLSearchParams(window.location.search).get('slideshow') === '1'
+    ) {
+      return;
+    }
     if (infoCloseTimeoutRef.current) {
       clearTimeout(infoCloseTimeoutRef.current);
       infoCloseTimeoutRef.current = null;
@@ -1198,6 +1242,10 @@ export default function RunChartStay({
       infoCloseTimeoutRef.current = null;
     }, 360);
   };
+
+  const isSlideshowMode =
+    typeof window !== 'undefined' &&
+    new URLSearchParams(window.location.search).get('slideshow') === '1';
 
   return (
     <div
@@ -1338,11 +1386,18 @@ export default function RunChartStay({
         {/* Right Button with hover tooltip and click effect */}
         <div style={{ position: "relative" }}>
           <button
+            ref={nextWeekBtnRef}
             onClick={() => {
               if (!isNextWeekFuture) setWeekOffset((w) => w + 1);
             }}
-            onMouseEnter={() => isNextWeekFuture && setShowTooltip(true)}
-            onMouseLeave={() => setShowTooltip(false)}
+            onMouseEnter={() => {
+              if (isNextWeekFuture && nextWeekBtnRef.current) {
+                const rect = nextWeekBtnRef.current.getBoundingClientRect();
+                setTooltipPos({ x: rect.left + rect.width / 2, y: rect.top });
+                setShowTooltip(true);
+              }
+            }}
+            onMouseLeave={() => { setShowTooltip(false); setTooltipPos(null); }}
             style={{
               display: "flex",
               alignItems: "center",
@@ -1392,25 +1447,40 @@ export default function RunChartStay({
           </button>
 
           {/* Tooltip */}
-          {showTooltip && isNextWeekFuture && (
+          {showTooltip && isNextWeekFuture && tooltipPos && typeof document !== 'undefined' && createPortal(
             <div
               style={{
-                position: "absolute",
-                top: tooltipOffsetTop,
-                right: tooltipOffsetRight,
-                backgroundColor: "#242323ff",
+                position: "fixed",
+                left: `${tooltipPos.x}px`,
+                top: `${tooltipPos.y - 10}px`,
+                transform: "translate(-70%, -100%)",
+                backgroundColor: isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)",
                 color: "#fff",
-                padding: "8px 12px",
+                padding: "7px 14px",
                 borderRadius: "8px",
-                fontSize: "14px",
+                fontSize: compact ? "12px" : "13px",
+                fontWeight: 500,
                 whiteSpace: "nowrap",
-                boxShadow: "0 4px 8px rgba(0,0,0,0.2)",
-                opacity: 1,
-                transition: "opacity 0.3s ease",
+                boxShadow: "0 4px 16px rgba(0,0,0,0.25)",
+                zIndex: 99999,
+                pointerEvents: "none",
+                border: "1px solid rgba(255,255,255,0.1)",
               }}
             >
-              No patient data available
-            </div>
+              Can't go beyond current week
+              <div style={{
+                position: "absolute",
+                top: "100%",
+                left: "50%",
+                transform: "translateX(-50%)",
+                width: 0,
+                height: 0,
+                borderLeft: "6px solid transparent",
+                borderRight: "6px solid transparent",
+                borderTop: `6px solid ${isDarkMode ? "rgba(30, 35, 42, 0.95)" : "rgba(15, 23, 42, 0.88)"}`,
+              }} />
+            </div>,
+            document.body
           )}
         </div>
       </div>
@@ -1439,6 +1509,7 @@ export default function RunChartStay({
           transition: "background-color 0.3s ease, border-color 0.3s ease, box-shadow 0.3s ease",
         }}
       >
+        {!isSlideshowMode && (
         <button
           type="button"
           aria-label="What am I seeing?"
@@ -1471,6 +1542,7 @@ export default function RunChartStay({
         >
           <Info size={infoIconSize} strokeWidth={2.2} />
         </button>
+        )}
         <style>{`
           .run-stay-chart-container {
             overflow: hidden !important;
@@ -1492,9 +1564,13 @@ export default function RunChartStay({
             max-height: 100% !important;
             max-width: 100% !important;
           }
-          .run-stay-chart-container div {
+          .run-stay-chart-container div:not(.chartjs-tooltip) {
             overflow: hidden !important;
             max-width: 100% !important;
+          }
+          .run-stay-chart-container .chartjs-tooltip {
+            overflow: visible !important;
+            border-radius: 12px !important;
           }
           .run-stay-chart-container div canvas {
             max-width: 100% !important;
@@ -1558,7 +1634,7 @@ export default function RunChartStay({
         </div>
       </div>
 
-      {showInfoModal && (
+      {showInfoModal && !isSlideshowMode && (
         <div
           role="presentation"
           onClick={closeInfoModal}
@@ -1583,14 +1659,16 @@ export default function RunChartStay({
             aria-modal="true"
             aria-label="Chart explanation"
             onClick={(e) => e.stopPropagation()}
-            style={{
-              background: isDarkMode
-                ? 'rgba(30, 35, 42, 0.92)'
-                : '#ffffff',
-              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
-              boxShadow: isDarkMode
-                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
-                : '0 24px 52px rgba(24, 144, 255, 0.24)',
+	            style={{
+	              background: isDarkMode
+	                ? 'rgba(30, 35, 42, 0.70)'
+	                : 'rgba(255, 255, 255, 0.70)',
+	              backdropFilter: 'blur(16px) saturate(170%)',
+	              WebkitBackdropFilter: 'blur(16px) saturate(170%)',
+	              border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+	              boxShadow: isDarkMode
+	                ? '0 28px 58px rgba(0, 0, 0, 0.56)'
+	                : '0 24px 52px rgba(24, 144, 255, 0.24)',
               color: isDarkMode ? '#f0f0f0' : '#1f2937',
               overflow: 'hidden',
               transformOrigin: 'top right',
@@ -1601,6 +1679,9 @@ export default function RunChartStay({
               width: 'clamp(320px, 90vw, 500px)',
               maxWidth: 'calc(100% - 20px)',
               borderRadius: '16px',
+              maxHeight: 'calc(100% - 24px)',
+              display: 'flex',
+              flexDirection: 'column',
             }}
           >
             <div
@@ -1649,7 +1730,18 @@ export default function RunChartStay({
                 <X size={18} />
               </button>
             </div>
-            <div style={{ padding: 'clamp(12px, 2.8vw, 16px)', display: 'grid', gap: 'clamp(10px, 2.5vw, 14px)' }}>
+            <div
+              style={{
+                padding: 'clamp(12px, 2.8vw, 16px)',
+                display: 'grid',
+                gap: 'clamp(10px, 2.5vw, 14px)',
+                flex: '1 1 auto',
+                minHeight: 0,
+                overflowY: 'auto',
+                overscrollBehavior: 'contain',
+                WebkitOverflowScrolling: 'touch',
+              }}
+            >
               <div style={{ display: 'grid', gap: '4px' }}>
                 <div style={{ fontSize: 'clamp(0.9rem, 2.2vw, 1.05rem)', fontWeight: 700, color: '#1890ff' }}>Weekly trend line</div>
                 <div style={{ fontSize: 'clamp(0.85rem, 2vw, 0.95rem)', lineHeight: 1.5 }}>
