@@ -80,6 +80,7 @@ import DashboardContainer from './DashboardContainer';
 import { useNativeFilters } from './state';
 import DashboardWrapper from './DashboardWrapper';
 import NetworkStatusOverlay from 'src/components/NetworkStatusOverlay';
+import OfflineOverlay from '../OfflineOverlay';
 
 // @z-index-above-dashboard-charts + 1 = 11
 const FiltersPanel = styled.div<{ width: number; hidden: boolean }>`
@@ -617,6 +618,7 @@ const DashboardBuilder = () => {
   return (
     <DashboardWrapper>
       {isStandalone && <NetworkStatusOverlay />}
+      <OfflineOverlay />
       {showFilterBar &&
         filterBarOrientation === FilterBarOrientation.Vertical && (
           <>
