@@ -15,7 +15,6 @@ function isPresentationMode(): boolean {
   const isFullscreen = Boolean(document.fullscreenElement);
   return isStandalone || isSlideshow || isFullscreen;
 }
-
 // Use lightweight probes so we do not rely only on navigator.onLine.
 async function checkConnectivity(): Promise<boolean> {
   const probePaths = ['/health', '/health/', '/favicon.ico'];
