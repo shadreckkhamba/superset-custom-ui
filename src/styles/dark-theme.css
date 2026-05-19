@@ -77,6 +77,11 @@ body {
 .dark-theme [data-test-viz-type="pie"] .resizable-container {
   background-color: transparent !important;
   color: #e0e0e0 !important;
+  overflow: visible !important;
+}
+
+[data-test-viz-type="pie"] .slice_container {
+  overflow: visible !important;
 }
 
 .dark-theme [data-test-viz-type="pie"] .chart-slice > div[style*="background: rgb(227, 251, 255)"] {

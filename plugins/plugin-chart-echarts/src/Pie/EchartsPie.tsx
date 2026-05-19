@@ -28,7 +28,6 @@ const Container = styled.div<{ $showSkeleton?: boolean }>`
   width: 100%;
   height: 100%;
   padding: 0;
-  background: #F6F8FA;
   border-radius: 28px;
   box-shadow: 0 14px 30px rgba(22, 41, 50, 0.18);
   box-sizing: border-box;
@@ -178,7 +177,7 @@ const SkeletonLegendRow = styled.div`
 const PieLegendItem = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   min-width: 0;
 `;
 
@@ -186,32 +185,49 @@ const PieLegendRow = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 2px;
-  padding: 4px 8px;
-  border-radius: 4px;
-  background: #edf3f6;
-  border: 1px solid #d4dfe4;
-  margin-bottom: 3px;
+  column-gap: 8px;
+  padding: 6px 4px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0;
   width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: #252540;
-    border: 1px solid #3d4a5a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 `;
 
 const Dot = styled.span<{ $color: string }>`
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 2px;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
-  border: 2px solid white;
-  box-shadow: 0 0 3px rgba(0,0,0,0.3);
+  border: none;
+  box-shadow: none;
   flex-shrink: 0;
   display: inline-block;
 
@@ -220,34 +236,33 @@ const Dot = styled.span<{ $color: string }>`
   [data-theme='dark'] [data-test-viz-type='pie'] & {
     background-color: ${({ $color }) => $color} !important;
     background-image: none !important;
-    border-radius: 50% !important;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 2px !important;
+    box-shadow: none !important;
   }
 `;
 
 const PieLegendLabel = styled.span`
-  font-size: clamp(15px, 2vw, 24px);
+  font-size: 22px;
   color: #1d2d33;
-  font-weight: 700;
-  line-height: 1.15;
+  font-weight: 500;
+  line-height: 1.3;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    color: #ffffff;
+    color: #e0e0e0;
   }
 `;
 
 const PieLegendPercent = styled.span`
   display: inline-block;
-  font-size: clamp(16px, 2.3vw, 28px);
+  font-size: 20px;
   color: #5d7079;
-  font-weight: 700;
+  font-weight: 600;
   flex-shrink: 0;
   justify-self: end;
-  transform: translateX(-18px);
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -256,11 +271,13 @@ const PieLegendPercent = styled.span`
 `;
 
 const PieLegendTotalLabel = styled(PieLegendLabel)`
-  font-size: clamp(15px, 2vw, 24px);
+  font-size: 24px;
+  font-weight: 600;
 `;
 
 const PieLegendTotalValue = styled(PieLegendPercent)`
-  font-size: clamp(16px, 2.3vw, 28px);
+  font-size: 26px;
+  font-weight: 700;
 `;
 
 const PieTemplate = styled.div<{ $orientation?: string }>`
@@ -271,14 +288,17 @@ const PieTemplate = styled.div<{ $orientation?: string }>`
   }};
   height: 100%;
   min-height: 0;
-  gap: 16px;
+  gap: 20px;
   align-items: stretch;
+  padding: 16px 24px;
+  box-sizing: border-box;
   
   ${({ $orientation }) => $orientation === 'top' && 'flex-direction: column-reverse;'}
   ${({ $orientation }) => $orientation === 'left' && 'flex-direction: row-reverse;'}
   
   @media (max-width: 768px) {
     flex-direction: column;
+    padding: 12px 16px;
   }
 `;
 
@@ -307,11 +327,11 @@ const PieChartWrap = styled.div<{ $orientation?: string }>`
 const PieLegend = styled.div`
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 0;
   width: 100%;
   min-width: 0;
-  overflow: hidden;
-  padding: 4px 2px;
+  overflow: visible;
+  padding: 4px 0;
   flex: 1;
 `;
 
@@ -321,7 +341,7 @@ const RightPanel = styled.div`
   flex: 1;
   gap: 8px;
   min-width: 0;
-  overflow: hidden;
+  overflow: visible;
 `;
 
 const DonutTemplate = styled.div<{ $orientation?: string }>`
@@ -337,12 +357,18 @@ const DonutTemplate = styled.div<{ $orientation?: string }>`
   width: 100%;
   gap: 0;
   overflow: visible;
+  padding: 16px 24px;
+  box-sizing: border-box;
 
   ${({ $orientation }) => $orientation === 'top' && 'flex-direction: column-reverse;'}
   ${({ $orientation }) => $orientation === 'left' && 'flex-direction: row-reverse;'}
 
   @media (max-width: 1200px) {
     min-height: 220px;
+  }
+
+  @media (max-width: 768px) {
+    padding: 12px 16px;
   }
 `;
 
@@ -398,42 +424,59 @@ const DonutLegendRow = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 2px;
+  column-gap: 8px;
   min-width: 0;
-  padding: 4px 14px 4px 8px;
-  border-radius: 4px;
-  background: #edf3f6;
-  border: 1px solid #d4dfe4;
-  margin-bottom: 6px;
+  padding: 6px 8px;
+  border-radius: 0;
+  background: transparent;
+  border: none;
+  border-bottom: 1px solid rgba(0, 0, 0, 0.06);
+  margin-bottom: 0;
   overflow: hidden;
   width: 100%;
   box-sizing: border-box;
+  transition: background-color 0.15s ease;
+
+  &:hover {
+    background: rgba(0, 0, 0, 0.02);
+  }
+
+  &:last-child {
+    border-bottom: none;
+  }
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: #252540;
-    border: 1px solid #3d4a5a;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    
+    &:hover {
+      background: rgba(255, 255, 255, 0.03);
+    }
+
+    &:last-child {
+      border-bottom: none;
+    }
   }
 `;
 
 const DonutLegendLabelWrap = styled.div`
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 8px;
   flex-shrink: 0;
   min-width: 0;
 `;
 
 const DonutDot = styled.span<{ $color: string }>`
-  width: 28px;
-  height: 28px;
-  min-width: 28px;
-  min-height: 28px;
-  border-radius: 50%;
+  width: 10px;
+  height: 10px;
+  min-width: 10px;
+  min-height: 10px;
+  border-radius: 2px;
   background-color: ${({ $color }) => $color} !important;
   background-image: none !important;
-  border: 2px solid white;
-  box-shadow: 0 0 3px rgba(0,0,0,0.3);
+  border: none;
+  box-shadow: none;
   display: inline-block;
   flex-shrink: 0;
 
@@ -442,37 +485,37 @@ const DonutDot = styled.span<{ $color: string }>`
   [data-theme='dark'] [data-test-viz-type='pie'] & {
     background-color: ${({ $color }) => $color} !important;
     background-image: none !important;
-    border-radius: 50% !important;
-    box-shadow: 0 0 3px rgba(0, 0, 0, 0.3) !important;
+    border-radius: 2px !important;
+    box-shadow: none !important;
   }
 `;
 
 const DonutLegendLabel = styled.span`
-  font-size: clamp(15px, 2vw, 24px);
+  font-size: 18px;
   color: #1d2d33;
-  font-weight: 700;
+  font-weight: 500;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  line-height: 1.15;
+  line-height: 1.3;
   word-break: normal;
   text-align: left;
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    color: #ffffff;
+    color: #e0e0e0;
   }
 `;
 
 const DonutLegendPercent = styled.span`
   display: inline-block;
-  font-size: clamp(16px, 2.3vw, 28px);
-  line-height: 1.15;
+  font-size: 20px;
+  line-height: 1.3;
   text-align: right;
   white-space: nowrap;
   color: #5d7079;
   font-variant-numeric: tabular-nums;
-  font-weight: 700;
+  font-weight: 600;
   justify-self: end;
 
   body.dark-theme &,
@@ -490,7 +533,6 @@ const DonutLegendValueStack = styled.div`
   min-width: 0;
   flex-shrink: 0;
   margin-left: auto;
-  margin-right: 24px;
 `;
 
 const CenterLabel = styled.div`
