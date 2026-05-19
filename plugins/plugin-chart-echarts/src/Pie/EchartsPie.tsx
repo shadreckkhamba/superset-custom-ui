@@ -263,21 +263,30 @@ const PieLegendTotalValue = styled(PieLegendPercent)`
   font-size: clamp(16px, 2.3vw, 28px);
 `;
 
-const PieTemplate = styled.div`
+const PieTemplate = styled.div<{ $orientation?: string }>`
   display: flex;
-  flex-direction: row;
+  flex-direction: ${({ $orientation }) => {
+    if ($orientation === 'top' || $orientation === 'bottom') return 'column';
+    return 'row';
+  }};
   height: 100%;
   min-height: 0;
   gap: 16px;
   align-items: stretch;
+  
+  ${({ $orientation }) => $orientation === 'top' && 'flex-direction: column-reverse;'}
+  ${({ $orientation }) => $orientation === 'left' && 'flex-direction: row-reverse;'}
   
   @media (max-width: 768px) {
     flex-direction: column;
   }
 `;
 
-const PieChartWrap = styled.div`
-  flex: 0 0 60%;
+const PieChartWrap = styled.div<{ $orientation?: string }>`
+  flex: ${({ $orientation }) => {
+    if ($orientation === 'top' || $orientation === 'bottom') return '1';
+    return '0 0 60%';
+  }};
   min-height: 200px;
   height: auto;
   display: flex;
@@ -315,9 +324,12 @@ const RightPanel = styled.div`
   overflow: hidden;
 `;
 
-const DonutTemplate = styled.div`
+const DonutTemplate = styled.div<{ $orientation?: string }>`
   display: flex;
-  flex-direction: column;
+  flex-direction: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return 'row';
+    return 'column';
+  }};
   align-items: stretch;
   justify-content: flex-start;
   height: 100%;
@@ -326,14 +338,23 @@ const DonutTemplate = styled.div`
   gap: 0;
   overflow: visible;
 
+  ${({ $orientation }) => $orientation === 'top' && 'flex-direction: column-reverse;'}
+  ${({ $orientation }) => $orientation === 'left' && 'flex-direction: row-reverse;'}
+
   @media (max-width: 1200px) {
     min-height: 220px;
   }
 `;
 
-const DonutChartWrap = styled.div`
-  flex: 0 0 auto;
-  height: 70%;
+const DonutChartWrap = styled.div<{ $orientation?: string }>`
+  flex: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return '0 0 60%';
+    return '0 0 auto';
+  }};
+  height: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return '100%';
+    return '70%';
+  }};
   min-height: 180px;
   width: 100%;
   display: flex;
@@ -346,16 +367,22 @@ const DonutChartWrap = styled.div`
   }
 `;
 
-const DonutLegend = styled.div`
+const DonutLegend = styled.div<{ $orientation?: string }>`
   flex: 1 1 auto;
   display: grid;
   grid-template-columns: 1fr;
   grid-auto-rows: max-content;
-  align-content: end;
+  align-content: ${({ $orientation }) => {
+    if ($orientation === 'bottom') return 'start';
+    return 'end';
+  }};
   gap: 0;
   width: 100%;
   min-width: 0;
-  padding: 0 2px 6px;
+  padding: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return '2px 6px';
+    return '0 2px 6px';
+  }};
   overflow-y: auto;
   box-sizing: border-box;
 
@@ -548,18 +575,6 @@ const LegendEmptyState = styled.div`
   }
 `;
 
-const CHART_COLORS = [
-  '#1565C0',   
-  '#e03b09',  
-  '#F9A825', 
-  '#43A047',      
-  '#EF6C00',   
-  '#5E35B1',   
-  '#EC407A',   
-  '#546E7A',   
-];
-
-
 type SliceLabelProps = {
   cx: number;
   cy: number;
@@ -588,14 +603,14 @@ export default function EchartsPie(props: PieChartTransformedProps) {
   };
 
   const chartData = data.map(
-    (item: { name: string; value: number }, index: number) => ({
+    (item: { name: string; value: number; itemStyle?: { color?: string } }, index: number) => ({
       ...item,
       name: capitalizeFirst(item.name),
-      color: CHART_COLORS[index % CHART_COLORS.length],
+      color: item.itemStyle?.color || '#1565C0',
       percentage: total > 0 ? ((item.value / total) * 100).toFixed(1) : '0.0',
     }),
   );
-  const hasData = chartData.some(item => Number(item.value) > 0);
+  const hasData = chartData.some((item: { value: number }) => Number(item.value) > 0);
 
   const [showSkeleton, setShowSkeleton] = useState(chartData.length === 0);
 
@@ -727,8 +742,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
   return (
     <Container style={{ width, height }}>
       {!isDonut ? (
-        <PieTemplate>
-          <PieChartWrap>
+        <PieTemplate $orientation={formData?.legendOrientation}>
+          <PieChartWrap $orientation={formData?.legendOrientation}>
             {hasData ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -802,8 +817,8 @@ export default function EchartsPie(props: PieChartTransformedProps) {
           )}
         </PieTemplate>
       ) : (
-        <DonutTemplate>
-          <DonutChartWrap>
+        <DonutTemplate $orientation={formData?.legendOrientation}>
+          <DonutChartWrap $orientation={formData?.legendOrientation}>
             {hasData ? (
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
@@ -859,7 +874,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
           </DonutChartWrap>
 
           {formData?.showLegend !== false && (
-            <DonutLegend>
+            <DonutLegend $orientation={formData?.legendOrientation}>
               {hasData ? (
                 chartData.map(
                   (item: {
