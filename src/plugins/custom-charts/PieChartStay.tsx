@@ -1217,6 +1217,9 @@ export default function StayTimePie({
           .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
             width: 24px !important;
             height: 24px !important;
+            pointer-events: auto !important;
+            cursor: pointer !important;
+            z-index: 10 !important;
           }
         }
 
