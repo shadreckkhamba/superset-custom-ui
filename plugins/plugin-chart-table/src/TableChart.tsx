@@ -240,15 +240,16 @@ const SkeletonTableRow = styled.div`
 const KPIBanner = styled.div`
   display: flex;
   align-items: center;
-  gap: 16px;
+  gap: 20px;
   border-bottom: 1px solid var(--color-border);
   background: var(--color-bg-card);
   height: auto;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
-  padding: 16px 20px;
+  padding: 16px 24px;
   flex-wrap: nowrap;
+  justify-content: space-between;
 
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -280,8 +281,7 @@ const KPITile = styled.div<{ bgColor?: string }>`
   border: 1px solid var(--color-border-light);
   background: ${props => props.bgColor || 'var(--color-bg-muted)'};
   transition: all var(--transition-normal);
-  min-height: 76px;
-  height: auto;
+  height: 76px;
   box-sizing: border-box;
   overflow: visible;
   min-width: 0;
@@ -494,8 +494,19 @@ const KPIHeaderControls = styled.div`
   flex-wrap: nowrap;
   gap: 10px;
   margin-left: auto;
-  padding: 0;
+  margin-right: 4px;
+  padding: 0 16px;
   flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  min-height: 76px;
+  align-self: flex-start;
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    border-color: rgba(255, 255, 255, 0.1);
+  }
   
   @media (max-width: 1200px) {
     flex-wrap: wrap;
@@ -576,6 +587,7 @@ const OthersButton = styled.button`
   transition: all var(--transition-fast);
   white-space: nowrap;
   flex-shrink: 0;
+  align-self: center;
 
   &:hover {
     background: var(--color-primary);
@@ -600,9 +612,11 @@ const OthersButton = styled.button`
 
 const OthersFilterGroup = styled.div`
   display: flex;
-  align-items: center;
-  gap: 8px;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
   flex-shrink: 0;
+  align-self: center;
 `;
 
 const OthersFilterLabel = styled.label`
@@ -612,6 +626,8 @@ const OthersFilterLabel = styled.label`
   white-space: nowrap;
   flex-shrink: 0;
   opacity: 0.9;
+  line-height: 1.2;
+  margin-bottom: 0;
   
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -620,7 +636,7 @@ const OthersFilterLabel = styled.label`
 `;
 
 const OthersFilterSelect = styled.select`
-  height: 32px;
+  height: 36px;
   border: 1px solid var(--color-border);
   border-radius: 6px;
   background: var(--color-bg-card);
