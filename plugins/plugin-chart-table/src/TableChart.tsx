@@ -272,7 +272,7 @@ const KPIBanner = styled.div`
 const KPITile = styled.div<{ bgColor?: string }>`
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
   gap: 14px;
   padding: 14px 18px;
@@ -335,6 +335,7 @@ const KPIIcon = styled.div<{ color?: string; $size?: number; $iconSize?: number 
   flex-shrink: 0;
   min-width: ${props => `${props.$size ?? 56}px`};
   min-height: ${props => `${props.$size ?? 56}px`};
+  align-self: flex-start;
   
   & > svg {
     width: ${props => `${props.$iconSize ?? 28}px`};
@@ -388,14 +389,15 @@ const KPIContentLeft = styled(KPIContent)`
   justify-content: flex-start;
   flex-direction: column;
   align-items: flex-start;
-  gap: 4px;
+  gap: 2px;
+  align-self: flex-start;
 `;
 
 const KPIValue = styled.div`
   font-size: clamp(24px, 4vw, 36px);
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: 1.1;
+  line-height: 1;
   height: auto;
   text-align: right;
   white-space: nowrap;
@@ -418,6 +420,7 @@ const KPIValue = styled.div`
 
 const KPIValueLeft = styled(KPIValue)`
   text-align: left;
+  line-height: 1;
 `;
 
 const TopLocationsValue = styled(KPIValue)`
@@ -455,6 +458,7 @@ const KPILabel = styled.div`
   flex-shrink: 1;
   min-width: 0;
   opacity: 0.85;
+  line-height: 1.2;
 
   body.dark-theme &,
 [data-theme='dark'] & {
