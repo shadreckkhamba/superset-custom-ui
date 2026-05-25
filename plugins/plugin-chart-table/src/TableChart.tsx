@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useMemo, useState, useEffect, SVGProps } from 'react';
+import React, { useMemo, useState, useEffect, SVGProps, useRef } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
 import {
@@ -26,6 +26,7 @@ import {
   Play,
   MoreHorizontal,
   ArrowUpDown,
+  ChevronDown,
 } from 'lucide-react';
 
 function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
@@ -504,6 +505,7 @@ const KPIHeaderControls = styled.div`
   background: transparent;
   min-height: 76px;
   align-self: flex-start;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
   
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -586,13 +588,25 @@ const OthersButton = styled.button`
   font-size: 13px;
   font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
   white-space: nowrap;
   flex-shrink: 0;
   align-self: center;
   display: inline-flex;
   align-items: center;
   justify-content: center;
+  animation: fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 
   &:hover {
     background: var(--color-primary);
@@ -622,6 +636,18 @@ const OthersFilterGroup = styled.div`
   gap: 8px;
   flex-shrink: 0;
   align-self: center;
+  animation: fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 `;
 
 const OthersFilterLabel = styled.label`
@@ -644,21 +670,34 @@ const OthersFilterLabel = styled.label`
   }
 `;
 
-const OthersFilterSelect = styled.select`
+const CustomDropdownWrapper = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
+const CustomDropdownButton = styled.button<{ $isOpen?: boolean }>`
   height: 36px;
+  min-width: 120px;
   border: 1px solid var(--color-border);
-  border-radius: 6px;
-  background: var(--color-bg-card);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 249, 252, 0.98) 100%);
   color: var(--color-text-primary);
-  padding: 0 10px;
+  padding: 0 32px 0 12px;
   font-size: 13px;
   font-weight: 500;
-  flex-shrink: 0;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  position: relative;
   
   &:hover {
     border-color: var(--color-primary);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(240, 247, 252, 1) 100%);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15);
   }
   
   &:focus {
@@ -669,8 +708,95 @@ const OthersFilterSelect = styled.select`
   
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: rgba(255, 255, 255, 0.05);
+    background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(30, 34, 42, 0.98) 100%);
     border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba(45, 49, 57, 1) 0%, rgba(35, 39, 47, 1) 100%);
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+    }
+  }
+`;
+
+const CustomDropdownIcon = styled.span<{ $isOpen?: boolean }>`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: ${({ $isOpen }) => 
+    $isOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)'};
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+`;
+
+const CustomDropdownMenu = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
+  transform: ${({ $isOpen }) => ($isOpen ? 'translateY(0)' : 'translateY(-8px)')};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #2a2e38;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const CustomDropdownOption = styled.button<{ $isSelected: boolean }>`
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: ${({ $isSelected }) =>
+    $isSelected
+      ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+      : 'transparent'};
+  color: ${({ $isSelected }) => ($isSelected ? 'white' : 'var(--color-text-primary)')};
+  font-size: 14px;
+  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 500)};
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: block;
+  
+  &:hover {
+    background: ${({ $isSelected }) =>
+      $isSelected
+        ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+        : 'rgba(13, 148, 136, 0.08)'};
+  }
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: ${({ $isSelected }) => ($isSelected ? 'white' : 'rgba(255, 255, 255, 0.9)')};
+    
+    &:hover {
+      background: ${({ $isSelected }) =>
+        $isSelected
+          ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+          : 'rgba(13, 148, 136, 0.15)'};
+    }
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
   }
 `;
 
@@ -942,6 +1068,24 @@ export default function TableChart({
   const [activeView, setActiveView] = useState<'top10' | 'others'>('top10');
   const [othersPage, setOthersPage] = useState(0);
   const [othersSortMode, setOthersSortMode] = useState<OthersSortMode>('visits_desc');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return undefined;
+  }, [isDropdownOpen]);
+  
   // Get column names from data
   const columns = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -1235,22 +1379,65 @@ export default function TableChart({
             {activeView === 'others' && (
               <>
                 <OthersFilterGroup>
-                  <OthersFilterLabel htmlFor="others-sort-inline">
+                  <OthersFilterLabel>
                     <ArrowUpDown size={14} />
                     Sort
                   </OthersFilterLabel>
-                  <OthersFilterSelect
-                    id="others-sort-inline"
-                    value={othersSortMode}
-                    onChange={event =>
-                      setOthersSortMode(event.target.value as OthersSortMode)
-                    }
-                  >
-                    <option value="visits_desc">Highest</option>
-                    <option value="visits_asc">Lowest</option>
-                    <option value="name_asc">A-Z</option>
-                    <option value="name_desc">Z-A</option>
-                  </OthersFilterSelect>
+                  <CustomDropdownWrapper ref={dropdownRef}>
+                    <CustomDropdownButton
+                      type="button"
+                      $isOpen={isDropdownOpen}
+                      aria-expanded={isDropdownOpen}
+                      aria-haspopup="listbox"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                      {othersSortMode === 'visits_desc' && 'Highest'}
+                      {othersSortMode === 'visits_asc' && 'Lowest'}
+                      {othersSortMode === 'name_asc' && 'A-Z'}
+                      {othersSortMode === 'name_desc' && 'Z-A'}
+                      <CustomDropdownIcon $isOpen={isDropdownOpen}>
+                        <ChevronDown size={16} />
+                      </CustomDropdownIcon>
+                    </CustomDropdownButton>
+                    <CustomDropdownMenu $isOpen={isDropdownOpen}>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'visits_desc'}
+                        onClick={() => {
+                          setOthersSortMode('visits_desc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Highest
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'visits_asc'}
+                        onClick={() => {
+                          setOthersSortMode('visits_asc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Lowest
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'name_asc'}
+                        onClick={() => {
+                          setOthersSortMode('name_asc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        A-Z
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'name_desc'}
+                        onClick={() => {
+                          setOthersSortMode('name_desc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Z-A
+                      </CustomDropdownOption>
+                    </CustomDropdownMenu>
+                  </CustomDropdownWrapper>
                 </OthersFilterGroup>
                 <OthersButton
                   type="button"
