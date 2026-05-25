@@ -16,28 +16,18 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import React, { useMemo, useState, useEffect, SVGProps } from 'react';
+import React, { useMemo, useState, useEffect, SVGProps, useRef } from 'react';
 import { styled, css } from '@superset-ui/core';
 import { DataRecord } from '@superset-ui/core';
 import {
-  Hash,
-  MapPin,
-  Database,
-  TrendingUp,
-  Trophy,
   ChevronLeft,
   ChevronRight,
   Pause,
   Play,
+  MoreHorizontal,
+  ArrowUpDown,
+  ChevronDown,
 } from 'lucide-react';
-
-function FluentPeopleCommunity20Filled(props: SVGProps<SVGSVGElement>) {
-  return (
-    <svg xmlns="http://www.w3.org/2000/svg" width="1em" height="1em" viewBox="0 0 20 20" {...props}>
-      <path fill="currentColor" d="M10 2a3 3 0 1 0 0 6a3 3 0 0 0 0-6M5.053 9.996q-.051.244-.051.504V14a4.99 4.99 0 0 0 1.767 3.814l-.171.05a4 4 0 0 1-4.9-2.828l-.647-2.415a1.5 1.5 0 0 1 1.061-1.837zm8.182 7.818A4.99 4.99 0 0 0 15.002 14v-3.5q-.001-.26-.05-.504l2.94.788a1.5 1.5 0 0 1 1.06 1.837l-.647 2.415a4 4 0 0 1-5.07 2.778M16.5 4a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5m-13 0a2.5 2.5 0 1 0 0 5a2.5 2.5 0 0 0 0-5m4 5A1.5 1.5 0 0 0 6 10.5V14a4 4 0 0 0 8 0v-3.5A1.5 1.5 0 0 0 12.5 9z" />
-    </svg>
-  );
-}
 
 function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
   return (
@@ -216,12 +206,12 @@ const SkeletonLayout = styled.div`
 `;
 
 const SkeletonKpiRow = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr) minmax(0, 1.2fr);
+  display: flex;
+  align-items: center;
   gap: 10px;
 
   @media (max-width: 900px) {
-    grid-template-columns: 1fr;
+    flex-wrap: wrap;
   }
 `;
 
@@ -237,20 +227,6 @@ const SkeletonTile = styled.div`
   background-size: 220% 100%;
   animation: tableThemeSkeletonShimmer 1.1s linear infinite;
 `;
-
-const SkeletonHeaderRow = styled.div`
-  height: 34px;
-  border-radius: 8px;
-  background: linear-gradient(
-    90deg,
-    rgba(130, 152, 164, 0.14) 0%,
-    rgba(130, 152, 164, 0.26) 45%,
-    rgba(130, 152, 164, 0.14) 100%
-  );
-  background-size: 220% 100%;
-  animation: tableThemeSkeletonShimmer 1.1s linear infinite;
-`;
-
 const SkeletonTableRow = styled.div`
   height: 48px;
   border-radius: 8px;
@@ -265,135 +241,132 @@ const SkeletonTableRow = styled.div`
 `;
 
 const KPIBanner = styled.div`
-  display: grid;
-  grid-template-columns: minmax(0, 0.82fr) minmax(0, 0.82fr) minmax(0, 1.36fr);
-  gap: 16px;
+  display: flex;
+  align-items: center;
+  gap: 20px;
   border-bottom: 1px solid var(--color-border);
-  background: linear-gradient(135deg, var(--color-bg-muted) 0%, var(--color-bg-card) 100%);
+  background: var(--color-bg-card);
   height: auto;
   width: 100%;
   box-sizing: border-box;
   min-width: 0;
+  padding: 16px 24px;
+  flex-wrap: nowrap;
+  justify-content: space-between;
 
-  body.dark-theme &,s
+  body.dark-theme &,
   [data-theme='dark'] & {
-    background: linear-gradient(135deg, #111111 0%, #0a0a0a 100%);
+    background: #0a0a0a;
     border-bottom-color: #1f3744;
   }
   
-  @media (max-width: 1024px) {
-    grid-template-columns: repeat(2, 1fr);
+  @media (max-width: 1200px) {
+    flex-wrap: wrap;
     gap: 12px;
+    padding: 12px 16px;
   }
   
   @media (max-width: 640px) {
-    grid-template-columns: 1fr;
-    gap: 8px;
+    flex-direction: column;
+    gap: 10px;
+    padding: 12px;
   }
 `;
 
 const KPITile = styled.div<{ bgColor?: string }>`
   display: flex;
   flex-direction: row;
-  align-items: center;
+  align-items: flex-start;
   justify-content: flex-start;
-  gap: 12px;
-  padding: 16px 20px;
-  border-right: none;
-  background: ${props => props.bgColor || 'transparent'};
+  gap: 14px;
+  padding: 14px 18px;
+  border-radius: 12px;
+  border: 1px solid var(--color-border-light);
+  background: ${props => props.bgColor || 'var(--color-bg-muted)'};
   transition: all var(--transition-normal);
-  animation: slideIn 0.4s ease-out backwards;
-  min-height: 88px;
-  height: auto;
+  height: 76px;
   box-sizing: border-box;
   overflow: visible;
   min-width: 0;
-  
-  &:nth-child(1) { animation-delay: 0.1s; }
-  &:nth-child(2) { animation-delay: 0.2s; }
-  &:nth-child(3) { animation-delay: 0.3s; }
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.04);
   
   &:hover {
-    background: var(--color-bg-hover);
-    transform: translateY(-2px);
+    border-color: var(--color-border);
+    box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+    transform: translateY(-1px);
   }
 
   body.dark-theme &,
   [data-theme='dark'] & {
+    background: ${props => props.bgColor || 'rgba(255, 255, 255, 0.03)'};
+    border-color: rgba(255, 255, 255, 0.08);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.2);
+    
     &:hover {
       background: rgba(255, 255, 255, 0.05);
-    }
-  }
-  
-  @keyframes slideIn {
-    from {
-      opacity: 0;
-      transform: translateX(-10px);
-    }
-    to {
-      opacity: 1;
-      transform: translateX(0);
+      border-color: rgba(255, 255, 255, 0.12);
+      box-shadow: 0 2px 8px rgba(0, 0, 0, 0.3);
     }
   }
 `;
 
 const CompactKPITile = styled(KPITile)`
-  padding: 12px 14px;
-  min-height: 72px;
+  padding: 14px 16px;
+  min-height: 76px;
+  flex: 0 0 auto;
+  min-width: 150px;
 `;
 
 const TopLocationTile = styled(KPITile)`
-  padding: 10px 16px;
-  min-height: 72px;
-
-  @media (max-width: 1024px) {
-    grid-column: 1 / -1;
-  }
+  padding: 14px 18px;
+  min-height: 76px;
+  flex: 1 1 auto;
+  min-width: 200px;
+  max-width: 450px;
 `;
 
 const KPIIcon = styled.div<{ color?: string; $size?: number; $iconSize?: number }>`
   display: flex;
   align-items: center;
   justify-content: center;
-  width: ${props => `${props.$size ?? 60}px`};
-  height: ${props => `${props.$size ?? 60}px`};
-  border-radius: var(--radius-md);
-  background: #e3e8f0;
-  box-shadow: 0 2px 6px rgba(15, 23, 42, 0.14);
-  color: #111827;
-  font-size: 30px;
+  width: ${props => `${props.$size ?? 56}px`};
+  height: ${props => `${props.$size ?? 56}px`};
+  border-radius: 10px;
+  background: ${props => props.color || 'rgba(13, 148, 136, 0.12)'};
+  color: var(--color-primary);
+  font-size: 28px;
   flex-shrink: 0;
-  min-width: ${props => `${props.$size ?? 60}px`};
-  min-height: ${props => `${props.$size ?? 60}px`};
+  min-width: ${props => `${props.$size ?? 56}px`};
+  min-height: ${props => `${props.$size ?? 56}px`};
+  align-self: flex-start;
   
   & > svg {
-    width: ${props => `${props.$iconSize ?? 26}px`};
-    height: ${props => `${props.$iconSize ?? 26}px`};
-    font-size: ${props => `${props.$iconSize ?? 26}px`};
+    width: ${props => `${props.$iconSize ?? 28}px`};
+    height: ${props => `${props.$iconSize ?? 28}px`};
+    font-size: ${props => `${props.$iconSize ?? 28}px`};
     flex-shrink: 0;
   }
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: ${props => props.color || 'var(--color-primary)'};
-    box-shadow: 0 2px 6px rgba(0, 0, 0, 0.35);
-    color: #ffffff;
+    background: ${props => props.color || 'rgba(13, 148, 136, 0.2)'};
+    color: var(--color-primary-light);
   }
 
   @media (max-width: 768px) {
-    width: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
-    height: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
-    min-width: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
-    min-height: ${props => `${props.$size ? Math.max(40, Math.round(props.$size * 0.67)) : 40}px`};
-    font-size: 20px;
+    width: ${props => `${props.$size ? Math.max(44, Math.round(props.$size * 0.78)) : 44}px`};
+    height: ${props => `${props.$size ? Math.max(44, Math.round(props.$size * 0.78)) : 44}px`};
+    min-width: ${props => `${props.$size ? Math.max(44, Math.round(props.$size * 0.78)) : 44}px`};
+    min-height: ${props => `${props.$size ? Math.max(44, Math.round(props.$size * 0.78)) : 44}px`};
+    font-size: 22px;
 
     & > svg {
       width: ${props =>
-        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+        `${props.$iconSize ? Math.max(20, Math.round(props.$iconSize * 0.85)) : 22}px`};
       height: ${props =>
-        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+        `${props.$iconSize ? Math.max(20, Math.round(props.$iconSize * 0.85)) : 22}px`};
       font-size: ${props =>
-        `${props.$iconSize ? Math.max(18, Math.round(props.$iconSize * 0.8)) : 20}px`};
+        `${props.$iconSize ? Math.max(20, Math.round(props.$iconSize * 0.85)) : 22}px`};
     }
   }
 `;
@@ -417,13 +390,17 @@ const KPIContent = styled.div`
 
 const KPIContentLeft = styled(KPIContent)`
   justify-content: flex-start;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 2px;
+  align-self: flex-start;
 `;
 
 const KPIValue = styled.div`
-  font-size: clamp(22px, 4vw, 42px);
+  font-size: clamp(24px, 4vw, 36px);
   font-weight: 700;
   color: var(--color-text-primary);
-  line-height: 1.1;
+  line-height: 1;
   height: auto;
   text-align: right;
   white-space: nowrap;
@@ -438,7 +415,7 @@ const KPIValue = styled.div`
   }
   
   @media (max-width: 768px) {
-    font-size: 32px;
+    font-size: 28px;
     white-space: normal;
     word-break: break-word;
   }
@@ -446,16 +423,18 @@ const KPIValue = styled.div`
 
 const KPIValueLeft = styled(KPIValue)`
   text-align: left;
+  line-height: 1;
 `;
 
 const TopLocationsValue = styled(KPIValue)`
-  font-size: clamp(18px, 2.8vw, 25px);
+  font-size: clamp(16px, 2.4vw, 20px);
+  font-weight: 600;
   text-align: left;
   white-space: normal;
   overflow: hidden;
   overflow-wrap: anywhere;
   word-break: break-word;
-  line-height: 1.25;
+  line-height: 1.3;
   max-width: 100%;
   flex: 1 1 100%;
   flex-shrink: 1;
@@ -469,10 +448,10 @@ const TopLocationsValue = styled(KPIValue)`
 `;
 
 const KPILabel = styled.div`
-  font-size: clamp(14px, 2.1vw, 20px);
-  font-weight: 700;
-  color: var(--color-text-muted);
-  letter-spacing: 0.3px;
+  font-size: clamp(13px, 1.8vw, 15px);
+  font-weight: 600;
+  color: var(--color-text-secondary);
+  letter-spacing: 0.2px;
   height: auto;
   text-align: left;
   text-transform: none;
@@ -481,14 +460,16 @@ const KPILabel = styled.div`
   text-overflow: ellipsis;
   flex-shrink: 1;
   min-width: 0;
+  opacity: 0.85;
+  line-height: 1.2;
 
   body.dark-theme &,
 [data-theme='dark'] & {
-    color: #ffffff;
+    color: rgba(255, 255, 255, 0.7);
   }
   
   @media (max-width: 768px) {
-    font-size: 18px;
+    font-size: 14px;
     white-space: normal;
     word-break: break-word;
   }
@@ -510,42 +491,50 @@ const TableSection = styled.div`
   min-width: 0;
 `;
 
-const SectionHeader = styled.div`
-  display: flex;
+const KPIHeaderControls = styled.div`
+  display: inline-flex;
   align-items: center;
-  justify-content: flex-end;
-  gap: 16px;
-  padding: 6px 10px;
-  border-bottom: 1px solid var(--color-border);
-  background: var(--color-bg-card);
-  min-height: 44px;
-
+  flex-wrap: nowrap;
+  gap: 10px;
+  margin-left: auto;
+  margin-right: 4px;
+  padding: 0 16px;
+  flex-shrink: 0;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: transparent;
+  min-height: 76px;
+  align-self: flex-start;
+  transition: all 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+  
   body.dark-theme &,
   [data-theme='dark'] & {
-    background: #0a0a0a;
-    border-bottom-color: #1f3744;
+    border-color: rgba(255, 255, 255, 0.1);
+  }
+  
+  @media (max-width: 1200px) {
+    flex-wrap: wrap;
   }
 `;
 
-
-const HeaderControls = styled.div`
-  display: inline-flex;
-  align-items: center;
-  flex-wrap: wrap;
-  gap: 10px;
-  margin-left: auto;
-`;
-
 const PageMeta = styled.span`
-  font-size: clamp(14px, 1.8vw, 18px);
+  font-size: clamp(13px, 1.6vw, 14px);
   font-weight: 600;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0.9;
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: rgba(255, 255, 255, 0.7);
+  }
 `;
 
 const NavButton = styled.button`
-  width: 38px;
-  height: 38px;
-  border-radius: 50%;
+  width: 36px;
+  height: 36px;
+  border-radius: 8px;
   border: 1px solid var(--color-border);
   background: var(--color-bg-card);
   color: var(--color-text-primary);
@@ -555,6 +544,8 @@ const NavButton = styled.button`
   cursor: pointer;
   transition: all var(--transition-fast);
   line-height: 0;
+  flex-shrink: 0;
+  padding: 0;
 
   & > svg {
     display: block;
@@ -562,62 +553,251 @@ const NavButton = styled.button`
   }
 
   &:hover:not(:disabled) {
-    background: var(--color-bg-hover);
+    background: var(--color-primary);
+    border-color: var(--color-primary);
+    color: white;
     transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.3);
   }
 
   &:disabled {
-    opacity: 0.45;
+    opacity: 0.35;
     cursor: not-allowed;
+  }
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: rgba(255, 255, 255, 0.05);
+    border-color: rgba(255, 255, 255, 0.1);
+    
+    &:hover:not(:disabled) {
+      background: var(--color-primary);
+      border-color: var(--color-primary);
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.4);
+    }
   }
 `;
 
 const OthersButton = styled.button`
-  height: 38px;
-  border-radius: 999px;
-  border: 1px solid var(--color-border);
-  background: rgba(13, 148, 136, 0.1);
-  color: var(--color-primary-dark);
+  height: 36px;
+  border-radius: 8px;
+  border: 1px solid var(--color-primary);
+  background: rgba(13, 148, 136, 0.08);
+  color: var(--color-primary);
   padding: 0 14px;
-  font-size: 14px;
-  font-weight: 700;
+  font-size: 13px;
+  font-weight: 600;
   cursor: pointer;
-  transition: all var(--transition-fast);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  white-space: nowrap;
+  flex-shrink: 0;
+  align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  animation: fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 
   &:hover {
-    background: rgba(13, 148, 136, 0.16);
+    background: var(--color-primary);
+    color: white;
     transform: translateY(-1px);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.3);
   }
 
   body.dark-theme &,
   [data-theme='dark'] & {
-    border-color: #1f3744;
-    background: rgba(20, 184, 166, 0.16);
-    color: #c9f7f2;
+    border-color: var(--color-primary);
+    background: rgba(13, 148, 136, 0.15);
+    color: var(--color-primary-light);
+    
+    &:hover {
+      background: var(--color-primary);
+      color: white;
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.4);
+    }
   }
 `;
 
 const OthersFilterGroup = styled.div`
   display: flex;
+  flex-direction: row;
   align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+  align-self: center;
+  animation: fadeInSlide 0.4s cubic-bezier(0.4, 0, 0.2, 1);
+
+  @keyframes fadeInSlide {
+    from {
+      opacity: 0;
+      transform: translateX(-10px);
+    }
+    to {
+      opacity: 1;
+      transform: translateX(0);
+    }
+  }
 `;
 
 const OthersFilterLabel = styled.label`
-  font-size: 13px;
-  font-weight: 700;
+  font-size: 11px;
+  font-weight: 600;
   color: var(--color-text-secondary);
+  white-space: nowrap;
+  flex-shrink: 0;
+  opacity: 0.9;
+  line-height: 1.2;
+  margin-bottom: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: rgba(255, 255, 255, 0.7);
+  }
 `;
 
-const OthersFilterSelect = styled.select`
-  height: 32px;
+const CustomDropdownWrapper = styled.div`
+  position: relative;
+  flex-shrink: 0;
+`;
+
+const CustomDropdownButton = styled.button<{ $isOpen?: boolean }>`
+  height: 36px;
+  min-width: 120px;
   border: 1px solid var(--color-border);
-  border-radius: var(--radius-sm);
-  background: var(--color-bg-card);
+  border-radius: 8px;
+  background: linear-gradient(135deg, rgba(255, 255, 255, 0.95) 0%, rgba(246, 249, 252, 0.98) 100%);
   color: var(--color-text-primary);
-  padding: 0 10px;
+  padding: 0 32px 0 12px;
   font-size: 13px;
-  font-weight: 600;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  text-align: left;
+  position: relative;
+  
+  &:hover {
+    border-color: var(--color-primary);
+    background: linear-gradient(135deg, rgba(255, 255, 255, 1) 0%, rgba(240, 247, 252, 1) 100%);
+    box-shadow: 0 2px 6px rgba(13, 148, 136, 0.15);
+  }
+  
+  &:focus {
+    outline: none;
+    border-color: var(--color-primary);
+    box-shadow: 0 0 0 3px rgba(13, 148, 136, 0.1);
+  }
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: linear-gradient(135deg, rgba(40, 44, 52, 0.95) 0%, rgba(30, 34, 42, 0.98) 100%);
+    border-color: rgba(255, 255, 255, 0.1);
+    color: rgba(255, 255, 255, 0.9);
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+    
+    &:hover {
+      background: linear-gradient(135deg, rgba(45, 49, 57, 1) 0%, rgba(35, 39, 47, 1) 100%);
+      box-shadow: 0 2px 6px rgba(13, 148, 136, 0.25);
+    }
+  }
+`;
+
+const CustomDropdownIcon = styled.span<{ $isOpen?: boolean }>`
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: ${({ $isOpen }) => 
+    $isOpen ? 'translateY(-50%) rotate(180deg)' : 'translateY(-50%)'};
+  display: flex;
+  align-items: center;
+  pointer-events: none;
+  transition: transform 0.2s ease;
+`;
+
+const CustomDropdownMenu = styled.div<{ $isOpen: boolean }>`
+  position: absolute;
+  top: calc(100% + 4px);
+  left: 0;
+  right: 0;
+  background: white;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  z-index: 1000;
+  overflow: hidden;
+  opacity: ${({ $isOpen }) => ($isOpen ? 1 : 0)};
+  visibility: ${({ $isOpen }) => ($isOpen ? 'visible' : 'hidden')};
+  transform: ${({ $isOpen }) => ($isOpen ? 'translateY(0)' : 'translateY(-8px)')};
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    background: #2a2e38;
+    border-color: rgba(255, 255, 255, 0.15);
+    box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5);
+  }
+`;
+
+const CustomDropdownOption = styled.button<{ $isSelected: boolean }>`
+  width: 100%;
+  padding: 10px 12px;
+  border: none;
+  background: ${({ $isSelected }) =>
+    $isSelected
+      ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+      : 'transparent'};
+  color: ${({ $isSelected }) => ($isSelected ? 'white' : 'var(--color-text-primary)')};
+  font-size: 14px;
+  font-weight: ${({ $isSelected }) => ($isSelected ? 600 : 500)};
+  text-align: left;
+  cursor: pointer;
+  transition: all 0.15s ease;
+  display: block;
+  
+  &:hover {
+    background: ${({ $isSelected }) =>
+      $isSelected
+        ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+        : 'rgba(13, 148, 136, 0.08)'};
+  }
+  
+  &:not(:last-child) {
+    border-bottom: 1px solid rgba(0, 0, 0, 0.05);
+  }
+  
+  body.dark-theme &,
+  [data-theme='dark'] & {
+    color: ${({ $isSelected }) => ($isSelected ? 'white' : 'rgba(255, 255, 255, 0.9)')};
+    
+    &:hover {
+      background: ${({ $isSelected }) =>
+        $isSelected
+          ? 'linear-gradient(135deg, var(--color-primary) 0%, #0d8a7f 100%)'
+          : 'rgba(13, 148, 136, 0.15)'};
+    }
+    
+    &:not(:last-child) {
+      border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+    }
+  }
 `;
 
 const DataTable = styled.div`
@@ -858,25 +1038,6 @@ const BarFill = styled.div<{ width: number; color?: string }>`
   }
 `;
 
-const TrendCell = styled.div<{ trend: 'up' | 'down' | 'stable' }>`
-  display: flex;
-  align-items: center;
-  gap: 4px;
-  font-weight: 600;
-  color: ${props => {
-    switch (props.trend) {
-      case 'up': return 'var(--color-success)';
-      case 'down': return 'var(--color-error)';
-      default: return 'var(--color-text-muted)';
-    }
-  }};
-`;
-
-const TrendIcon = styled.span`
-  font-size: 14px;
-`;
-
-
 // Types
 interface TableChartProps {
   data?: DataRecord[];
@@ -890,7 +1051,7 @@ const locationColors = [
   '#ef4444', '#8b5cf6', '#ec4899', '#f97316', '#14b8a6',
 ];
 
-const ROWS_PER_PAGE = 3;
+const ROWS_PER_PAGE = 4;
 const AUTO_PAGE_DELAY_MS = 7000;
 const MAX_TOP_ITEMS_IN_TILE = 3;
 const TOP_LOCATIONS_LIMIT = 10;
@@ -907,6 +1068,24 @@ export default function TableChart({
   const [activeView, setActiveView] = useState<'top10' | 'others'>('top10');
   const [othersPage, setOthersPage] = useState(0);
   const [othersSortMode, setOthersSortMode] = useState<OthersSortMode>('visits_desc');
+  const [isDropdownOpen, setIsDropdownOpen] = useState(false);
+  const dropdownRef = useRef<HTMLDivElement>(null);
+  
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event: MouseEvent) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target as Node)) {
+        setIsDropdownOpen(false);
+      }
+    };
+    
+    if (isDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      return () => document.removeEventListener('mousedown', handleClickOutside);
+    }
+    return undefined;
+  }, [isDropdownOpen]);
+  
   // Get column names from data
   const columns = useMemo(() => {
     if (!data || data.length === 0) return [];
@@ -1073,12 +1252,12 @@ export default function TableChart({
   // Calculate dynamic height based on data
   const dynamicHeight = useMemo(() => {
     const totalRows = activeView === 'others' ? othersTableRows.length : tableData.length;
-    if (totalRows === 0) return 400;
-    const baseHeight = 220; // KPI banner + controls/header
-    const rowHeight = 70; // Slightly higher to prevent row clipping at larger font sizes
+    if (totalRows === 0) return 450;
+    const baseHeight = 200; // KPI banner + controls/header
+    const rowHeight = 65; // Row height for 4 rows
     const rowCount = Math.min(totalRows, ROWS_PER_PAGE);
     const calculatedHeight = baseHeight + (rowCount * rowHeight);
-    return Math.max(300, calculatedHeight);
+    return Math.max(350, calculatedHeight);
   }, [activeView, othersTableRows.length, tableData.length]);
 
   // Use provided height if available, otherwise use dynamic height
@@ -1142,9 +1321,7 @@ export default function TableChart({
           <SkeletonKpiRow>
             <SkeletonTile />
             <SkeletonTile />
-            <SkeletonTile />
           </SkeletonKpiRow>
-          <SkeletonHeaderRow />
           <SkeletonTableRow />
           <SkeletonTableRow />
           <SkeletonTableRow />
@@ -1162,143 +1339,179 @@ export default function TableChart({
     >
       {/* KPI Banner */}
       <KPIBanner>
-        <CompactKPITile bgColor="rgba(13, 148, 136, 0.05)">
-          <KPIIcon color="rgba(13, 148, 136, 0.05)" $size={74} $iconSize={34}>
-            <FluentPeopleCommunity20Filled />
-          </KPIIcon>
-          <KPIContent>
-            <KPILabel>Total Patients:</KPILabel>
-            <KPIValue style={{ marginRight: 12 }}>{kpiValues.total.toLocaleString()}</KPIValue>
-          </KPIContent>
-        </CompactKPITile>
-        
-        <CompactKPITile bgColor="rgba(6, 182, 212, 0.05)">
-          <KPIIcon color="rgba(6, 182, 212, 0.05)" $size={74} $iconSize={34}>
+        <CompactKPITile>
+          <KPIIcon $size={56} $iconSize={28}>
             <MaterialSymbolsPinDropRounded />
           </KPIIcon>
           <KPIContentLeft>
-            <KPILabel>Location(s):</KPILabel>
+            <KPILabel>All</KPILabel>
             <KPIValueLeft>{kpiValues.count}</KPIValueLeft>
           </KPIContentLeft>
         </CompactKPITile>
                 
-        <TopLocationTile bgColor="rgba(16, 185, 129, 0.05)">
-          <KPIIcon color="rgba(16, 185, 129, 0.05)" $size={74} $iconSize={34}>
+        <TopLocationTile>
+          <KPIIcon $size={56} $iconSize={28}>
             <MaterialSymbolsPinDropRounded />
           </KPIIcon>
           <KPIContentLeft>
-            <KPILabel>Top Location(s):</KPILabel>
+            <KPILabel>Top</KPILabel>
             <TopLocationsValue title={kpiValues.topItems}>
               {kpiValues.topItemsDisplay}
             </TopLocationsValue>
           </KPIContentLeft>
         </TopLocationTile>
+
+        {(othersRows.length > 0 || activeTotalPages > 1 || activeView === 'others') && (
+          <KPIHeaderControls>
+            {activeView === 'top10' && othersRows.length > 0 && (
+              <OthersButton
+                type="button"
+                aria-label={`Show ${othersRows.length} locations in Others`}
+                onClick={() => {
+                  setOthersPage(0);
+                  setActiveView('others');
+                }}
+              >
+                <MoreHorizontal size={16} />
+                <span style={{ marginLeft: '6px' }}>Others ({othersRows.length})</span>
+              </OthersButton>
+            )}
+            {activeView === 'others' && (
+              <>
+                <OthersFilterGroup>
+                  <OthersFilterLabel>
+                    <ArrowUpDown size={14} />
+                    Sort
+                  </OthersFilterLabel>
+                  <CustomDropdownWrapper ref={dropdownRef}>
+                    <CustomDropdownButton
+                      type="button"
+                      $isOpen={isDropdownOpen}
+                      aria-expanded={isDropdownOpen}
+                      aria-haspopup="listbox"
+                      onClick={() => setIsDropdownOpen(!isDropdownOpen)}
+                    >
+                      {othersSortMode === 'visits_desc' && 'Highest'}
+                      {othersSortMode === 'visits_asc' && 'Lowest'}
+                      {othersSortMode === 'name_asc' && 'A-Z'}
+                      {othersSortMode === 'name_desc' && 'Z-A'}
+                      <CustomDropdownIcon $isOpen={isDropdownOpen}>
+                        <ChevronDown size={16} />
+                      </CustomDropdownIcon>
+                    </CustomDropdownButton>
+                    <CustomDropdownMenu $isOpen={isDropdownOpen}>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'visits_desc'}
+                        onClick={() => {
+                          setOthersSortMode('visits_desc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Highest
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'visits_asc'}
+                        onClick={() => {
+                          setOthersSortMode('visits_asc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Lowest
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'name_asc'}
+                        onClick={() => {
+                          setOthersSortMode('name_asc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        A-Z
+                      </CustomDropdownOption>
+                      <CustomDropdownOption
+                        $isSelected={othersSortMode === 'name_desc'}
+                        onClick={() => {
+                          setOthersSortMode('name_desc');
+                          setIsDropdownOpen(false);
+                        }}
+                      >
+                        Z-A
+                      </CustomDropdownOption>
+                    </CustomDropdownMenu>
+                  </CustomDropdownWrapper>
+                </OthersFilterGroup>
+                <OthersButton
+                  type="button"
+                  aria-label="Back to Top 10"
+                  title="Back to Top 10"
+                  onClick={() => setActiveView('top10')}
+                >
+                  Back to Top 10
+                </OthersButton>
+              </>
+            )}
+            {(activeView === 'others' || activeTotalPages > 1) && (
+              <>
+                <PageMeta>
+                  Page {activePage + 1} / {activeTotalPages}
+                </PageMeta>
+                <NavButton
+                  type="button"
+                  aria-label="Previous page"
+                  disabled={activeTotalPages <= 1}
+                  onClick={() =>
+                    activeView === 'others'
+                      ? setOthersPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
+                      : setCurrentPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
+                  }
+                >
+                  <ChevronLeft size={16} />
+                </NavButton>
+                {activeView === 'top10' && (
+                  <NavButton
+                    type="button"
+                    aria-label={
+                      isAutoRotatePaused
+                        ? 'Resume auto pagination'
+                        : 'Pause auto pagination'
+                    }
+                    title={
+                      isAutoRotatePaused
+                        ? 'Resume auto pagination'
+                        : 'Pause auto pagination'
+                    }
+                    onClick={() =>
+                      setIsAutoRotatePaused(prevPaused => !prevPaused)
+                    }
+                  >
+                    {isAutoRotatePaused ? (
+                      <Play size={16} />
+                    ) : (
+                      <Pause size={16} />
+                    )}
+                  </NavButton>
+                )}
+                <NavButton
+                  type="button"
+                  aria-label="Next page"
+                  disabled={activeTotalPages <= 1}
+                  onClick={() =>
+                    activeView === 'others'
+                      ? setOthersPage(prev => (prev + 1) % activeTotalPages)
+                      : setCurrentPage(prev => (prev + 1) % activeTotalPages)
+                  }
+                >
+                  <ChevronRight size={16} />
+                </NavButton>
+              </>
+            )}
+          </KPIHeaderControls>
+        )}
       </KPIBanner>
 
       {/* Content Area */}
       <ContentArea>
         {/* Table Section */}
         <TableSection>
-          <SectionHeader>
-            {(othersRows.length > 0 || activeTotalPages > 1 || activeView === 'others') && (
-              <HeaderControls>
-                {activeView === 'top10' && othersRows.length > 0 && (
-                  <OthersButton
-                    type="button"
-                    aria-label={`Show ${othersRows.length} locations in Others`}
-                    onClick={() => {
-                      setOthersPage(0);
-                      setActiveView('others');
-                    }}
-                  >
-                    Others ({othersRows.length})
-                  </OthersButton>
-                )}
-                {activeView === 'others' && (
-                  <>
-                    <OthersFilterGroup>
-                      <OthersFilterLabel htmlFor="others-sort-inline">Sort by</OthersFilterLabel>
-                      <OthersFilterSelect
-                        id="others-sort-inline"
-                        value={othersSortMode}
-                        onChange={event =>
-                          setOthersSortMode(event.target.value as OthersSortMode)
-                        }
-                      >
-                        <option value="visits_desc">Highest visits</option>
-                        <option value="visits_asc">Lowest visits</option>
-                        <option value="name_asc">A-Z</option>
-                        <option value="name_desc">Z-A</option>
-                      </OthersFilterSelect>
-                    </OthersFilterGroup>
-                    <OthersButton
-                      type="button"
-                      aria-label="Back to Top 10"
-                      title="Back to Top 10"
-                      onClick={() => setActiveView('top10')}
-                    >
-                      Back to Top 10
-                    </OthersButton>
-                  </>
-                )}
-                {(activeView === 'others' || activeTotalPages > 1) && (
-                  <>
-                    <PageMeta>
-                      Page {activePage + 1} / {activeTotalPages}
-                    </PageMeta>
-                    <NavButton
-                      type="button"
-                      aria-label="Previous page"
-                      disabled={activeTotalPages <= 1}
-                      onClick={() =>
-                        activeView === 'others'
-                          ? setOthersPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
-                          : setCurrentPage(prev => (prev - 1 + activeTotalPages) % activeTotalPages)
-                      }
-                    >
-                      <ChevronLeft size={18} />
-                    </NavButton>
-                    {activeView === 'top10' && (
-                      <NavButton
-                        type="button"
-                        aria-label={
-                          isAutoRotatePaused
-                            ? 'Resume auto pagination'
-                            : 'Pause auto pagination'
-                        }
-                        title={
-                          isAutoRotatePaused
-                            ? 'Resume auto pagination'
-                            : 'Pause auto pagination'
-                        }
-                        onClick={() =>
-                          setIsAutoRotatePaused(prevPaused => !prevPaused)
-                        }
-                      >
-                        {isAutoRotatePaused ? (
-                          <Play size={18} />
-                        ) : (
-                          <Pause size={18} />
-                        )}
-                      </NavButton>
-                    )}
-                    <NavButton
-                      type="button"
-                      aria-label="Next page"
-                      disabled={activeTotalPages <= 1}
-                      onClick={() =>
-                        activeView === 'others'
-                          ? setOthersPage(prev => (prev + 1) % activeTotalPages)
-                          : setCurrentPage(prev => (prev + 1) % activeTotalPages)
-                      }
-                    >
-                      <ChevronRight size={18} />
-                    </NavButton>
-                  </>
-                )}
-              </HeaderControls>
-            )}
-          </SectionHeader>
           <DataTable>
             <Table>
               {columns.length > 0 && (
