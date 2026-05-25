@@ -887,27 +887,29 @@ export default function EchartsPie(props: PieChartTransformedProps) {
                       ),
                     )}
                   </Pie>
-                  <foreignObject
-                    x="22%"
-                    y="22%"
-                    width="56%"
-                    height="56%"
-                    style={{ pointerEvents: 'none', overflow: 'visible' }}
-                  >
-                    <div
-                      style={{
-                        display: 'flex',
-                        flexDirection: 'column',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        height: '100%',
-                        overflow: 'visible',
-                      }}
+                  {formData?.showTotal === true && (
+                    <foreignObject
+                      x="22%"
+                      y="22%"
+                      width="56%"
+                      height="56%"
+                      style={{ pointerEvents: 'none', overflow: 'visible' }}
                     >
-                      <CenterLabel>Total</CenterLabel>
-                      <CenterValue>{total.toLocaleString()}</CenterValue>
-                    </div>
-                  </foreignObject>
+                      <div
+                        style={{
+                          display: 'flex',
+                          flexDirection: 'column',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          height: '100%',
+                          overflow: 'visible',
+                        }}
+                      >
+                        <CenterLabel>Total</CenterLabel>
+                        <CenterValue>{total.toLocaleString()}</CenterValue>
+                      </div>
+                    </foreignObject>
+                  )}
                 </PieChart>
               </ResponsiveContainer>
             ) : (
