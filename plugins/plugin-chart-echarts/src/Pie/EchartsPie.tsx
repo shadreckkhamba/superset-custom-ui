@@ -185,7 +185,7 @@ const PieLegendRow = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 4px;
   padding: 6px 4px;
   border-radius: 0;
   background: transparent;
@@ -424,7 +424,7 @@ const DonutLegendRow = styled.div`
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
   align-items: center;
-  column-gap: 8px;
+  column-gap: 4px;
   min-width: 0;
   padding: 6px 8px;
   border-radius: 0;
