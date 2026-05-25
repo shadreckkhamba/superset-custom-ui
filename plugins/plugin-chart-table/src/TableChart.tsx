@@ -430,10 +430,9 @@ const TopLocationsValue = styled(KPIValue)`
   font-size: clamp(16px, 2.4vw, 20px);
   font-weight: 600;
   text-align: left;
-  white-space: normal;
+  white-space: nowrap;
   overflow: hidden;
-  overflow-wrap: anywhere;
-  word-break: break-word;
+  text-overflow: ellipsis;
   line-height: 1.3;
   max-width: 100%;
   flex: 1 1 100%;
