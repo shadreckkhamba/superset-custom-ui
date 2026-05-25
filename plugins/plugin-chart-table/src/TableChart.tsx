@@ -24,6 +24,8 @@ import {
   ChevronRight,
   Pause,
   Play,
+  MoreHorizontal,
+  ArrowUpDown,
 } from 'lucide-react';
 
 function MaterialSymbolsPinDropRounded(props: SVGProps<SVGSVGElement>) {
@@ -588,6 +590,9 @@ const OthersButton = styled.button`
   white-space: nowrap;
   flex-shrink: 0;
   align-self: center;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
 
   &:hover {
     background: var(--color-primary);
@@ -612,15 +617,15 @@ const OthersButton = styled.button`
 
 const OthersFilterGroup = styled.div`
   display: flex;
-  flex-direction: column;
-  align-items: flex-start;
-  gap: 4px;
+  flex-direction: row;
+  align-items: center;
+  gap: 8px;
   flex-shrink: 0;
   align-self: center;
 `;
 
 const OthersFilterLabel = styled.label`
-  font-size: 13px;
+  font-size: 11px;
   font-weight: 600;
   color: var(--color-text-secondary);
   white-space: nowrap;
@@ -628,6 +633,10 @@ const OthersFilterLabel = styled.label`
   opacity: 0.9;
   line-height: 1.2;
   margin-bottom: 0;
+  display: inline-flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
   
   body.dark-theme &,
   [data-theme='dark'] & {
@@ -1219,13 +1228,17 @@ export default function TableChart({
                   setActiveView('others');
                 }}
               >
-                Others ({othersRows.length})
+                <MoreHorizontal size={16} />
+                <span style={{ marginLeft: '6px' }}>Others ({othersRows.length})</span>
               </OthersButton>
             )}
             {activeView === 'others' && (
               <>
                 <OthersFilterGroup>
-                  <OthersFilterLabel htmlFor="others-sort-inline">Sort by</OthersFilterLabel>
+                  <OthersFilterLabel htmlFor="others-sort-inline">
+                    <ArrowUpDown size={14} />
+                    Sort
+                  </OthersFilterLabel>
                   <OthersFilterSelect
                     id="others-sort-inline"
                     value={othersSortMode}
@@ -1233,8 +1246,8 @@ export default function TableChart({
                       setOthersSortMode(event.target.value as OthersSortMode)
                     }
                   >
-                    <option value="visits_desc">Highest visits</option>
-                    <option value="visits_asc">Lowest visits</option>
+                    <option value="visits_desc">Highest</option>
+                    <option value="visits_asc">Lowest</option>
                     <option value="name_asc">A-Z</option>
                     <option value="name_desc">Z-A</option>
                   </OthersFilterSelect>
