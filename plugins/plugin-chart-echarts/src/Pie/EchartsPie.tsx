@@ -927,6 +927,14 @@ export default function EchartsPie(props: PieChartTransformedProps) {
 
           {formData?.showLegend !== false && (
             <DonutLegend $orientation={formData?.legendOrientation}>
+              <DonutLegendRow key="donut-legend-total">
+                <DonutLegendLabelWrap>
+                  <PieLegendTotalLabel>Total</PieLegendTotalLabel>
+                </DonutLegendLabelWrap>
+                <DonutLegendValueStack>
+                  <PieLegendTotalValue>{total.toLocaleString()}</PieLegendTotalValue>
+                </DonutLegendValueStack>
+              </DonutLegendRow>
               {hasData ? (
                 chartData.map(
                   (item: {
