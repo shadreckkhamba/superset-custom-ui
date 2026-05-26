@@ -335,13 +335,17 @@ const PieLegend = styled.div`
   flex: 1;
 `;
 
-const RightPanel = styled.div`
+const RightPanel = styled.div<{ $orientation?: string }>`
   display: flex;
   flex-direction: column;
   flex: 1;
   gap: 8px;
   min-width: 0;
   overflow: visible;
+  align-self: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return 'flex-start';
+    return 'stretch';
+  }};
 `;
 
 const DonutTemplate = styled.div<{ $orientation?: string }>`
@@ -401,6 +405,10 @@ const DonutLegend = styled.div<{ $orientation?: string }>`
   align-content: ${({ $orientation }) => {
     if ($orientation === 'bottom') return 'start';
     return 'end';
+  }};
+  align-self: ${({ $orientation }) => {
+    if ($orientation === 'left' || $orientation === 'right') return 'flex-start';
+    return 'stretch';
   }};
   gap: 0;
   width: 100%;
@@ -818,7 +826,7 @@ export default function EchartsPie(props: PieChartTransformedProps) {
           </PieChartWrap>
 
           {formData?.showLegend !== false && (
-            <RightPanel>
+            <RightPanel $orientation={formData?.legendOrientation}>
               <PieLegend>
                 <PieLegendRow key="pie-legend-total">
                   <PieLegendItem>

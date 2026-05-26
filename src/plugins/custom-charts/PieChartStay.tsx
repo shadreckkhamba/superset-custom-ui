@@ -2308,6 +2308,8 @@ export default function StayTimePie({
                 ))}
                 <div
                   ref={datePickerShellRef}
+                  onMouseEnter={() => setIsDatePickerOpen(true)}
+                  onFocusCapture={() => setIsDatePickerOpen(true)}
                   style={{
                     display: 'grid',
                     gap: '8px',
