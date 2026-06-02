@@ -19,42 +19,73 @@ import { TrendingUp, TrendingDown, Info, X } from 'lucide-react';
 import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
+import PatientTrendIcon from '../../assets/images/PatientTrend.png';
+import PatientIcon from '../../assets/images/patientIcon.png';
 
 // Register components
 ChartJS.register(CategoryScale, LinearScale, PointElement, LineElement, Title, Tooltip, Legend, Filler);
 
 // CSS for responsive dashboard view switch
 const responsiveSwitchStyles = `
+  /* Patient timeline animations */
+  @keyframes fadeInUp {
+    from {
+      opacity: 0;
+      transform: translateY(20px);
+    }
+    to {
+      opacity: 1;
+      transform: translateY(0);
+    }
+  }
+
+  @keyframes growBar {
+    from {
+      width: 0;
+    }
+  }
+
+  @keyframes boxFadeIn {
+    from {
+      opacity: 0;
+      transform: scale(0.8);
+    }
+    to {
+      opacity: 1;
+      transform: scale(1);
+    }
+  }
+
   /* Responsive dashboard view switch */
   [data-test="dashboard-view-switch"] {
     padding: clamp(10px, 2.5vw, 14px) clamp(14px, 3.5vw, 20px) !important;
     gap: clamp(8px, 2vw, 12px) !important;
     margin-left: clamp(20px, 4vw, 45px) !important;
     border-width: clamp(1px, 0.2vw, 2px) !important;
-    box-shadow: rgba(15, 23, 42, 0.15) 0px clamp(6px, 1.5vw, 12px) clamp(20px, 5vw, 40px), 
+    box-shadow: rgba(15, 23, 42, 0.15) 0px clamp(6px, 1.5vw, 12px) clamp(20px, 5vw, 40px),
                 rgba(15, 23, 42, 0.1) 0px clamp(2px, 0.5vw, 4px) clamp(6px, 1.5vw, 12px) !important;
   }
-  
+
   [data-test="dashboard-view-switch"] > div {
     gap: clamp(8px, 2vw, 12px) !important;
   }
-  
+
   [data-test="dashboard-view-switch"] span {
     font-size: clamp(12px, 2.5vw, 14px) !important;
   }
-  
+
   /* Blue ring around the switch component only */
   [data-test="dashboard-view-switch"] .antd5-switch {
     transform: scale(clamp(0.9, 0.2vw + 0.9, 1.15)) !important;
     box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.4) !important;
     border-radius: 100px !important;
   }
-  
+
   /* Enhanced blue ring on hover */
   [data-test="dashboard-view-switch"] .antd5-switch:hover {
     box-shadow: 0 0 0 4px rgba(64, 169, 255, 0.5) !important;
   }
-  
+
   /* Responsive adjustments for very small screens */
   @media (max-width: 480px) {
     [data-test="dashboard-view-switch"] {
@@ -63,21 +94,21 @@ const responsiveSwitchStyles = `
       gap: 6px !important;
       margin-left: 20px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] span {
       font-size: 11px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.85) !important;
       box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.4) !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch:hover {
       box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.5) !important;
     }
   }
-  
+
   /* Responsive adjustments for medium screens */
   @media (min-width: 481px) and (max-width: 768px) {
     [data-test="dashboard-view-switch"] {
@@ -85,16 +116,16 @@ const responsiveSwitchStyles = `
       gap: 8px !important;
       margin-left: 30px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] span {
       font-size: 12px !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch {
       transform: scale(0.95) !important;
       box-shadow: 0 0 0 2px rgba(64, 169, 255, 0.4) !important;
     }
-    
+
     [data-test="dashboard-view-switch"] .antd5-switch:hover {
       box-shadow: 0 0 0 3px rgba(64, 169, 255, 0.5) !important;
     }
@@ -133,6 +164,13 @@ interface StayApiResponse {
   rolling_avg?: { time_label: string; avg_hours: number }[];
   stay_distribution?: Record<string, { hours: number; count: number }[]>;
 }
+
+interface PatientDetail {
+  patient_id: string;
+  arrival_time: string;
+  departure_time: string;
+  stay_hours: number;
+}
 interface BigNumberStayProps {
   refreshKey?: number;
   resetKey?: number;
@@ -141,6 +179,39 @@ interface BigNumberStayProps {
   autoRefresh?: boolean;
 }
 type TrendDay = { day: string; avg_hours: number };
+
+// Fetch patient details for a specific date
+async function fetchPatientDetails(date: string): Promise<PatientDetail[] | null> {
+  try {
+    // Use the same base URL pattern as other endpoints
+    const baseUrl = ENDPOINTS.DAILY_AVERAGE_STAY.split('/wandikweza/')[0];
+    const url = `${baseUrl}/wandikweza/patient_stay_details/${date}`;
+    console.log('Fetching from URL:', url);
+    const resp = await fetch(url);
+    console.log('Response status:', resp.status, resp.statusText);
+    if (!resp.ok) {
+      console.error('API returned error:', resp.status, resp.statusText);
+      return null;
+    }
+    const data = await resp.json();
+    console.log('Patient data parsed:', data);
+
+    // Ensure we always return an array
+    if (Array.isArray(data)) {
+      return data as PatientDetail[];
+    } else if (data && typeof data === 'object' && Array.isArray(data.patients)) {
+      // In case API returns { patients: [...] }
+      return data.patients as PatientDetail[];
+    } else {
+      console.error('API did not return an array:', data);
+      return [];
+    }
+  } catch (err) {
+    console.error("Fetch patient details failed:", err);
+    return null;
+  }
+}
+
 // Synchronous fetch
 async function fetchStayTimes(): Promise<StayApiResponse | null> {
   try {
@@ -181,6 +252,12 @@ export default function BigNumberStay({
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
   const infoCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
+
+  // Patient timeline states
+  const [patientDetails, setPatientDetails] = useState<PatientDetail[]>([]);
+  const [showPatientTimeline, setShowPatientTimeline] = useState(false);
+  const [patientTimelineReady, setPatientTimelineReady] = useState(false);
+  const patientCloseTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   // Handle external refresh requests
   useEffect(() => {
@@ -229,7 +306,7 @@ export default function BigNumberStay({
   const daysRef = useRef<HTMLDivElement | null>(null);
   const [showLeftArrow, setShowLeftArrow] = useState(false);
   const [showRightArrow, setShowRightArrow] = useState(false);
-  
+
   useEffect(() => {
     const el = daysRef.current;
     if (!el) return;
@@ -295,7 +372,7 @@ const loadData = async (resetToToday = false) => {
   setHeatmapMounted(false);
   setTooltipData(null);
   const startTime = Date.now(); // Track when loading started
-  
+
   try {
     const resp = await fetchStayTimes();
     if (!resp) return;
@@ -390,7 +467,7 @@ const loadData = async (resetToToday = false) => {
     const elapsedTime = Date.now() - startTime;
     const minDisplayTime = 2000;
     const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
-    
+
     setTimeout(() => {
       setLoading(false);
     }, remainingTime);
@@ -451,6 +528,47 @@ useEffect(() => {
 
   return () => clearInterval(intervalId);
 }, [autoRefresh, selectedIsToday]);
+
+  // Fetch patient details when selected date changes
+  useEffect(() => {
+    const loadPatientDetails = async () => {
+      if (!selectedDayKey) return;
+      console.log('Fetching patient details for date:', selectedDayKey);
+      const details = await fetchPatientDetails(selectedDayKey);
+      console.log('Patient details received:', details);
+      if (details) {
+        setPatientDetails(details);
+      } else {
+        setPatientDetails([]);
+      }
+    };
+    loadPatientDetails();
+  }, [selectedDayKey]);
+
+  // Handle patient timeline modal animation
+  useEffect(() => {
+    if (showPatientTimeline) {
+      if (patientCloseTimeoutRef.current) {
+        clearTimeout(patientCloseTimeoutRef.current);
+        patientCloseTimeoutRef.current = null;
+      }
+      setPatientTimelineReady(false);
+      const rafId = requestAnimationFrame(() => setPatientTimelineReady(true));
+      return () => cancelAnimationFrame(rafId);
+    }
+
+    setPatientTimelineReady(false);
+    return undefined;
+  }, [showPatientTimeline]);
+
+  useEffect(
+    () => () => {
+      if (patientCloseTimeoutRef.current) {
+        clearTimeout(patientCloseTimeoutRef.current);
+      }
+    },
+    [],
+  );
 
   // Graph options
   const gradientPlugin: Plugin<'line'> = {
@@ -547,6 +665,23 @@ useEffect(() => {
     }, 360);
   };
 
+  const openPatientTimeline = () => {
+    if (isSlideshowMode) return;
+    if (patientCloseTimeoutRef.current) {
+      clearTimeout(patientCloseTimeoutRef.current);
+      patientCloseTimeoutRef.current = null;
+    }
+    setShowPatientTimeline(true);
+  };
+
+  const closePatientTimeline = () => {
+    setPatientTimelineReady(false);
+    patientCloseTimeoutRef.current = setTimeout(() => {
+      setShowPatientTimeline(false);
+      patientCloseTimeoutRef.current = null;
+    }, 360);
+  };
+
   useEffect(() => {
     if (typeof window === 'undefined') {
       return undefined;
@@ -567,7 +702,7 @@ useEffect(() => {
 
   return (
     <div
-      ref={containerRef} 
+      ref={containerRef}
       className="responsive-chart-wrapper big-number-stay-wrapper"
       style={{
         position: 'relative',
@@ -581,8 +716,8 @@ useEffect(() => {
         padding: isExpanded ? '12px 12px 0' : '28px 28px 0',
         backgroundColor: isDarkMode ? '#2d2d2d' : '#fafbfc',
         borderRadius: '20px',
-        boxShadow: isDarkMode 
-          ? '0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4)' 
+        boxShadow: isDarkMode
+          ? '0 1px 3px rgba(0,0,0,0.3), 0 8px 24px rgba(0,0,0,0.4)'
           : '0 1px 3px rgba(0,0,0,0.06), 0 8px 24px rgba(0,0,0,0.08)',
         overflow: 'hidden',
         boxSizing: 'border-box',
@@ -591,16 +726,17 @@ useEffect(() => {
       }}
     >
     {!isSlideshowMode && (
+    <>
     <button
       type="button"
       aria-label="What am I seeing?"
       onClick={openInfoModal}
       style={{
         position: 'absolute',
-        top: '0px',
-        right: '2px',
-        width: '32px',
-        height: '32px',
+        top: '8px',
+        right: '8px',
+        width: '36px',
+        height: '36px',
         borderRadius: '999px',
         border: 'none',
         background: 'transparent',
@@ -621,8 +757,55 @@ useEffect(() => {
         e.currentTarget.style.color = isDarkMode ? '#d9d9d9' : '#595959';
       }}
     >
-      <Info size={20} strokeWidth={2.2} />
+      <Info size={22} strokeWidth={2.2} />
     </button>
+
+    {/* Drill-down button to view patient timeline */}
+    {/* Show button if we have patient data OR for testing always show it */}
+    {((Array.isArray(patientDetails) && patientDetails.length > 0) || true) && (
+      <button
+        type="button"
+        aria-label={Array.isArray(patientDetails) && patientDetails.length > 0 ? `View ${patientDetails.length} patient${patientDetails.length !== 1 ? 's' : ''}` : 'View patient timeline'}
+        onClick={openPatientTimeline}
+        style={{
+          position: 'absolute',
+          top: '8px',
+          right: '50px',
+          width: '40px',
+          height: '40px',
+          borderRadius: '999px',
+          border: 'none',
+          background: 'transparent',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          cursor: 'pointer',
+          zIndex: 12,
+          transition: 'transform 0.2s ease, opacity 0.2s ease',
+          padding: 0,
+        }}
+        onMouseEnter={(e) => {
+          e.currentTarget.style.transform = 'scale(1.1)';
+          e.currentTarget.style.opacity = '0.7';
+        }}
+        onMouseLeave={(e) => {
+          e.currentTarget.style.transform = 'scale(1)';
+          e.currentTarget.style.opacity = '1';
+        }}
+      >
+        <img
+          src={PatientTrendIcon}
+          alt="Patient Trend"
+          style={{
+            width: '44px',
+            height: '44px',
+            filter: 'none', // Keep original color (black/dark)
+            objectFit: 'contain'
+          }}
+        />
+      </button>
+    )}
+    </>
     )}
     <>
       <div
@@ -641,7 +824,7 @@ useEffect(() => {
           textAlign: 'left',
           color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
           fontSize: 'clamp(1.2rem, 1.5vw, 1.2rem)',
-          display: 'none', 
+          display: 'none',
           marginBottom: '1rem',
           marginTop: '-0.5rem',
           fontWeight: 500,
@@ -656,7 +839,7 @@ useEffect(() => {
           day: 'numeric',
         })}
       </div>
-      
+
       {/* Weekday Selector */}
       <div
         style={{
@@ -751,10 +934,10 @@ useEffect(() => {
         >
           {(() => {
             const apiTodayKey = stayData?.today?.date || toDateKey(new Date());
-            
+
             // Always build the full week
             const fullWeek = buildLocalWeek();
-            
+
             // Merge API data into the full week structure
             const selectorDays = fullWeek.map((weekDay) => {
               // Try to find matching data from API trend
@@ -764,7 +947,7 @@ useEffect(() => {
                 avg_hours: apiData ? Number(apiData.avg_hours) || 0 : 0,
               };
             });
-            
+
             console.log('Selector days:', selectorDays);
 
             return selectorDays.map((item) => {
@@ -790,7 +973,7 @@ useEffect(() => {
                       if (isCurrentDay) {
                         // --- TODAY CLICKED ---
                         const todayTrendData = stayData.trend?.find((t) => t.day === apiTodayKey);
-                        
+
                         const todayAvg = todayTrendData ? Number(todayTrendData.avg_hours) || 0 : 0;
                         const recentAvg = Number(stayData.today.recent_avg) || 0;
 
@@ -854,9 +1037,9 @@ useEffect(() => {
                     fontSize: isExpanded
                       ? 'clamp(0.8rem, 1.1vw, 0.95rem)'
                       : 'clamp(1.05rem, 1.8vw, 1.3rem)',
-                    color: isFuture 
+                    color: isFuture
                       ? (isDarkMode ? '#555' : '#cbd5e1')
-                      : isSelected 
+                      : isSelected
                         ? (isDarkMode ? '#ffffff' : '#0f172a')
                         : (isDarkMode ? '#9ca3af' : '#475569'),
                     background: 'transparent',
@@ -1077,9 +1260,9 @@ useEffect(() => {
       </div>
 
       {/* Stay Time Heatmap - GitHub style */}
-      <div 
+      <div
         className={`heatmap-container ${heatmapMounted ? 'mounted' : ''}`}
-        style={{ 
+        style={{
           width: '100%',
           minHeight: 'clamp(76px, 9vh, 92px)',
           flex: '0 0 auto',
@@ -1106,7 +1289,7 @@ useEffect(() => {
           const rows = 4;
           const cols = 50;
           const totalBoxes = rows * cols;
-          
+
           const maxHours = 5;
           const intervalMinutes = (maxHours * 60) / totalBoxes; // ~1 minute per box
           const clampedMaxHours = maxHours - Number.EPSILON;
@@ -1114,7 +1297,7 @@ useEffect(() => {
             ...d,
             hours: Math.min(d.hours, clampedMaxHours),
           }));
-          
+
           // Raw (discrete) counts per bucket for tooltip display
           const rawCounts = Array.from({ length: totalBoxes }, (_, i) => {
             const startHours = (i * intervalMinutes) / 60;
@@ -1168,7 +1351,7 @@ useEffect(() => {
             const startHours = (i * intervalMinutes) / 60;
             const endHours = ((i + 1) * intervalMinutes) / 60;
             const count = displayCounts[i] || 0;
-            
+
             return {
               startHours,
               endHours,
@@ -1205,11 +1388,11 @@ useEffect(() => {
               return { label, minutes };
             },
           );
-          
+
           return (
             <>
               {/* Time indicators */}
-              <div className="heatmap-time-indicators" style={{ 
+              <div className="heatmap-time-indicators" style={{
                 position: 'relative',
                 width: '100%',
                 height: 'clamp(22px, 2.8vh, 28px)',
@@ -1262,9 +1445,9 @@ useEffect(() => {
                   );
                 })}
               </div>
-              
+
               {/* Heatmap boxes */}
-              <div style={{ 
+              <div style={{
                 display: 'grid',
                 gridTemplateColumns: `repeat(${cols}, 1fr)`,
                 gridTemplateRows: `repeat(${rows}, 1fr)`,
@@ -1278,18 +1461,18 @@ useEffect(() => {
                 {gridBuckets.map(({ bucket }, idx) => {
                   // Color intensity based on count
                   const baseColor = { r: 24, g: 144, b: 255 }; // #1890ff
-                  const alpha = bucket.count === 0 
-                    ? 0.08 
+                  const alpha = bucket.count === 0
+                    ? 0.08
                     : 0.2 + (bucket.intensity * 0.8); // 0.2 to 1.0
-                  
+
                   const startMin = Math.floor((bucket.startHours % 1) * 60);
                   const endMin = Math.floor((bucket.endHours % 1) * 60);
                   const startLabel = `${Math.floor(bucket.startHours)}h ${startMin}m`;
                   const endLabel = `${Math.floor(bucket.endHours)}h ${endMin}m`;
-                  
+
                   // Staggered animation delay based on position (row by row)
                   const staggerDelay = (idx % cols) * 0.02 + Math.floor(idx / cols) * 0.05;
-                  
+
                   return (
                     <div
                       key={idx}
@@ -1297,8 +1480,8 @@ useEffect(() => {
                       style={{
                         backgroundColor: `rgba(${baseColor.r}, ${baseColor.g}, ${baseColor.b}, ${alpha})`,
                         borderRadius: '2px',
-                        border: isDarkMode 
-                          ? '1px solid rgba(255, 255, 255, 0.1)' 
+                        border: isDarkMode
+                          ? '1px solid rgba(255, 255, 255, 0.1)'
                           : '1px solid rgba(0, 0, 0, 0.05)',
                         cursor: 'pointer',
                         position: 'relative',
@@ -1310,9 +1493,9 @@ useEffect(() => {
                         e.currentTarget.style.transform = 'scale(1.15)';
                         e.currentTarget.style.boxShadow = '0 2px 8px rgba(24, 144, 255, 0.4)';
                         e.currentTarget.style.zIndex = '10';
-                        
+
                         const rect = e.currentTarget.getBoundingClientRect();
-                        
+
                         // Position to the right side of the box
                         setTooltipData({
                           x: rect.right + 15,
@@ -1485,7 +1668,407 @@ useEffect(() => {
         </div>
       )}
       </>
-    
+
+    {/* Patient Timeline Modal */}
+    {showPatientTimeline && !isSlideshowMode && (
+      <div
+        role="presentation"
+        onClick={closePatientTimeline}
+        style={{
+          position: 'absolute',
+          inset: 0,
+          zIndex: 30,
+          background: patientTimelineReady
+            ? isDarkMode
+              ? 'rgba(6, 10, 16, 0.72)'
+              : 'rgba(15, 23, 42, 0.44)'
+            : 'rgba(0, 0, 0, 0)',
+          display: 'flex',
+          justifyContent: 'center',
+          alignItems: 'center',
+          padding: '8px',
+          transition: 'background-color 280ms cubic-bezier(0.2, 0.9, 0.2, 1)',
+        }}
+      >
+        <div
+          role="dialog"
+          aria-modal="true"
+          aria-label="Patient timeline"
+          onClick={(e) => e.stopPropagation()}
+          style={{
+            width: 'clamp(360px, 95vw, 800px)',
+            maxWidth: 'calc(100% - 16px)',
+            height: 'calc(100% - 16px)',
+            maxHeight: 'calc(100% - 16px)',
+            borderRadius: '16px',
+            background: isDarkMode
+              ? 'rgba(30, 35, 42, 0.75)'
+              : 'rgba(255, 255, 255, 0.75)',
+            backdropFilter: 'blur(20px) saturate(180%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(180%)',
+            border: isDarkMode ? '1px solid rgba(255,255,255,0.14)' : '1px solid rgba(24,144,255,0.14)',
+            boxShadow: isDarkMode
+              ? '0 32px 64px rgba(0, 0, 0, 0.6)'
+              : '0 28px 56px rgba(24, 144, 255, 0.28)',
+            color: isDarkMode ? '#f0f0f0' : '#1f2937',
+            display: 'flex',
+            flexDirection: 'column',
+            overflow: 'hidden',
+            transform: patientTimelineReady ? 'scale(1) translateY(0)' : 'scale(0.9) translateY(20px)',
+            opacity: patientTimelineReady ? 1 : 0,
+            transition:
+              'transform 400ms cubic-bezier(0.2, 0.9, 0.2, 1), opacity 300ms cubic-bezier(0.2, 0.9, 0.2, 1)',
+          }}
+        >
+          {/* Header */}
+          <div
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '12px',
+              padding: '8px clamp(14px, 3vw, 20px)',
+              borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '10px', minWidth: 0, flex: '1 1 auto' }}>
+              <div
+                style={{
+                  width: '30px',
+                  height: '30px',
+                  flex: '0 0 30px',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  background: 'transparent',
+                }}
+              >
+                <img
+                  src={PatientTrendIcon}
+                  alt="Patient Timeline"
+                  style={{
+                    width: '30px',
+                    height: '30px',
+                    filter: 'none',
+                    objectFit: 'contain'
+                  }}
+                />
+              </div>
+              <div
+                style={{
+                  minWidth: 0,
+                  flex: '1 1 auto',
+                  display: 'flex',
+                  alignItems: 'baseline',
+                  justifyContent: 'space-between',
+                  gap: '12px',
+                }}
+              >
+                <div style={{ fontWeight: 700, fontSize: 'clamp(1rem, 2.2vw, 1.15rem)', letterSpacing: 0 }}>
+                  Patient Timeline
+                </div>
+                <div style={{ fontSize: 'clamp(0.78rem, 1.6vw, 0.88rem)', color: isDarkMode ? '#b0b0b0' : '#8c8c8c', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right' }}>
+                  {selectedDate.toLocaleDateString(undefined, {
+                    weekday: 'long',
+                    year: 'numeric',
+                    month: 'long',
+                    day: 'numeric',
+                  })}
+                </div>
+              </div>
+            </div>
+            <button
+              type="button"
+              onClick={closePatientTimeline}
+              aria-label="Close patient timeline"
+              style={{
+                width: '32px',
+                height: '32px',
+                flex: '0 0 32px',
+                borderRadius: '999px',
+                border: 'none',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                background: isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)',
+                color: isDarkMode ? '#d9d9d9' : '#595959',
+                transition: 'all 0.2s ease',
+              }}
+              onMouseEnter={(e) => {
+                e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.15)' : 'rgba(0,0,0,0.12)';
+                e.currentTarget.style.transform = 'scale(1.05)';
+              }}
+              onMouseLeave={(e) => {
+                e.currentTarget.style.background = isDarkMode ? 'rgba(255,255,255,0.1)' : 'rgba(0,0,0,0.08)';
+                e.currentTarget.style.transform = 'scale(1)';
+              }}
+            >
+              <X size={20} />
+            </button>
+          </div>
+
+          {/* Patient List */}
+          <div
+            style={{
+              padding: '10px clamp(12px, 2.5vw, 16px)',
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '8px',
+              flex: '1 1 auto',
+              minHeight: 0,
+              overflowY: 'auto',
+              overscrollBehavior: 'contain',
+              WebkitOverflowScrolling: 'touch',
+            }}
+          >
+            {!Array.isArray(patientDetails) || patientDetails.length === 0 ? (
+              <div
+                style={{
+                  textAlign: 'center',
+                  padding: '40px 20px',
+                  color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
+                  fontSize: '1rem',
+                }}
+              >
+                No patient data available for this date.
+              </div>
+            ) : (
+              [...patientDetails]
+                .sort((a, b) => a.stay_hours - b.stay_hours)
+                .map((patient, index) => {
+                  const stayHours = patient.stay_hours;
+                  const isDurationShort = stayHours <= 1;
+                  const isDurationLong = stayHours > 4;
+                  const durationColor = isDurationShort
+                    ? '#52c41a'
+                    : isDurationLong
+                    ? '#ff4d4f'
+                    : '#1890ff';
+
+                  return (
+                    <div
+                      key={patient.patient_id}
+                      style={{
+                        position: 'relative',
+                        background: isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)',
+                        borderRadius: '8px',
+                        padding: '9px 10px 8px 42px',
+                        border: isDarkMode ? '1px solid rgba(255,255,255,0.08)' : '1px solid rgba(0,0,0,0.06)',
+                        animation: patientTimelineReady ? `fadeInUp 0.4s ease-out ${index * 0.05}s forwards` : 'none',
+                        opacity: patientTimelineReady ? 1 : 0,
+                        cursor: 'pointer',
+                        transition: 'all 0.2s ease',
+                      }}
+                      onMouseEnter={(e) => {
+                        e.currentTarget.style.background = isDarkMode ? 'rgba(255, 255, 255, 0.08)' : 'rgba(24, 144, 255, 0.05)';
+                        e.currentTarget.style.transform = 'translateY(-2px)';
+                        e.currentTarget.style.boxShadow = isDarkMode
+                          ? '0 4px 12px rgba(0, 0, 0, 0.3)'
+                          : '0 4px 12px rgba(24, 144, 255, 0.15)';
+                      }}
+                      onMouseLeave={(e) => {
+                        e.currentTarget.style.background = isDarkMode ? 'rgba(255, 255, 255, 0.05)' : 'rgba(0, 0, 0, 0.02)';
+                        e.currentTarget.style.transform = 'translateY(0)';
+                        e.currentTarget.style.boxShadow = 'none';
+                      }}
+                    >
+                      <div
+                        aria-label={`List position ${index + 1}`}
+                        style={{
+                          position: 'absolute',
+                          top: '-1px',
+                          left: '-1px',
+                          minWidth: '28px',
+                          height: '22px',
+                          padding: '0 6px',
+                          boxSizing: 'border-box',
+                          borderRadius: '8px 0 8px 0',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          background: isDarkMode ? 'rgba(24, 144, 255, 0.28)' : 'rgba(24, 144, 255, 0.16)',
+                          borderRight: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(24,144,255,0.18)',
+                          borderBottom: isDarkMode ? '1px solid rgba(255,255,255,0.12)' : '1px solid rgba(24,144,255,0.18)',
+                          color: '#1890ff',
+                          fontSize: '0.68rem',
+                          fontWeight: 700,
+                          lineHeight: 1,
+                        }}
+                      >
+                        {index + 1}
+                      </div>
+                      <div
+                        style={{
+                          display: 'grid',
+                          gridTemplateColumns: 'minmax(112px, 0.95fr) minmax(120px, 1.5fr) minmax(86px, 1fr)',
+                          alignItems: 'center',
+                          gap: '10px',
+                        }}
+                      >
+                        <div
+                          style={{
+                            display: 'inline-flex',
+                            alignItems: 'center',
+                            gap: '6px',
+                            minWidth: 0,
+                            padding: '5px 10px 5px 7px',
+                            borderRadius: '6px',
+                            background: isDarkMode ? 'rgba(24, 144, 255, 0.15)' : 'rgba(24, 144, 255, 0.1)',
+                            color: '#1890ff',
+                            fontSize: 'clamp(0.76rem, 1.5vw, 0.86rem)',
+                            fontWeight: 600,
+                            lineHeight: 1.15,
+                          }}
+                        >
+	                          <img
+	                            src={PatientIcon}
+	                            alt=""
+	                            style={{
+	                              width: '22px',
+	                              height: '22px',
+	                              filter: 'brightness(0) saturate(100%) invert(48%) sepia(98%) saturate(1847%) hue-rotate(189deg) brightness(99%) contrast(96%)',
+	                              objectFit: 'contain',
+	                              opacity: 1,
+	                            }}
+	                          />
+                          <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                            Patient {patient.patient_id}
+                          </span>
+                        </div>
+
+                        <div
+                          style={{
+                            display: 'grid',
+                            gridTemplateColumns: '1fr 1fr',
+                            gap: '8px',
+                            minWidth: 0,
+                          }}
+                        >
+                        {[
+                          ['Arrival', patient.arrival_time],
+                          ['Departure', patient.departure_time],
+                        ].map(([label, value]) => (
+                          <div key={label} style={{ minWidth: 0 }}>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: 'clamp(0.68rem, 1.3vw, 0.76rem)',
+                                color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
+                                fontWeight: 500,
+                                lineHeight: 1.15,
+                              }}
+                            >
+                              {label}
+                            </span>
+                            <span
+                              style={{
+                                display: 'block',
+                                fontSize: 'clamp(0.82rem, 1.7vw, 0.94rem)',
+                                fontWeight: 600,
+                                lineHeight: 1.25,
+                                color: isDarkMode ? '#f0f0f0' : '#262626',
+                                overflow: 'hidden',
+                                textOverflow: 'ellipsis',
+                                whiteSpace: 'nowrap',
+                              }}
+                            >
+                              {new Date(value).toLocaleTimeString(undefined, {
+                                hour: '2-digit',
+                                minute: '2-digit',
+                              })}
+                            </span>
+                          </div>
+                        ))}
+                      </div>
+
+                      <div>
+                        <div
+                          style={{
+                            display: 'flex',
+                            justifyContent: 'space-between',
+                            alignItems: 'center',
+                            gap: '8px',
+                            marginBottom: '3px',
+                          }}
+                        >
+                          <span
+                            style={{
+                              fontSize: 'clamp(0.68rem, 1.3vw, 0.76rem)',
+                              color: isDarkMode ? '#b0b0b0' : '#8c8c8c',
+                              fontWeight: 500,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            Stay
+                          </span>
+                          <span
+                            style={{
+                              fontSize: 'clamp(0.78rem, 1.5vw, 0.9rem)',
+                              fontWeight: 700,
+                              color: durationColor,
+                              whiteSpace: 'nowrap',
+                            }}
+                          >
+                            {formatHours(stayHours)}
+                          </span>
+                        </div>
+                        <div
+                          style={{
+                            width: '100%',
+                            height: '5px',
+                            borderRadius: '999px',
+                            background: isDarkMode ? 'rgba(255, 255, 255, 0.1)' : 'rgba(0, 0, 0, 0.08)',
+                            overflow: 'hidden',
+                            position: 'relative',
+                          }}
+                        >
+                          <div
+                            style={{
+                              width: `${Math.min((stayHours / 8) * 100, 100)}%`,
+                              height: '100%',
+                              background: `linear-gradient(90deg, ${durationColor} 0%, ${durationColor}dd 100%)`,
+                              borderRadius: '999px',
+                              transition: 'width 0.6s ease-out',
+                              animation: patientTimelineReady ? `growBar 0.8s ease-out ${index * 0.05}s forwards` : 'none',
+                            }}
+                          />
+                        </div>
+                      </div>
+                    </div>
+                    </div>
+                  );
+                })
+            )}
+          </div>
+
+          {/* Footer Stats */}
+          <div
+            style={{
+              padding: '9px clamp(14px, 3vw, 20px)',
+              borderTop: isDarkMode ? '1px solid rgba(255,255,255,0.1)' : '1px solid rgba(0,0,0,0.08)',
+              display: 'flex',
+              justifyContent: 'space-between',
+              alignItems: 'center',
+              gap: '12px',
+              background: isDarkMode ? 'rgba(0, 0, 0, 0.2)' : 'rgba(255, 255, 255, 0.5)',
+            }}
+          >
+            <div style={{ fontSize: 'clamp(0.82rem, 1.7vw, 0.92rem)', fontWeight: 600 }}>
+              Total Patients: <span style={{ color: '#1890ff' }}>{Array.isArray(patientDetails) ? patientDetails.length : 0}</span>
+            </div>
+            <div style={{ fontSize: 'clamp(0.78rem, 1.6vw, 0.88rem)', color: isDarkMode ? '#b0b0b0' : '#8c8c8c', textAlign: 'right' }}>
+              Average Stay: <span style={{ color: '#1890ff', fontWeight: 600 }}>
+                {Array.isArray(patientDetails) && patientDetails.length > 0
+                  ? formatHours(patientDetails.reduce((sum, p) => sum + p.stay_hours, 0) / patientDetails.length)
+                  : '0h 00m'}
+              </span>
+            </div>
+          </div>
+        </div>
+      </div>
+    )}
+
     {/* Custom Tooltip */}
     {tooltipData &&
       typeof document !== 'undefined' &&
@@ -1502,8 +2085,8 @@ useEffect(() => {
             borderRadius: isCompactHeatmapTooltip ? '7px' : '10px',
             fontSize: isCompactHeatmapTooltip ? '0.72rem' : '0.86rem',
             fontWeight: 500,
-            boxShadow: isDarkMode 
-              ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)' 
+            boxShadow: isDarkMode
+              ? '0 8px 24px rgba(0, 0, 0, 0.6), 0 4px 8px rgba(0, 0, 0, 0.4)'
               : '0 8px 24px rgba(0, 0, 0, 0.15), 0 4px 8px rgba(0, 0, 0, 0.1)',
             pointerEvents: 'none',
             zIndex: 10000,
@@ -1524,9 +2107,9 @@ useEffect(() => {
                   gap: isCompactHeatmapTooltip ? '3px' : '7px',
                 }}
               >
-                <div style={{ 
-                  color: '#1890ff', 
-                  fontSize: isCompactHeatmapTooltip ? '0.6rem' : '0.78rem', 
+                <div style={{
+                  color: '#1890ff',
+                  fontSize: isCompactHeatmapTooltip ? '0.6rem' : '0.78rem',
                   fontWeight: 700,
                   letterSpacing: isCompactHeatmapTooltip ? '0.25px' : '0.55px',
                   textTransform: 'uppercase',
@@ -1544,7 +2127,7 @@ useEffect(() => {
                 >
                   {timeRange}
                 </div>
-                <div style={{ 
+                <div style={{
                   marginTop: isCompactHeatmapTooltip ? '1px' : '3px',
                   paddingTop: isCompactHeatmapTooltip ? '4px' : '8px',
                   borderTop: isDarkMode ? '1px solid #404040' : '1px solid #f0f0f0',
