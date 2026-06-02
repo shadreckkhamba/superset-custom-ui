@@ -1905,33 +1905,37 @@ useEffect(() => {
                           alignItems: 'center',
                           gap: '10px',
                         }}
-                      >
-                        <div
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '6px',
-                            minWidth: 0,
-                            padding: '5px 10px 5px 7px',
-                            borderRadius: '6px',
-                            background: isDarkMode ? 'rgba(24, 144, 255, 0.15)' : 'rgba(24, 144, 255, 0.1)',
-                            color: '#1890ff',
-                            fontSize: 'clamp(0.76rem, 1.5vw, 0.86rem)',
-                            fontWeight: 600,
+	                      >
+	                        <div
+	                          style={{
+	                            display: 'inline-flex',
+	                            alignItems: 'center',
+	                            position: 'relative',
+	                            minWidth: 0,
+	                            height: '32px',
+	                            padding: '0 10px 0 38px',
+	                            borderRadius: '6px',
+	                            background: isDarkMode ? 'rgba(24, 144, 255, 0.15)' : 'rgba(24, 144, 255, 0.1)',
+	                            color: '#1890ff',
+	                            fontSize: 'clamp(0.76rem, 1.5vw, 0.86rem)',
+	                            fontWeight: 600,
                             lineHeight: 1.15,
                           }}
-                        >
-	                          <img
-	                            src={PatientIcon}
-	                            alt=""
+	                        >
+	                          <span
+	                            aria-hidden="true"
 	                            style={{
-	                              width: '22px',
-	                              height: '22px',
-	                              filter: 'brightness(0) saturate(100%) invert(48%) sepia(98%) saturate(1847%) hue-rotate(189deg) brightness(99%) contrast(96%)',
-	                              objectFit: 'contain',
-	                              opacity: 1,
+	                              position: 'absolute',
+	                              left: '4px',
+	                              top: '50%',
+	                              transform: 'translateY(-50%)',
+	                              width: '32px',
+	                              height: '32px',
+	                              backgroundColor: '#1890ff',
+	                              mask: `url(${PatientIcon}) center / contain no-repeat`,
+	                              WebkitMask: `url(${PatientIcon}) center / contain no-repeat`,
 	                            }}
-	                          />
+                          />
                           <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                             Patient {patient.patient_id}
                           </span>
