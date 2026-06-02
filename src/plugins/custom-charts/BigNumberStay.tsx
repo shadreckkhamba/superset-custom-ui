@@ -20,6 +20,7 @@ import { ShimmerLoader } from './ShimmerLoader';
 import { ENDPOINTS } from '../../config/endpoints';
 import './chart-fixes.css';
 import PatientTrendIcon from '../../assets/images/PatientTrend.png';
+import PatientTrendGif from '../../assets/images/trend-transparent-paused-5s.gif';
 import PatientIcon from '../../assets/images/patientIcon.png';
 
 // Register components
@@ -245,6 +246,7 @@ export default function BigNumberStay({
   const [stayData, setStayData] = useState<StayApiResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedIsToday, setSelectedIsToday] = useState(true);
+  const [isStayEndpointLive, setIsStayEndpointLive] = useState(false);
   const [updateTrigger, setUpdateTrigger] = useState<number>(0); // Add trigger for forced updates
   const [trendDays, setTrendDays] = useState<TrendDay[]>([]);
   const [stayDistributionByDay, setStayDistributionByDay] = useState<Record<string, { hours: number; count: number }[]>>({});
@@ -375,10 +377,14 @@ const loadData = async (resetToToday = false) => {
 
   try {
     const resp = await fetchStayTimes();
-    if (!resp) return;
+    if (!resp) {
+      setIsStayEndpointLive(false);
+      return;
+    }
 
     console.log('API Response:', resp); // Debug logging
 
+    setIsStayEndpointLive(true);
     setStayData(resp);
 
     // Use the today object from API which has the correct current average
@@ -462,6 +468,7 @@ const loadData = async (resetToToday = false) => {
     }
   } catch (err) {
     console.error(err);
+    setIsStayEndpointLive(false);
   } finally {
     // Ensure shimmer shows for at least 800ms
     const elapsedTime = Date.now() - startTime;
@@ -773,7 +780,7 @@ useEffect(() => {
         style={{
           position: 'absolute',
           top: '8px',
-          right: '50px',
+          right: '64px',
           width: '40px',
           height: '40px',
           borderRadius: '999px',
@@ -796,6 +803,24 @@ useEffect(() => {
           e.currentTarget.style.opacity = '1';
         }}
       >
+        {isStayEndpointLive && selectedIsToday && (
+          <span
+            aria-label="Timeline live"
+            title="Timeline live"
+            style={{
+              position: 'absolute',
+              top: '4px',
+              right: '1px',
+              width: '10px',
+              height: '10px',
+              borderRadius: '999px',
+              background: '#22c55e',
+              border: isDarkMode ? '2px solid #2d2d2d' : '2px solid #fafbfc',
+              boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.22)',
+              zIndex: 1,
+            }}
+          />
+        )}
         <img
           src={PatientTrendIcon}
           alt="Patient Trend"
@@ -1746,14 +1771,15 @@ useEffect(() => {
                   background: 'transparent',
                 }}
               >
-                <img
-                  src={PatientTrendIcon}
-                  alt="Patient Timeline"
+                <span
+                  aria-hidden="true"
                   style={{
+                    display: 'inline-block',
                     width: '30px',
                     height: '30px',
-                    filter: 'none',
-                    objectFit: 'contain'
+                    backgroundColor: '#1890ff',
+                    mask: `url(${PatientTrendGif}) center / contain no-repeat`,
+                    WebkitMask: `url(${PatientTrendGif}) center / contain no-repeat`,
                   }}
                 />
               </div>
@@ -1965,13 +1991,18 @@ useEffect(() => {
                                 timeString = date.toLocaleTimeString(undefined, {
                                   hour: '2-digit',
                                   minute: '2-digit',
+                                  second: '2-digit',
                                 });
                               } else {
                                 // If it's just a time string like "08:30:00", display it directly
                                 if (typeof value === 'string' && value.includes(':')) {
                                   const timeParts = value.split(':');
-                                  if (timeParts.length >= 2) {
-                                    timeString = `${timeParts[0]}:${timeParts[1]}`;
+                                  if (timeParts.length >= 3) {
+                                    // Format: HH:MM:SS
+                                    timeString = `${timeParts[0]}:${timeParts[1]}:${timeParts[2]}`;
+                                  } else if (timeParts.length >= 2) {
+                                    // Format: HH:MM
+                                    timeString = `${timeParts[0]}:${timeParts[1]}:00`;
                                   }
                                 }
                               }
@@ -1979,7 +2010,7 @@ useEffect(() => {
                           } catch (e) {
                             console.error('Error parsing time:', value, e);
                           }
-                          
+
                           return (
                           <div key={label} style={{ minWidth: 0 }}>
                             <span

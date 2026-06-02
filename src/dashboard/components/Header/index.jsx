@@ -521,6 +521,9 @@ const Header = () => {
   const isViewingDashboard = /^\/superset\/dashboard\/\d+$/.test(location.pathname);
   
   const [lastUpdatedTime, setLastUpdatedTime] = useState(null);
+  const lastUpdatedRefreshRef = useRef(0);
+  const lastUpdatedRefreshTimeoutRef = useRef(null);
+  const forceRefreshRef = useRef(null);
   // Avg stay model
   const [isAvgStayModalOpen, setAvgStayModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -959,7 +962,23 @@ const Header = () => {
         .then(res => res.json())
         .then(data => {
           if (data.last_updated) {
+            const apiTimestamp = new Date(data.last_updated).getTime();
             setLastUpdatedTime(data.last_updated);
+
+            if (!Number.isNaN(apiTimestamp) && apiTimestamp > lastUpdatedRefreshRef.current) {
+              lastUpdatedRefreshRef.current = apiTimestamp;
+
+              if (lastUpdatedRefreshTimeoutRef.current) {
+                clearTimeout(lastUpdatedRefreshTimeoutRef.current);
+              }
+
+              lastUpdatedRefreshTimeoutRef.current = setTimeout(() => {
+                if (forceRefreshRef.current) {
+                  forceRefreshRef.current();
+                }
+                lastUpdatedRefreshTimeoutRef.current = null;
+              }, 1000);
+            }
           } else {
             setLastUpdatedTime(null);
           }
@@ -970,7 +989,13 @@ const Header = () => {
     fetchLastUpdated(); 
 
     const interval = setInterval(fetchLastUpdated, 2000); 
-    return () => clearInterval(interval);
+    return () => {
+      clearInterval(interval);
+      if (lastUpdatedRefreshTimeoutRef.current) {
+        clearTimeout(lastUpdatedRefreshTimeoutRef.current);
+        lastUpdatedRefreshTimeoutRef.current = null;
+      }
+    };
   }, []);
 
   //Handle checkbox toggle
@@ -1420,6 +1445,10 @@ const Header = () => {
     }
     return false;
   }, [boundActionCreators, chartIds, dashboardInfo.id, isLoading, isPatientStayView]);
+
+  useEffect(() => {
+    forceRefreshRef.current = forceRefresh;
+  }, [forceRefresh]);
 
   const toggleEditMode = useCallback(() => {
     boundActionCreators.logEvent(LOG_ACTIONS_TOGGLE_EDIT_DASHBOARD, {
