@@ -536,6 +536,9 @@ useEffect(() => {
       console.log('Fetching patient details for date:', selectedDayKey);
       const details = await fetchPatientDetails(selectedDayKey);
       console.log('Patient details received:', details);
+      if (details && details.length > 0) {
+        console.log('Sample patient data:', details[0]);
+      }
       if (details) {
         setPatientDetails(details);
       } else {
@@ -1952,7 +1955,32 @@ useEffect(() => {
                         {[
                           ['Arrival', patient.arrival_time],
                           ['Departure', patient.departure_time],
-                        ].map(([label, value]) => (
+                        ].map(([label, value]) => {
+                          // Parse the date/time value more robustly
+                          let timeString = 'Invalid Date';
+                          try {
+                            if (value) {
+                              const date = new Date(value);
+                              if (!isNaN(date.getTime())) {
+                                timeString = date.toLocaleTimeString(undefined, {
+                                  hour: '2-digit',
+                                  minute: '2-digit',
+                                });
+                              } else {
+                                // If it's just a time string like "08:30:00", display it directly
+                                if (typeof value === 'string' && value.includes(':')) {
+                                  const timeParts = value.split(':');
+                                  if (timeParts.length >= 2) {
+                                    timeString = `${timeParts[0]}:${timeParts[1]}`;
+                                  }
+                                }
+                              }
+                            }
+                          } catch (e) {
+                            console.error('Error parsing time:', value, e);
+                          }
+                          
+                          return (
                           <div key={label} style={{ minWidth: 0 }}>
                             <span
                               style={{
@@ -1977,13 +2005,11 @@ useEffect(() => {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              {new Date(value).toLocaleTimeString(undefined, {
-                                hour: '2-digit',
-                                minute: '2-digit',
-                              })}
+                              {timeString}
                             </span>
                           </div>
-                        ))}
+                        );
+                        })}
                       </div>
 
                       <div>
