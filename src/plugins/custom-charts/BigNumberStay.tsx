@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { createPortal } from 'react-dom';
 import { Line } from 'react-chartjs-2';
 import {
@@ -54,6 +54,15 @@ const responsiveSwitchStyles = `
     to {
       opacity: 1;
       transform: scale(1);
+    }
+  }
+
+  @keyframes patientTimelinePendingSpin {
+    from {
+      transform: rotate(0deg);
+    }
+    to {
+      transform: rotate(360deg);
     }
   }
 
@@ -168,9 +177,9 @@ interface StayApiResponse {
 
 interface PatientDetail {
   patient_id: string;
-  arrival_time: string;
-  departure_time: string;
-  stay_hours: number;
+  arrival_time: string | null;
+  departure_time: string | null;
+  stay_hours: number | null;
 }
 interface BigNumberStayProps {
   refreshKey?: number;
@@ -287,6 +296,73 @@ export default function BigNumberStay({
 
   const formatDayLabel = (day: string) =>
     parseApiDay(day).toLocaleDateString(undefined, { weekday: 'short', timeZone: 'UTC' });
+
+  const isPendingTimeValue = (value: string | null | undefined) => {
+    if (value === null || value === undefined) {
+      return true;
+    }
+
+    const normalizedValue = String(value).trim().toLowerCase();
+    return (
+      normalizedValue === '' ||
+      normalizedValue === 'null' ||
+      normalizedValue === 'none' ||
+      normalizedValue === 'undefined' ||
+      normalizedValue === 'invalid date' ||
+      normalizedValue === 'pending' ||
+      normalizedValue === 'processing'
+    );
+  };
+
+  const formatPatientTime = (value: string | null | undefined) => {
+    if (isPendingTimeValue(value)) {
+      return '';
+    }
+
+    try {
+      const date = new Date(value as string);
+      if (!Number.isNaN(date.getTime())) {
+        return date.toLocaleTimeString(undefined, {
+          hour: '2-digit',
+          minute: '2-digit',
+          second: '2-digit',
+        });
+      }
+
+      if (typeof value === 'string' && value.includes(':')) {
+        const timeParts = value.split(':');
+        if (timeParts.length >= 3) {
+          return `${timeParts[0]}:${timeParts[1]}:${timeParts[2]}`;
+        }
+        if (timeParts.length >= 2) {
+          return `${timeParts[0]}:${timeParts[1]}:00`;
+        }
+      }
+    } catch (e) {
+      console.error('Error parsing time:', value, e);
+    }
+
+    return 'Invalid Date';
+  };
+
+  const getArrivalSortValue = (arrivalTime: string | null) => {
+    if (!arrivalTime) {
+      return Number.MAX_SAFE_INTEGER;
+    }
+
+    const parsedDate = new Date(arrivalTime).getTime();
+    if (!Number.isNaN(parsedDate)) {
+      return parsedDate;
+    }
+
+    const timeMatch = arrivalTime.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?/);
+    if (timeMatch) {
+      const [, hours, minutes, seconds = '0'] = timeMatch;
+      return Number(hours) * 3600 + Number(minutes) * 60 + Number(seconds);
+    }
+
+    return Number.MAX_SAFE_INTEGER;
+  };
 
   const buildLocalWeek = () => {
     const today = new Date();
@@ -521,6 +597,21 @@ useEffect(
   [],
 );
 
+const refreshPatientDetails = useCallback(async (dayKey: string) => {
+  if (!dayKey) return;
+  console.log('Fetching patient details for date:', dayKey);
+  const details = await fetchPatientDetails(dayKey);
+  console.log('Patient details received:', details);
+  if (details && details.length > 0) {
+    console.log('Sample patient data:', details[0]);
+  }
+  if (details) {
+    setPatientDetails(details);
+  } else {
+    setPatientDetails([]);
+  }
+}, []);
+
 // Auto refresh every 60s - only when viewing today's data
 useEffect(() => {
   if (!autoRefresh) {
@@ -536,24 +627,23 @@ useEffect(() => {
   return () => clearInterval(intervalId);
 }, [autoRefresh, selectedIsToday]);
 
-  // Fetch patient details when selected date changes
+  // Fetch patient details when selected date or parent refresh changes
   useEffect(() => {
-    const loadPatientDetails = async () => {
-      if (!selectedDayKey) return;
-      console.log('Fetching patient details for date:', selectedDayKey);
-      const details = await fetchPatientDetails(selectedDayKey);
-      console.log('Patient details received:', details);
-      if (details && details.length > 0) {
-        console.log('Sample patient data:', details[0]);
-      }
-      if (details) {
-        setPatientDetails(details);
-      } else {
-        setPatientDetails([]);
-      }
-    };
-    loadPatientDetails();
-  }, [selectedDayKey]);
+    refreshPatientDetails(selectedDayKey);
+  }, [refreshKey, refreshPatientDetails, selectedDayKey]);
+
+  // Keep today's timeline list live while the chart is on screen
+  useEffect(() => {
+    if (!autoRefresh || !selectedIsToday || !selectedDayKey) {
+      return undefined;
+    }
+
+    const intervalId = setInterval(() => {
+      refreshPatientDetails(selectedDayKey);
+    }, 60000);
+
+    return () => clearInterval(intervalId);
+  }, [autoRefresh, refreshPatientDetails, selectedDayKey, selectedIsToday]);
 
   // Handle patient timeline modal animation
   useEffect(() => {
@@ -1864,12 +1954,15 @@ useEffect(() => {
               </div>
             ) : (
               [...patientDetails]
-                .sort((a, b) => a.stay_hours - b.stay_hours)
+                .sort((a, b) => getArrivalSortValue(b.arrival_time) - getArrivalSortValue(a.arrival_time))
                 .map((patient, index) => {
-                  const stayHours = patient.stay_hours;
+                  const stayHours = Number(patient.stay_hours) || 0;
+                  const hasPendingDeparture = isPendingTimeValue(patient.departure_time);
                   const isDurationShort = stayHours <= 1;
                   const isDurationLong = stayHours > 4;
-                  const durationColor = isDurationShort
+                  const durationColor = hasPendingDeparture
+                    ? '#1890ff'
+                    : isDurationShort
                     ? '#52c41a'
                     : isDurationLong
                     ? '#ff4d4f'
@@ -1982,34 +2075,8 @@ useEffect(() => {
                           ['Arrival', patient.arrival_time],
                           ['Departure', patient.departure_time],
                         ].map(([label, value]) => {
-                          // Parse the date/time value more robustly
-                          let timeString = 'Invalid Date';
-                          try {
-                            if (value) {
-                              const date = new Date(value);
-                              if (!isNaN(date.getTime())) {
-                                timeString = date.toLocaleTimeString(undefined, {
-                                  hour: '2-digit',
-                                  minute: '2-digit',
-                                  second: '2-digit',
-                                });
-                              } else {
-                                // If it's just a time string like "08:30:00", display it directly
-                                if (typeof value === 'string' && value.includes(':')) {
-                                  const timeParts = value.split(':');
-                                  if (timeParts.length >= 3) {
-                                    // Format: HH:MM:SS
-                                    timeString = `${timeParts[0]}:${timeParts[1]}:${timeParts[2]}`;
-                                  } else if (timeParts.length >= 2) {
-                                    // Format: HH:MM
-                                    timeString = `${timeParts[0]}:${timeParts[1]}:00`;
-                                  }
-                                }
-                              }
-                            }
-                          } catch (e) {
-                            console.error('Error parsing time:', value, e);
-                          }
+                          const isPendingDeparture = label === 'Departure' && isPendingTimeValue(value);
+                          const timeString = formatPatientTime(value);
 
                           return (
                           <div key={label} style={{ minWidth: 0 }}>
@@ -2036,7 +2103,32 @@ useEffect(() => {
                                 whiteSpace: 'nowrap',
                               }}
                             >
-                              {timeString}
+                              {isPendingDeparture ? (
+                                <span
+                                  style={{
+                                    display: 'inline-flex',
+                                    alignItems: 'center',
+                                    gap: '5px',
+                                    color: '#1890ff',
+                                  }}
+                                >
+                                  <span
+                                    aria-hidden="true"
+                                    style={{
+                                      width: '14px',
+                                      height: '14px',
+                                      borderRadius: '999px',
+                                      border: '2px solid rgba(24, 144, 255, 0.22)',
+                                      borderTopColor: '#1890ff',
+                                      boxSizing: 'border-box',
+                                      animation: 'patientTimelinePendingSpin 1.1s linear infinite',
+                                    }}
+                                  />
+                                  Processing
+                                </span>
+                              ) : (
+                                timeString
+                              )}
                             </span>
                           </div>
                         );
@@ -2067,11 +2159,11 @@ useEffect(() => {
                             style={{
                               fontSize: 'clamp(0.78rem, 1.5vw, 0.9rem)',
                               fontWeight: 700,
-                              color: durationColor,
-                              whiteSpace: 'nowrap',
-                            }}
-                          >
-                            {formatHours(stayHours)}
+                            color: durationColor,
+                            whiteSpace: 'nowrap',
+                          }}
+                        >
+                            {hasPendingDeparture ? 'In care' : formatHours(stayHours)}
                           </span>
                         </div>
                         <div
@@ -2086,9 +2178,11 @@ useEffect(() => {
                         >
                           <div
                             style={{
-                              width: `${Math.min((stayHours / 8) * 100, 100)}%`,
+                              width: hasPendingDeparture ? '100%' : `${Math.min((stayHours / 8) * 100, 100)}%`,
                               height: '100%',
-                              background: `linear-gradient(90deg, ${durationColor} 0%, ${durationColor}dd 100%)`,
+                              background: hasPendingDeparture
+                                ? 'linear-gradient(90deg, rgba(24, 144, 255, 0.35) 0%, rgba(24, 144, 255, 0.75) 50%, rgba(24, 144, 255, 0.35) 100%)'
+                                : `linear-gradient(90deg, ${durationColor} 0%, ${durationColor}dd 100%)`,
                               borderRadius: '999px',
                               transition: 'width 0.6s ease-out',
                               animation: patientTimelineReady ? `growBar 0.8s ease-out ${index * 0.05}s forwards` : 'none',
