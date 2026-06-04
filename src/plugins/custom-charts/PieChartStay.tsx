@@ -691,6 +691,304 @@ export default function StayTimePie({
 
   const hasData = useMemo(() => percentages.some(p => p > 0), [percentages]);
 
+  // Inject/remove dark mode styles for the calendar dropdown (rendered in document.body)
+  useEffect(() => {
+    const styleId = 'pie-stay-datepicker-dark-mode-styles';
+    let existing = document.getElementById(styleId);
+    if (isDarkMode) {
+      if (!existing) {
+        existing = document.createElement('style');
+        existing.id = styleId;
+        document.head.appendChild(existing);
+      }
+      existing.textContent = `
+        /* ── Container & panel ── */
+        .pie-stay-reference-date-picker-dropdown,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-panel,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-panel,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-date-panel {
+          background: #1e2330 !important;
+          border-color: rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
+        }
+
+        /* ── Root dropdown element itself ── */
+        .pie-stay-reference-date-picker-dropdown {
+          background: transparent !important;
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+
+        /* ── Kill ALL white/light backgrounds everywhere in the calendar ── */
+        .pie-stay-reference-date-picker-dropdown,
+        .pie-stay-reference-date-picker-dropdown *,
+        .pie-stay-reference-date-picker-dropdown *::before,
+        .pie-stay-reference-date-picker-dropdown *::after {
+          background-color: transparent !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+          box-shadow: none !important;
+        }
+
+        /* ── Re-apply panel background after the wildcard reset ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container {
+          background-color: #1e2330 !important;
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
+          border-radius: 12px !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-panel,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-panel,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-date-panel,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-panel-layout,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-panel-layout,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-body,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-footer {
+          background-color: #1e2330 !important;
+        }
+
+        /* ── Header ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header {
+          background: #1e2330 !important;
+          border-bottom: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-view button,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-view button {
+          color: #c8d6e8 !important;
+          font-weight: 600 !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-view button:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-view button:hover {
+          color: #4da6ff !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn {
+          color: #7a8fa8 !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-super-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .ant-picker-header-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-prev-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-super-next-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-header-next-btn:hover {
+          background: rgba(255, 255, 255, 0.07) !important;
+          color: #c8d6e8 !important;
+        }
+
+        /* ── Body ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-body {
+          background: #1e2330 !important;
+        }
+
+        /* ── Weekday labels ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-content th,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-content th {
+          color: #5a7494 !important;
+          font-weight: 600 !important;
+          background: transparent !important;
+        }
+
+        /* ── Disabled cells (dates > today) ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-disabled,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-disabled {
+          color: rgba(255, 255, 255, 0.18) !important;
+          background: transparent !important;
+          cursor: not-allowed !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-disabled .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-disabled .antd5-picker-cell-inner {
+          background: rgba(255, 255, 255, 0.04) !important;
+          color: rgba(255, 255, 255, 0.18) !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-disabled::before,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-disabled::before {
+          background: transparent !important;
+        }
+
+        /* ── Cells: out-of-month ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell {
+          color: rgba(255, 255, 255, 0.2) !important;
+          background: transparent !important;
+        }
+
+        /* ── Cells: in-month ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-in-view,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-in-view {
+          color: #c8d6e8 !important;
+        }
+
+        /* ── Cell inner base ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-inner {
+          transition: background 140ms ease, color 140ms ease !important;
+        }
+
+        /* ── Hover ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell:not(.ant-picker-cell-disabled):hover .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell:not(.antd5-picker-cell-disabled):hover .antd5-picker-cell-inner {
+          background-color: rgba(24, 144, 255, 0.18) !important;
+          color: #fff !important;
+        }
+
+        /* ── Selected ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-selected .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-selected .antd5-picker-cell-inner {
+          background-color: #1890ff !important;
+          color: #fff !important;
+          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.45) !important;
+        }
+
+        /* ── Today ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-today .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-today .antd5-picker-cell-inner {
+          border: 1px solid #1890ff !important;
+          color: #4da6ff !important;
+          background-color: rgba(24, 144, 255, 0.08) !important;
+        }
+
+        /* ── Today + selected ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-cell-selected.ant-picker-cell-today .ant-picker-cell-inner,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-cell-selected.antd5-picker-cell-today .antd5-picker-cell-inner {
+          color: #fff !important;
+          background-color: #1890ff !important;
+        }
+
+        /* ── Footer ── */
+        .pie-stay-reference-date-picker-dropdown .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-footer {
+          background: #1e2330 !important;
+          border-top: 1px solid rgba(255, 255, 255, 0.08) !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-today-btn,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-today-btn {
+          color: #4da6ff !important;
+          font-weight: 600 !important;
+        }
+        .pie-stay-reference-date-picker-dropdown .ant-picker-today-btn:hover,
+        .pie-stay-reference-date-picker-dropdown .antd5-picker-today-btn:hover {
+          color: #79c0ff !important;
+        }
+
+        /* ── Sidecar variant ── */
+        .pie-stay-reference-date-picker-dropdown--sidecar {
+          background: transparent !important;
+          background-color: transparent !important;
+          border: none !important;
+          box-shadow: none !important;
+        }
+        .pie-stay-reference-date-picker-dropdown--sidecar *,
+        .pie-stay-reference-date-picker-dropdown--sidecar *::before,
+        .pie-stay-reference-date-picker-dropdown--sidecar *::after {
+          background-color: transparent !important;
+          border-color: rgba(255, 255, 255, 0.08) !important;
+          box-shadow: none !important;
+        }
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel-layout,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel-layout,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-header,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-header,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-body,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-body,
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-footer,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-footer {
+          background-color: #1e2330 !important;
+        }
+        .pie-stay-reference-date-picker-dropdown--sidecar .ant-picker-panel-container,
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-panel-container {
+          border: 1px solid rgba(255, 255, 255, 0.1) !important;
+          box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
+          border-radius: 12px !important;
+        }
+        /* Re-apply selected/today/hover inside sidecar */
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-cell-selected .antd5-picker-cell-inner {
+          background-color: #1890ff !important;
+          color: #fff !important;
+          box-shadow: 0 2px 8px rgba(24, 144, 255, 0.45) !important;
+        }
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-cell-today .antd5-picker-cell-inner {
+          border: 1px solid #1890ff !important;
+          color: #4da6ff !important;
+          background-color: rgba(24, 144, 255, 0.08) !important;
+        }
+        .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-cell-selected.antd5-picker-cell-today .antd5-picker-cell-inner {
+          color: #fff !important;
+          background-color: #1890ff !important;
+        }
+
+        /* ── Popup header & close button ── */
+        .pie-stay-reference-date-picker-popup-header {
+          background: linear-gradient(180deg, #252c3e 0%, #1e2330 100%) !important;
+          border-bottom-color: rgba(255, 255, 255, 0.08) !important;
+          color: #7a8fa8 !important;
+        }
+        .pie-stay-reference-date-picker-popup-close {
+          background: rgba(255, 255, 255, 0.08) !important;
+          color: #7a8fa8 !important;
+        }
+        .pie-stay-reference-date-picker-popup-close:hover {
+          background: rgba(255, 255, 255, 0.14) !important;
+          color: #c8d6e8 !important;
+        }
+      `;
+    } else if (existing) {
+      existing.remove();
+    }
+
+    // Also patch CSS variables directly on the panel container via MutationObserver
+    // because Ant Design 5's CSS-in-JS overrides our stylesheet with higher specificity
+    const patchCalendarNodes = () => {
+      document
+        .querySelectorAll('.pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container, .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container')
+        .forEach(el => {
+          const htmlEl = el as HTMLElement;
+          if (isDarkMode) {
+            htmlEl.style.setProperty('background', '#1e2330', 'important');
+            htmlEl.style.setProperty('background-color', '#1e2330', 'important');
+            htmlEl.style.setProperty('border-color', 'rgba(255,255,255,0.1)', 'important');
+            htmlEl.style.setProperty('box-shadow', '0 12px 32px rgba(0,0,0,0.55)', 'important');
+          } else {
+            htmlEl.style.removeProperty('background');
+            htmlEl.style.removeProperty('background-color');
+            htmlEl.style.removeProperty('border-color');
+            htmlEl.style.removeProperty('box-shadow');
+          }
+        });
+    };
+
+    const observer = new MutationObserver(patchCalendarNodes);
+    observer.observe(document.body, { childList: true, subtree: true });
+    patchCalendarNodes();
+
+    return () => {
+      observer.disconnect();
+      document.getElementById(styleId)?.remove();
+    };
+  }, [isDarkMode]);
+
   // Memoize chart data to prevent unnecessary re-renders
   const chartData = useMemo(() => {
     const validPercentages =
@@ -2349,6 +2647,18 @@ export default function StayTimePie({
                     popupStyle={{
                       ...datePickerPopupStyle,
                       zIndex: 2000,
+                      ...(isDarkMode && {
+                        '--ant-color-bg-container': '#1e2330',
+                        '--ant-color-bg-elevated': '#1e2330',
+                        '--ant-color-border': 'rgba(255,255,255,0.1)',
+                        '--ant-color-split': 'rgba(255,255,255,0.08)',
+                        '--ant-color-text': '#c8d6e8',
+                        '--ant-color-text-disabled': 'rgba(255,255,255,0.25)',
+                        '--ant-color-text-placeholder': 'rgba(255,255,255,0.3)',
+                        '--ant-color-bg-container-disabled': 'transparent',
+                        background: '#1e2330',
+                        border: '1px solid rgba(255,255,255,0.1)',
+                      } as React.CSSProperties),
                     }}
                     inputReadOnly
                     value={extendedDayjs(selectedDate)}
