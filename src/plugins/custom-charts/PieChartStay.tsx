@@ -721,6 +721,8 @@ export default function StayTimePie({
           background-color: transparent !important;
           border: none !important;
           box-shadow: none !important;
+          overflow: hidden !important;
+          border-radius: 12px !important;
         }
 
         /* ── Kill ALL white/light backgrounds everywhere in the calendar ── */
@@ -740,6 +742,7 @@ export default function StayTimePie({
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
           border-radius: 12px !important;
+          overflow: hidden !important;
         }
         .pie-stay-reference-date-picker-dropdown .ant-picker-panel,
         .pie-stay-reference-date-picker-dropdown .antd5-picker-panel,
@@ -922,6 +925,7 @@ export default function StayTimePie({
           border: 1px solid rgba(255, 255, 255, 0.1) !important;
           box-shadow: 0 12px 32px rgba(0, 0, 0, 0.55) !important;
           border-radius: 12px !important;
+          overflow: hidden !important;
         }
         /* Re-apply selected/today/hover inside sidecar */
         .pie-stay-reference-date-picker-dropdown--sidecar .antd5-picker-cell-selected .antd5-picker-cell-inner {
@@ -961,8 +965,26 @@ export default function StayTimePie({
     // Also patch CSS variables directly on the panel container via MutationObserver
     // because Ant Design 5's CSS-in-JS overrides our stylesheet with higher specificity
     const patchCalendarNodes = () => {
+      // Patch root dropdown element — overflow:hidden so border-radius clips children
       document
-        .querySelectorAll('.pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container, .pie-stay-reference-date-picker-dropdown .ant-picker-panel-container')
+        .querySelectorAll('.pie-stay-reference-date-picker-dropdown')
+        .forEach(el => {
+          const htmlEl = el as HTMLElement;
+          if (isDarkMode) {
+            htmlEl.style.setProperty('overflow', 'hidden', 'important');
+            htmlEl.style.setProperty('border-radius', '12px', 'important');
+          } else {
+            htmlEl.style.removeProperty('overflow');
+            htmlEl.style.removeProperty('border-radius');
+          }
+        });
+
+      // Patch panel-container
+      document
+        .querySelectorAll(
+          '.pie-stay-reference-date-picker-dropdown .antd5-picker-panel-container,' +
+          '.pie-stay-reference-date-picker-dropdown .ant-picker-panel-container',
+        )
         .forEach(el => {
           const htmlEl = el as HTMLElement;
           if (isDarkMode) {
@@ -970,16 +992,70 @@ export default function StayTimePie({
             htmlEl.style.setProperty('background-color', '#1e2330', 'important');
             htmlEl.style.setProperty('border-color', 'rgba(255,255,255,0.1)', 'important');
             htmlEl.style.setProperty('box-shadow', '0 12px 32px rgba(0,0,0,0.55)', 'important');
+            htmlEl.style.setProperty('border-radius', '12px', 'important');
+            htmlEl.style.setProperty('overflow', 'hidden', 'important');
           } else {
             htmlEl.style.removeProperty('background');
             htmlEl.style.removeProperty('background-color');
             htmlEl.style.removeProperty('border-color');
             htmlEl.style.removeProperty('box-shadow');
+            htmlEl.style.removeProperty('border-radius');
+            htmlEl.style.removeProperty('overflow');
           }
         });
+
+      // Patch all inner panel elements to prevent Ant CSS-in-JS from leaking white into corners
+      const innerParts = [
+        '.antd5-picker-panel-layout', '.ant-picker-panel-layout',
+        '.antd5-picker-panel', '.ant-picker-panel',
+        '.antd5-picker-date-panel', '.ant-picker-date-panel',
+        '.antd5-picker-header', '.ant-picker-header',
+        '.antd5-picker-body', '.ant-picker-body',
+        '.antd5-picker-footer', '.ant-picker-footer',
+      ];
+      const innerSelector = innerParts
+        .map(s => `.pie-stay-reference-date-picker-dropdown ${s}`)
+        .join(', ');
+
+      document.querySelectorAll(innerSelector).forEach(el => {
+        const htmlEl = el as HTMLElement;
+        if (isDarkMode) {
+          htmlEl.style.setProperty('background', '#1e2330', 'important');
+          htmlEl.style.setProperty('background-color', '#1e2330', 'important');
+        } else {
+          htmlEl.style.removeProperty('background');
+          htmlEl.style.removeProperty('background-color');
+        }
+      });
     };
 
-    const observer = new MutationObserver(patchCalendarNodes);
+    // childList on body catches when Ant mounts/unmounts the dropdown portal
+    const observer = new MutationObserver(mutations => {
+      patchCalendarNodes();
+      // Also watch any newly added dropdown subtrees for attribute changes (Ant CSS-in-JS
+      // sets inline styles after mount, which childList won't catch)
+      mutations.forEach(m => {
+        m.addedNodes.forEach(node => {
+          if (node instanceof HTMLElement) {
+            const dropdowns = node.classList?.contains('pie-stay-reference-date-picker-dropdown')
+              ? [node]
+              : Array.from(node.querySelectorAll('.pie-stay-reference-date-picker-dropdown'));
+            dropdowns.forEach(dd => {
+              const subtreeObserver = new MutationObserver(patchCalendarNodes);
+              subtreeObserver.observe(dd, { subtree: true, attributes: true, attributeFilter: ['style'] });
+              // Disconnect when the dropdown is removed
+              const removalObserver = new MutationObserver(() => {
+                if (!document.contains(dd)) {
+                  subtreeObserver.disconnect();
+                  removalObserver.disconnect();
+                }
+              });
+              removalObserver.observe(document.body, { childList: true, subtree: true });
+            });
+          }
+        });
+      });
+    });
     observer.observe(document.body, { childList: true, subtree: true });
     patchCalendarNodes();
 
