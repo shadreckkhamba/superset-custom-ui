@@ -88,7 +88,7 @@ const headerStyles = (theme: SupersetTheme) => css`
     min-width: 100px;
     flex: 1;
     margin-right: ${theme.gridUnit * 12}px;
-    overflow: hidden;
+    overflow: visible;
     gap: 8px;
   }
 
@@ -207,7 +207,7 @@ export const PageHeaderWithActions = ({
               display: flex;
               align-items: center;
               gap: ${theme.gridUnit * 3}px;
-              margin-left: ${theme.gridUnit * 8}px;
+              margin-left: ${theme.gridUnit * 1}px;
               flex-shrink: 0;
             `}
           >
@@ -219,6 +219,8 @@ export const PageHeaderWithActions = ({
                 align-items: center;
                 justify-content: center;
                 flex-shrink: 0;
+                margin-right: ${theme.gridUnit * 8}px;
+                overflow: visible;
               `}
             >
               {isLive && (
@@ -227,7 +229,7 @@ export const PageHeaderWithActions = ({
                   css={css`
                     position: absolute;
                     top: 1px;
-                    left: 1px;
+                    right: 1px;
                     width: 7px;
                     height: 7px;
                     border-radius: 50%;
