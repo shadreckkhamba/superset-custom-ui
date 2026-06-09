@@ -16,7 +16,7 @@
  * specific language governing permissions and limitations
  * under the License.
  */
-import { ReactNode, ReactElement } from 'react';
+import { ReactNode, ReactElement, useEffect, useRef } from 'react';
 import { css, SupersetTheme, t, useTheme } from '@superset-ui/core';
 import { Dropdown, DropdownProps } from 'src/components/Dropdown';
 import { TooltipPlacement } from 'src/components/Tooltip';
@@ -28,11 +28,9 @@ import {
 import CertifiedBadge, { CertifiedBadgeProps } from '../CertifiedBadge';
 import FaveStar, { FaveStarProps } from '../FaveStar';
 import Button from '../Button';
-//import dashboardLogo from '../../assets/images/dashboard-logo.png';
-//import { useSelector } from 'react-redux';
 import { useLocation } from 'react-router-dom';
-import { useEffect, useRef } from 'react';
 import logoBase64 from 'src/dashboard/components/Header/logoBase64';
+import dashboardGif from 'src/assets/images/dashboard.gif';
 
 export const menuTriggerStyles = (theme: SupersetTheme) => css`
   width: ${theme.gridUnit * 8}px;
@@ -141,6 +139,8 @@ export type PageHeaderWithActionsProps = {
     text?: string;
     placement?: TooltipPlacement;
   };
+  isPresentationMode?: boolean;
+  isLive?: boolean;
 };
 
 export const PageHeaderWithActions = ({
@@ -155,6 +155,8 @@ export const PageHeaderWithActions = ({
   menuDropdownProps,
   showMenuDropdown = true,
   tooltipProps,
+  isPresentationMode = false,
+  isLive = false,
 } : PageHeaderWithActionsProps) => {
   const theme = useTheme();
   const location = useLocation();
@@ -196,6 +198,72 @@ export const PageHeaderWithActions = ({
             {certificatiedBadgeProps?.certifiedBy && <CertifiedBadge {...certificatiedBadgeProps} />}
             {!isStandalone && showFaveStar && <FaveStar {...faveStarProps} />}
             {titlePanelAdditionalItems}
+          </div>
+        )}
+
+        {isPresentationMode && (
+          <div
+            css={css`
+              display: flex;
+              align-items: center;
+              gap: ${theme.gridUnit * 3}px;
+              margin-left: ${theme.gridUnit * 8}px;
+              flex-shrink: 0;
+            `}
+          >
+            <div
+              title={isLive ? 'Live — data is updating' : 'Waiting for data…'}
+              css={css`
+                position: relative;
+                display: inline-flex;
+                align-items: center;
+                justify-content: center;
+                flex-shrink: 0;
+              `}
+            >
+              {isLive && (
+                <span
+                  aria-hidden="true"
+                  css={css`
+                    position: absolute;
+                    top: 1px;
+                    left: 1px;
+                    width: 7px;
+                    height: 7px;
+                    border-radius: 50%;
+                    background-color: #22c55e;
+                    border: 1.5px solid ${theme.colors.grayscale.light5};
+                    box-shadow: 0 0 0 0 rgba(34,197,94,0.45);
+                    animation: livePulse 1.8s ease-out infinite;
+                    z-index: 1;
+
+                    @keyframes livePulse {
+                      0%   { box-shadow: 0 0 0 0   rgba(34,197,94,0.45); }
+                      70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0);   }
+                      100% { box-shadow: 0 0 0 0   rgba(34,197,94,0);   }
+                    }
+                  `}
+                />
+              )}
+
+              {/* Dashboard GIF — animated when live, frozen + gray when not */}
+              <img
+                src={dashboardGif}
+                alt=""
+                aria-hidden="true"
+                css={css`
+                  height: 36px;
+                  width: auto;
+                  flex-shrink: 0;
+                  mix-blend-mode: multiply;
+                  pointer-events: none;
+                  user-select: none;
+                  transition: filter 0.4s ease, opacity 0.4s ease;
+                  filter: ${isLive ? 'none' : 'grayscale(1) opacity(0.45)'};
+                  animation-play-state: ${isLive ? 'running' : 'paused'};
+                `}
+              />
+            </div>
           </div>
         )}
       </div>

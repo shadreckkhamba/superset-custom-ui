@@ -481,6 +481,14 @@ const Header = () => {
   const query = new URLSearchParams(location.search);
   const isStandalone = query.get('standalone') === '1';
   const isSlideshow = query.get('slideshow') === '1';
+
+  const [isFullscreen, setIsFullscreen] = useState(() => Boolean(document.fullscreenElement));
+  useEffect(() => {
+    const onFullscreenChange = () => setIsFullscreen(Boolean(document.fullscreenElement));
+    document.addEventListener('fullscreenchange', onFullscreenChange);
+    return () => document.removeEventListener('fullscreenchange', onFullscreenChange);
+  }, []);
+  const isPresentationMode = isStandalone || isSlideshow || isFullscreen;
   const [slideshowCountdownSeconds, setSlideshowCountdownSeconds] = useState(
     SLIDESHOW_ROTATION_SECONDS,
   );
@@ -524,6 +532,8 @@ const Header = () => {
   const lastUpdatedRefreshRef = useRef(0);
   const lastUpdatedRefreshTimeoutRef = useRef(null);
   const forceRefreshRef = useRef(null);
+  const lastApiSuccessRef = useRef(0);
+  const [isLive, setIsLive] = useState(false);
   // Avg stay model
   const [isAvgStayModalOpen, setAvgStayModalOpen] = useState(false);
   const [isDarkMode, setIsDarkMode] = useState(() => {
@@ -964,6 +974,8 @@ const Header = () => {
           if (data.last_updated) {
             const apiTimestamp = new Date(data.last_updated).getTime();
             setLastUpdatedTime(data.last_updated);
+            lastApiSuccessRef.current = Date.now();
+            setIsLive(true);
 
             if (!Number.isNaN(apiTimestamp) && apiTimestamp > lastUpdatedRefreshRef.current) {
               lastUpdatedRefreshRef.current = apiTimestamp;
@@ -981,9 +993,13 @@ const Header = () => {
             }
           } else {
             setLastUpdatedTime(null);
+            setIsLive(false);
           }
         })
-        .catch(err => console.error('Failed to fetch last updated time:', err));
+        .catch(err => {
+          console.error('Failed to fetch last updated time:', err);
+          setIsLive(false);
+        });
     };
 
     fetchLastUpdated(); 
@@ -2410,6 +2426,8 @@ const handleSaveAsImage = async () => {
         additionalActionsMenu={menu}
         showFaveStar={user?.userId && dashboardInfo?.id}
         showTitlePanelItems
+        isPresentationMode={isPresentationMode}
+        isLive={isLive}
       />
       <ScrollToTopButton
         type="button"

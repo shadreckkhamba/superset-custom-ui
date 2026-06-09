@@ -255,7 +255,6 @@ export default function BigNumberStay({
   const [stayData, setStayData] = useState<StayApiResponse | null>(null);
   const [selectedDate, setSelectedDate] = useState<Date>(new Date());
   const [selectedIsToday, setSelectedIsToday] = useState(true);
-  const [isStayEndpointLive, setIsStayEndpointLive] = useState(false);
   const [updateTrigger, setUpdateTrigger] = useState<number>(0); // Add trigger for forced updates
   const [trendDays, setTrendDays] = useState<TrendDay[]>([]);
   const [stayDistributionByDay, setStayDistributionByDay] = useState<Record<string, { hours: number; count: number }[]>>({});
@@ -454,13 +453,11 @@ const loadData = async (resetToToday = false) => {
   try {
     const resp = await fetchStayTimes();
     if (!resp) {
-      setIsStayEndpointLive(false);
       return;
     }
 
     console.log('API Response:', resp); // Debug logging
 
-    setIsStayEndpointLive(true);
     setStayData(resp);
 
     // Use the today object from API which has the correct current average
@@ -544,7 +541,6 @@ const loadData = async (resetToToday = false) => {
     }
   } catch (err) {
     console.error(err);
-    setIsStayEndpointLive(false);
   } finally {
     // Ensure shimmer shows for at least 800ms
     const elapsedTime = Date.now() - startTime;
@@ -893,24 +889,6 @@ useEffect(() => {
           e.currentTarget.style.opacity = '1';
         }}
       >
-        {isStayEndpointLive && selectedIsToday && (
-          <span
-            aria-label="Timeline live"
-            title="Timeline live"
-            style={{
-              position: 'absolute',
-              top: '4px',
-              right: '1px',
-              width: '10px',
-              height: '10px',
-              borderRadius: '999px',
-              background: '#22c55e',
-              border: isDarkMode ? '2px solid #2d2d2d' : '2px solid #fafbfc',
-              boxShadow: '0 0 0 2px rgba(34, 197, 94, 0.22)',
-              zIndex: 1,
-            }}
-          />
-        )}
         <img
           src={PatientTrendIcon}
           alt="Patient Trend"
