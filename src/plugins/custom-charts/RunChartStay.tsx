@@ -262,6 +262,8 @@ export default function RunChartStay({
   const [showTooltip, setShowTooltip] = useState(false);
   const [tooltipPos, setTooltipPos] = useState<{ x: number; y: number } | null>(null);
   const [loading, setLoading] = useState(true);
+  const loadingRef = useRef(true);
+  const hasLoadedOnceRef = useRef(false);
   const [chartContainerWidth, setChartContainerWidth] = useState(0);
   const [showInfoModal, setShowInfoModal] = useState(false);
   const [infoPanelReady, setInfoPanelReady] = useState(false);
@@ -389,13 +391,13 @@ export default function RunChartStay({
   }, []);
 
   const runChartResize = useCallback(() => {
+    // Don't resize while shimmer is showing — causes canvas flash at high zoom levels
+    if (loadingRef.current) return;
+
     const chart = chartRef.current;
     const container = chartContainerRef.current;
     
-    // Ensure both chart and container exist and are connected to DOM
     if (!chart || !container || !chart.canvas || !chart.canvas.isConnected) return;
-    
-    // Check if the canvas parent is still in the DOM
     if (!chart.canvas.parentNode || !document.contains(chart.canvas)) return;
 
     const width = container.clientWidth;
@@ -421,10 +423,13 @@ export default function RunChartStay({
     };
   }, []);
 
-  const fetchData = useCallback(async (offset = weekOffset) => {
-    setLoading(true);
+  const fetchData = useCallback(async (offset: number, showShimmer: boolean) => {
+    if (showShimmer) {
+      loadingRef.current = true;
+      setLoading(true);
+    }
     const startTime = Date.now();
-    
+
     try {
       const { startDate, endDate } = getWeekDateRange(offset);
       console.log("📅 Requesting date range:", { startDate, endDate, weekOffset: offset });
@@ -434,45 +439,46 @@ export default function RunChartStay({
       });
       const resp = await fetch(`${ENDPOINTS.STAY_TIMES_TREND}?${params.toString()}`);
       const data = await resp.json();
-      const entries = (data.entries || []).map((e: any) => ({
+      const newEntries = (data.entries || []).map((e: any) => ({
         arrival_time: e.day,
         departure_time: e.day,
         difference_hours: parseFloat(e.avg_stay_hours) || 0,
         total_patients: e.total_patients || 0,
       }));
-      setEntries(entries);
-      console.log("📊 Fetched entries:", entries);
+      setEntries(newEntries);
+      console.log("📊 Fetched entries:", newEntries);
     } catch (err) {
       console.error("Error fetching stay data", err);
     } finally {
-      // Ensure shimmer shows for at least 800ms
-      const elapsedTime = Date.now() - startTime;
-      const minDisplayTime = 2000;
-      const remainingTime = Math.max(0, minDisplayTime - elapsedTime);
-      
-      setTimeout(() => {
-        setLoading(false);
-      }, remainingTime);
+      if (showShimmer) {
+        const elapsed = Date.now() - startTime;
+        const remaining = Math.max(0, 600 - elapsed);
+        setTimeout(() => {
+          loadingRef.current = false;
+          hasLoadedOnceRef.current = true;
+          setLoading(false);
+        }, remaining);
+      } else {
+        hasLoadedOnceRef.current = true;
+      }
     }
-  }, [getWeekDateRange, weekOffset]);
+  }, [getWeekDateRange]);
 
   // Reload chart handler
   const handleReload = useCallback(
     async (resetToCurrentWeek = false) => {
       if (resetToCurrentWeek) {
-        // Reset to current week; fetch immediately only if we're already on current week.
         if (weekOffset === 0) {
           setSelectedDate(toDateKey(new Date()));
-          await fetchData(0);
+          await fetchData(0, false);
           return;
         }
         setSelectedDate(toDateKey(new Date()));
         setWeekOffset(0);
         return;
       }
-
-      // Preserve selected week on external refreshes.
-      await fetchData(weekOffset);
+      // External refresh — silent, no shimmer
+      await fetchData(weekOffset, false);
     },
     [fetchData, weekOffset]
   );
@@ -491,41 +497,36 @@ export default function RunChartStay({
     }
   }, [resetKey, handleReload]);
 
-  // Initial fetch + interval - only auto-refresh when viewing current week
+  // Fetch on week change (shows shimmer), silent auto-refresh every 60s
   useEffect(() => {
-    fetchData();
-    // Only auto-refresh if viewing current week (weekOffset === 0)
+    hasLoadedOnceRef.current = false;
+    loadingRef.current = true;
+    setLoading(true);
+    fetchData(weekOffset, true);
+
     if (autoRefresh && weekOffset === 0) {
-      const id = setInterval(fetchData, 60000);
+      const id = setInterval(() => {
+        if (!loadingRef.current) fetchData(weekOffset, false);
+      }, 60000);
       return () => clearInterval(id);
     }
     return undefined;
-  }, [autoRefresh, fetchData, weekOffset]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [weekOffset, autoRefresh]);
+  // Note: fetchData intentionally omitted — it's stable and we don't want
+  // it re-running if getWeekDateRange ever changes reference.
 
-  // Force chart to fully re-measure modal container after mount/render transitions.
+  // Re-measure chart after loading completes. Only resize on window resize events,
+  // not immediately after load (that causes the canvas flash at high zoom levels).
   useEffect(() => {
-    const resizeChart = () => {
-      const chart = chartRef.current;
-      if (chart && chart.canvas && chart.canvas.isConnected && document.contains(chart.canvas)) {
-        runChartResize();
-      }
-    };
-    
-    const rafId = window.requestAnimationFrame(resizeChart);
-    const t1 = window.setTimeout(resizeChart, 120);
-    const t2 = window.setTimeout(resizeChart, 400);
-    const t3 = window.setTimeout(resizeChart, 800);
-    
-    window.addEventListener("resize", resizeChart);
+    if (loading) return undefined;
 
+    const resizeChart = () => { runChartResize(); };
+    window.addEventListener("resize", resizeChart);
     return () => {
-      window.cancelAnimationFrame(rafId);
-      window.clearTimeout(t1);
-      window.clearTimeout(t2);
-      window.clearTimeout(t3);
       window.removeEventListener("resize", resizeChart);
     };
-  }, [loading, refreshKey, weekOffset, compact, runChartResize]);
+  }, [loading, runChartResize]);
 
   // Fallback animation trigger - ensures animation happens even if visibility detection fails
   useEffect(() => {
@@ -684,7 +685,13 @@ export default function RunChartStay({
 
     const resizeObserver = new ResizeObserver(() => {
       syncChartContainerWidth();
-      runChartResize();
+      // Debounce resize calls to avoid subpixel flicker at non-100% zoom levels
+      if ((resizeObserver as any)._debounceTimer) {
+        clearTimeout((resizeObserver as any)._debounceTimer);
+      }
+      (resizeObserver as any)._debounceTimer = setTimeout(() => {
+        runChartResize();
+      }, 60);
     });
 
     resizeObserver.observe(el);
@@ -1351,10 +1358,6 @@ export default function RunChartStay({
     ]
   );
 
-  if (loading) {
-    return <ShimmerLoader type="line" isDarkMode={isDarkMode} />;
-  }
-
   const openInfoModal = () => {
     if (
       typeof window !== 'undefined' &&
@@ -1401,6 +1404,21 @@ export default function RunChartStay({
         padding: compact ? "10px 10px 0" : "16px 16px 0",
       }}
     >
+      {/* Shimmer overlay — sits on top, fades out, never unmounts the chart beneath */}
+      {loading && (
+        <div
+          style={{
+            position: "absolute",
+            inset: 0,
+            zIndex: 10,
+            borderRadius: "16px",
+            overflow: "hidden",
+            backgroundColor: isDarkMode ? "#2d2d2d" : "#f3f5f8",
+          }}
+        >
+          <ShimmerLoader type="line" isDarkMode={isDarkMode} />
+        </div>
+      )}
       {/* Navigation buttons and week range */}
       <div
         style={{
