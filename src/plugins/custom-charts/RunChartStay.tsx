@@ -500,18 +500,9 @@ export default function RunChartStay({
     loadingRef.current = true;
     setLoading(true);
     fetchData(weekOffset, true);
-
-    if (autoRefresh && weekOffset === 0) {
-      const id = setInterval(() => {
-        if (!loadingRef.current) fetchData(weekOffset, false);
-      }, 60000);
-      return () => clearInterval(id);
-    }
     return undefined;
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [weekOffset, autoRefresh]);
-  // Note: fetchData intentionally omitted — it's stable and we don't want
-  // it re-running if getWeekDateRange ever changes reference.
+  }, [weekOffset]);
 
   // Re-measure chart after loading completes. Only resize on window resize events,
   // not immediately after load (that causes the canvas flash at high zoom levels).

@@ -564,17 +564,8 @@ export default function StayTimePie({
     setActualPercent(null);
     setAnimatedPercent(0);
     loadData();
-
-    if (!autoRefresh) {
-      return undefined;
-    }
-
-    const intervalId = setInterval(() => {
-      loadData();
-    }, 60000);
-
-    return () => clearInterval(intervalId);
-  }, [autoRefresh, selectedPeriod, selectedDate]);
+    return undefined;
+  }, [selectedPeriod, selectedDate]);
 
   // If the focused slice disappears in a new dataset, fall back to all slices
   useEffect(() => {

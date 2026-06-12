@@ -608,38 +608,36 @@ const refreshPatientDetails = useCallback(async (dayKey: string) => {
   }
 }, []);
 
-// Auto refresh every 60s - only when viewing today's data
-useEffect(() => {
-  if (!autoRefresh) {
-    return undefined;
-  }
-
-  const intervalId = setInterval(() => {
-    if (selectedIsToday) {
-      loadData();
-    }
-  }, 60000);
-
-  return () => clearInterval(intervalId);
-}, [autoRefresh, selectedIsToday]);
-
+// Auto refresh removed — charts refresh only when API reports new data (via refreshKey from Header)
   // Fetch patient details when selected date or parent refresh changes
   useEffect(() => {
     refreshPatientDetails(selectedDayKey);
   }, [refreshKey, refreshPatientDetails, selectedDayKey]);
 
-  // Keep today's timeline list live while the chart is on screen
+  // Keep today's timeline live by polling last_update_status directly.
+  // This catches arrival-only events that may not always trigger a refreshKey increment.
+  const timelineLastUpdatedRef = useRef(0);
   useEffect(() => {
-    if (!autoRefresh || !selectedIsToday || !selectedDayKey) {
-      return undefined;
-    }
+    if (!selectedIsToday || !selectedDayKey) return undefined;
 
-    const intervalId = setInterval(() => {
-      refreshPatientDetails(selectedDayKey);
-    }, 60000);
+    const poll = async () => {
+      try {
+        const res = await fetch(ENDPOINTS.LAST_UPDATE_STATUS);
+        const data = await res.json();
+        if (!data.last_updated) return;
+        const ts = new Date(data.last_updated).getTime();
+        if (ts > timelineLastUpdatedRef.current) {
+          timelineLastUpdatedRef.current = ts;
+          refreshPatientDetails(selectedDayKey);
+        }
+      } catch {
+        // silent — network errors shouldn't crash the timeline
+      }
+    };
 
-    return () => clearInterval(intervalId);
-  }, [autoRefresh, refreshPatientDetails, selectedDayKey, selectedIsToday]);
+    const id = setInterval(poll, 3000);
+    return () => clearInterval(id);
+  }, [selectedIsToday, selectedDayKey, refreshPatientDetails]);
 
   // Handle patient timeline modal animation
   useEffect(() => {
