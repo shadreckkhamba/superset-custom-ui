@@ -31,6 +31,7 @@ import Button from '../Button';
 import { useLocation } from 'react-router-dom';
 import logoBase64 from 'src/dashboard/components/Header/logoBase64';
 import dashboardGif from 'src/assets/images/dashboard.gif';
+import dashboardStatic from 'src/assets/images/dashboard-static.png';
 
 export const menuTriggerStyles = (theme: SupersetTheme) => css`
   width: ${theme.gridUnit * 8}px;
@@ -212,7 +213,7 @@ export const PageHeaderWithActions = ({
             `}
           >
             <div
-              title={isLive ? 'Live — data is updating' : 'Waiting for data…'}
+              title={isLive ? 'Dashboard is live' : 'Dashboard is not live'}
               css={css`
                 position: relative;
                 display: inline-flex;
@@ -235,22 +236,14 @@ export const PageHeaderWithActions = ({
                     border-radius: 50%;
                     background-color: #22c55e;
                     border: 1.5px solid ${theme.colors.grayscale.light5};
-                    box-shadow: 0 0 0 0 rgba(34,197,94,0.45);
-                    animation: livePulse 1.8s ease-out infinite;
                     z-index: 1;
-
-                    @keyframes livePulse {
-                      0%   { box-shadow: 0 0 0 0   rgba(34,197,94,0.45); }
-                      70%  { box-shadow: 0 0 0 6px rgba(34,197,94,0);   }
-                      100% { box-shadow: 0 0 0 0   rgba(34,197,94,0);   }
-                    }
                   `}
                 />
               )}
 
               {/* Dashboard GIF — animated when live, frozen + gray when not */}
               <img
-                src={dashboardGif}
+                src={isLive ? dashboardGif : dashboardStatic}
                 alt=""
                 aria-hidden="true"
                 css={css`
@@ -262,7 +255,6 @@ export const PageHeaderWithActions = ({
                   user-select: none;
                   transition: filter 0.4s ease, opacity 0.4s ease;
                   filter: ${isLive ? 'none' : 'grayscale(1) opacity(0.45)'};
-                  animation-play-state: ${isLive ? 'running' : 'paused'};
                 `}
               />
             </div>
