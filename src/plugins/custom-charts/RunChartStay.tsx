@@ -257,6 +257,14 @@ export default function RunChartStay({
 }: RunChartStayProps): JSX.Element {
   const [entries, setEntries] = useState<StayEntry[]>([]);
   const [weekOffset, setWeekOffset] = useState(0);
+  const weekOffsetRef = useRef(0);
+  const setWeekOffsetSynced = useCallback((val: number | ((prev: number) => number)) => {
+    setWeekOffset(prev => {
+      const next = typeof val === 'function' ? val(prev) : val;
+      weekOffsetRef.current = next;
+      return next;
+    });
+  }, []);
   const [selectedDate, setSelectedDate] = useState(() => toDateKey(new Date()));
   const [isDatePickerOpen, setIsDatePickerOpen] = useState(false);
   const [showTooltip, setShowTooltip] = useState(false);
@@ -452,7 +460,7 @@ export default function RunChartStay({
     } finally {
       if (showShimmer) {
         const elapsed = Date.now() - startTime;
-        const remaining = Math.max(0, 600 - elapsed);
+        const remaining = Math.max(0, 2000 - elapsed);
         setTimeout(() => {
           loadingRef.current = false;
           hasLoadedOnceRef.current = true;
@@ -464,38 +472,27 @@ export default function RunChartStay({
     }
   }, [getWeekDateRange]);
 
-  // Reload chart handler
-  const handleReload = useCallback(
-    async (resetToCurrentWeek = false) => {
-      if (resetToCurrentWeek) {
-        if (weekOffset === 0) {
-          setSelectedDate(toDateKey(new Date()));
-          await fetchData(0, false);
-          return;
-        }
-        setSelectedDate(toDateKey(new Date()));
-        setWeekOffset(0);
-        return;
-      }
-      // External refresh — silent, no shimmer
-      await fetchData(weekOffset, false);
-    },
-    [fetchData, weekOffset]
-  );
-
   // Handle external refresh requests
   useEffect(() => {
-    if (refreshKey !== undefined) {
-      handleReload(false);
+    if ((refreshKey ?? 0) > 0) {
+      fetchData(weekOffsetRef.current, true);
     }
-  }, [refreshKey, handleReload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [refreshKey]);
 
   // Reset to current week on explicit parent trigger
   useEffect(() => {
     if ((resetKey ?? 0) > 0) {
-      handleReload(true);
+      if (weekOffset === 0) {
+        setSelectedDate(toDateKey(new Date()));
+        fetchData(0, false);
+      } else {
+        setSelectedDate(toDateKey(new Date()));
+        setWeekOffsetSynced(0); // week-change effect will fetch
+      }
     }
-  }, [resetKey, handleReload]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [resetKey]);
 
   // Fetch on week change (shows shimmer), silent auto-refresh every 60s
   useEffect(() => {
@@ -855,24 +852,24 @@ export default function RunChartStay({
     const pickedDate = new Date(`${nextDateKey}T00:00:00`);
 
     setSelectedDate(nextDateKey);
-    setWeekOffset(getWeekOffsetForDate(pickedDate));
+    setWeekOffsetSynced(getWeekOffsetForDate(pickedDate));
     setIsDatePickerOpen(false);
-  }, []);
+  }, [setWeekOffsetSynced]);
 
   const goToPreviousWeek = useCallback(() => {
-    setWeekOffset(w => {
+    setWeekOffsetSynced(w => {
       const nextOffset = w - 1;
       setSelectedDate(toDateKey(getWeekStartForOffset(nextOffset)));
       return nextOffset;
     });
-  }, []);
+  }, [setWeekOffsetSynced]);
 
   const goToNextWeek = useCallback(() => {
     if (isNextWeekFuture) {
       return;
     }
 
-    setWeekOffset(w => {
+    setWeekOffsetSynced(w => {
       const nextOffset = w + 1;
       setSelectedDate(toDateKey(getWeekStartForOffset(nextOffset)));
       return nextOffset;
@@ -1410,7 +1407,7 @@ export default function RunChartStay({
           style={{
             position: "absolute",
             inset: 0,
-            zIndex: 10,
+            zIndex: 20,
             borderRadius: "16px",
             overflow: "hidden",
             backgroundColor: isDarkMode ? "#2d2d2d" : "#f3f5f8",
