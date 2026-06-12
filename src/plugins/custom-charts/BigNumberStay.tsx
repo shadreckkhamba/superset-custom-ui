@@ -614,28 +614,15 @@ const refreshPatientDetails = useCallback(async (dayKey: string) => {
     refreshPatientDetails(selectedDayKey);
   }, [refreshKey, refreshPatientDetails, selectedDayKey]);
 
-  // Keep today's timeline live by polling last_update_status directly.
-  // This catches arrival-only events that may not always trigger a refreshKey increment.
-  const timelineLastUpdatedRef = useRef(0);
+  // Keep today's timeline live — poll patient details directly every 2s.
+  // Direct polling is simpler and faster than a two-step status-check + fetch.
   useEffect(() => {
     if (!selectedIsToday || !selectedDayKey) return undefined;
 
-    const poll = async () => {
-      try {
-        const res = await fetch(ENDPOINTS.LAST_UPDATE_STATUS);
-        const data = await res.json();
-        if (!data.last_updated) return;
-        const ts = new Date(data.last_updated).getTime();
-        if (ts > timelineLastUpdatedRef.current) {
-          timelineLastUpdatedRef.current = ts;
-          refreshPatientDetails(selectedDayKey);
-        }
-      } catch {
-        // silent — network errors shouldn't crash the timeline
-      }
-    };
+    const id = setInterval(() => {
+      refreshPatientDetails(selectedDayKey);
+    }, 2000);
 
-    const id = setInterval(poll, 3000);
     return () => clearInterval(id);
   }, [selectedIsToday, selectedDayKey, refreshPatientDetails]);
 
