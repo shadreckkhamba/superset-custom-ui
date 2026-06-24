@@ -1363,7 +1363,7 @@ const Header = () => {
   
            boundActionCreators.fetchCharts(affectedCharts, true, 0, dashboardInfo.id);
 
-          if (!isFirstTimestamp && isSlideshow && isPatientStayView) {
+          if (!isFirstTimestamp) {
             setBigNumberRefreshKey(prev => prev + 1);
             setPieRefreshKey(prev => prev + 1);
             setRunChartRefreshKey(prev => prev + 1);
@@ -1450,17 +1450,16 @@ const Header = () => {
         chartCount: chartIds.length,
       });
       
-      // Also refresh custom Patient Stay charts
-      if (isPatientStayView) {
-        handleRefreshBigNumberChart();
-        handleRefreshPieChart();
-        handleRefreshRunChart();
-      }
+      // Always refresh custom Patient Stay charts when new data arrives,
+      // regardless of which view is currently active
+      handleRefreshBigNumberChart();
+      handleRefreshPieChart();
+      handleRefreshRunChart();
       
       return boundActionCreators.onRefresh(chartIds, true, 0, dashboardInfo.id);
     }
     return false;
-  }, [boundActionCreators, chartIds, dashboardInfo.id, isLoading, isPatientStayView]);
+  }, [boundActionCreators, chartIds, dashboardInfo.id, isLoading]);
 
   useEffect(() => {
     forceRefreshRef.current = forceRefresh;
