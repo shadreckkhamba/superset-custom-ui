@@ -120,7 +120,7 @@ export default function StayTimePie({
 
   // Progress bar state
   const [actualPercent, setActualPercent] = useState<number | null>(null);
-  const [targetPercent] = useState<number>(100); // 100% when average ≤ 2h
+  const [targetPercent] = useState<number>(100); // 100% when average ≤ 1h
 
   const [animatedPercent, setAnimatedPercent] = useState(0);
   const [selectedPeriod, setSelectedPeriod] = useState<string>('Daily');
@@ -532,8 +532,14 @@ export default function StayTimePie({
         ? hoursList.reduce((a, b) => a + b, 0) / hoursList.length
         : null;
 
-      const progressPercent = avgStay
-        ? Math.min((1 / avgStay) * targetPercent, targetPercent)
+      // Progress bar: average per-patient compliance score.
+      // Each patient scores min(TARGET / stay, 1.0) — patients within the
+      // 1h target score full marks; over-target patients are penalised
+      // proportionally to how far they exceeded it.
+      // e.g. 1h 2m → 0.97, 2h → 0.50, 3h → 0.33
+      const TARGET_HOURS = 1;
+      const progressPercent = hoursList.length > 0
+        ? (hoursList.reduce((sum, h) => sum + Math.min(TARGET_HOURS / h, 1), 0) / hoursList.length) * 100
         : null;
 
       setPercentages(percents);
