@@ -96,6 +96,79 @@ const SLIDESHOW_ROTATION_SECONDS = 60;
 const SLIDESHOW_SYNC_LOADER_SESSION_KEY =
   'superset-slideshow-sync-loader-shown';
 const SLIDESHOW_SYNC_LOADER_DURATION_MS = 1600;
+const DARK_MODE_STORAGE_KEY = 'superset-dashboard-dark-mode';
+const DARK_MODE_MANUAL_STORAGE_KEY = 'superset-dashboard-dark-mode-manual';
+const DARK_MODE_SCHEDULE_CHECK_MS = 60_000;
+
+const isNightTime = () => {
+  const hour = new Date().getHours();
+  return hour >= 18 || hour < 6;
+};
+
+const isDarkModeManualOverride = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  try {
+    return window.localStorage.getItem(DARK_MODE_MANUAL_STORAGE_KEY) === '1';
+  } catch {
+    return false;
+  }
+};
+
+const hasExplicitDarkModeUrlParam = () => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const darkModeParam = new URLSearchParams(window.location.search).get('dark');
+  return darkModeParam === '1' || darkModeParam === '0';
+};
+
+const isAutoDarkModeEligible = (isFullscreen = false) => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  return (
+    params.get('standalone') === '1' ||
+    params.get('slideshow') === '1' ||
+    isFullscreen
+  );
+};
+
+const resolveScheduledDarkMode = (isFullscreen = false) => {
+  if (typeof window === 'undefined') {
+    return false;
+  }
+
+  const params = new URLSearchParams(window.location.search);
+  const darkModeParam = params.get('dark');
+  if (darkModeParam === '1') {
+    return true;
+  }
+  if (darkModeParam === '0') {
+    return false;
+  }
+
+  if (isDarkModeManualOverride()) {
+    const storedDarkMode = window.localStorage.getItem(DARK_MODE_STORAGE_KEY);
+    if (storedDarkMode === '1') {
+      return true;
+    }
+    if (storedDarkMode === '0') {
+      return false;
+    }
+  }
+
+  if (isAutoDarkModeEligible(isFullscreen)) {
+    return isNightTime();
+  }
+
+  return false;
+};
 
 const headerContainerStyle = theme => css`
   border-bottom: 1px solid ${theme.colors.grayscale.light2};
@@ -536,37 +609,9 @@ const Header = () => {
   const [isLive, setIsLive] = useState(false);
   // Avg stay model
   const [isAvgStayModalOpen, setAvgStayModalOpen] = useState(false);
-  const [isDarkMode, setIsDarkMode] = useState(() => {
-    if (typeof window === 'undefined') {
-      return false;
-    }
-
-    const params = new URLSearchParams(window.location.search);
-    const darkModeParam = params.get('dark');
-    if (darkModeParam === '1') {
-      return true;
-    }
-    if (darkModeParam === '0') {
-      return false;
-    }
-
-    const storedDarkMode = window.localStorage.getItem(
-      'superset-dashboard-dark-mode',
-    );
-    if (storedDarkMode === '1') {
-      return true;
-    }
-    if (storedDarkMode === '0') {
-      return false;
-    }
-
-    if (params.get('standalone') === '1') {
-      const hour = new Date().getHours();
-      return hour >= 18 || hour < 6;
-    }
-
-    return false;
-  });
+  const [isDarkMode, setIsDarkMode] = useState(() =>
+    resolveScheduledDarkMode(Boolean(document.fullscreenElement)),
+  );
   const [isPatientStayView, setIsPatientStayView] = useState(() => {
     if (typeof window === 'undefined') {
       return false;
@@ -578,8 +623,17 @@ const Header = () => {
     isStandalone ? 64 : 112,
   );
   const isHeaderCollapsed = isTitleBarCollapsed;
-  const darkModeRefreshRef = useRef(false);
   const titleBarRef = useRef(null);
+  const setDarkModeManually = useCallback(enabled => {
+    try {
+      window.localStorage.setItem(DARK_MODE_STORAGE_KEY, enabled ? '1' : '0');
+      window.localStorage.setItem(DARK_MODE_MANUAL_STORAGE_KEY, '1');
+    } catch (error) {
+      console.error('Failed to persist dark mode preference:', error);
+    }
+
+    setIsDarkMode(enabled);
+  }, []);
   const expandDelayRef = useRef(null);
   const updateDarkModeUrlParam = useCallback(enabled => {
     if (window.self !== window.top) {
@@ -823,15 +877,6 @@ const Header = () => {
   const closeAvgStayModal = () => setAvgStayModalOpen(false);
 
   useEffect(() => {
-    try {
-      window.localStorage.setItem(
-        'superset-dashboard-dark-mode',
-        isDarkMode ? '1' : '0',
-      );
-    } catch (error) {
-      console.error('Failed to persist dark mode preference:', error);
-    }
-
     updateDarkModeUrlParam(isDarkMode);
 
     const applyDarkTheme = async () => {
@@ -1465,6 +1510,42 @@ const Header = () => {
     forceRefreshRef.current = forceRefresh;
   }, [forceRefresh]);
 
+  useEffect(() => {
+    if (!isAutoDarkModeEligible(isFullscreen)) {
+      return undefined;
+    }
+
+    if (hasExplicitDarkModeUrlParam() || isDarkModeManualOverride()) {
+      return undefined;
+    }
+
+    const syncScheduledDarkMode = () => {
+      const shouldBeDark = isNightTime();
+
+      setIsDarkMode(prev => {
+        if (prev === shouldBeDark) {
+          return prev;
+        }
+
+        window.setTimeout(() => {
+          forceRefreshRef.current?.();
+        }, 300);
+
+        return shouldBeDark;
+      });
+    };
+
+    syncScheduledDarkMode();
+    const intervalId = window.setInterval(
+      syncScheduledDarkMode,
+      DARK_MODE_SCHEDULE_CHECK_MS,
+    );
+
+    return () => {
+      window.clearInterval(intervalId);
+    };
+  }, [isFullscreen, isSlideshow, isStandalone]);
+
   const toggleEditMode = useCallback(() => {
     boundActionCreators.logEvent(LOG_ACTIONS_TOGGLE_EDIT_DASHBOARD, {
       edit_mode: !editMode,
@@ -1993,7 +2074,7 @@ const Header = () => {
     lastModifiedTime: actualLastModifiedTime,
     logEvent: boundActionCreators.logEvent,
     isDarkMode,
-    setIsDarkMode,
+    setIsDarkMode: setDarkModeManually,
     isSlideshowOpen,
     openSlideshow,
     closeSlideshow,
