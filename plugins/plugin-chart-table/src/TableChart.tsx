@@ -863,8 +863,8 @@ const TableBody = styled.tbody`
 `;
 
 const TableRow = styled.tr`
-  transition: all var(--transition-fast);
-  animation: fadeInRow 0.3s ease-out backwards;
+  transition: all var(--transition-normal);
+  animation: fadeInRow 0.6s ease-out backwards;
   min-height: 36px;
 
   & > td {
@@ -872,11 +872,11 @@ const TableRow = styled.tr`
     padding-bottom: 4px;
   }
   
-  &:nth-child(1) { animation-delay: 0.1s; }
-  &:nth-child(2) { animation-delay: 0.15s; }
-  &:nth-child(3) { animation-delay: 0.2s; }
-  &:nth-child(4) { animation-delay: 0.25s; }
-  &:nth-child(5) { animation-delay: 0.3s; }
+  &:nth-child(1) { animation-delay: 0.15s; }
+  &:nth-child(2) { animation-delay: 0.25s; }
+  &:nth-child(3) { animation-delay: 0.35s; }
+  &:nth-child(4) { animation-delay: 0.45s; }
+  &:nth-child(5) { animation-delay: 0.55s; }
   
   &:hover {
     background: var(--color-bg-hover);
@@ -1051,7 +1051,7 @@ const locationColors = [
 ];
 
 const ROWS_PER_PAGE = 4;
-const AUTO_PAGE_DELAY_MS = 7000;
+const AUTO_PAGE_DELAY_MS = 12000;
 const MAX_TOP_ITEMS_IN_TILE = 3;
 const TOP_LOCATIONS_LIMIT = 10;
 type OthersSortMode = 'visits_desc' | 'visits_asc' | 'name_asc' | 'name_desc';
@@ -1522,7 +1522,7 @@ export default function TableChart({
                   </tr>
                 </TableHead>
               )}
-              <TableBody>
+              <TableBody key={`page-${activePage}`}>
                 {activeRows.length === 0 ? (
                   <TableRow>
                     <TableCell
@@ -1546,7 +1546,7 @@ export default function TableChart({
                     const color = locationColors[globalIndex % locationColors.length];
 
                     return (
-                      <TableRow key={rowIndex}>
+                      <TableRow key={`${activePage}-${rowIndex}`}>
                         {columns.map((col, colIndex) => {
                           const value = row[col];
                           const isNumeric = numericColumns.includes(col);
