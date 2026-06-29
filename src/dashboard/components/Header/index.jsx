@@ -291,7 +291,7 @@ const headerContainerStyle = theme => css`
     }
 
     .refresh-badge .refresh-text {
-      font-size: 12px;
+      font-size: 16px;
     }
   }
 `;
