@@ -2508,6 +2508,7 @@ const handleSaveAsImage = async () => {
         showTitlePanelItems
         isPresentationMode={isPresentationMode}
         isLive={isLive}
+        isDarkMode={isDarkMode}
       />
       <ScrollToTopButton
         type="button"

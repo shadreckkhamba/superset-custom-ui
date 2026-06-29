@@ -32,6 +32,8 @@ import { useLocation } from 'react-router-dom';
 import logoBase64 from 'src/dashboard/components/Header/logoBase64';
 import dashboardGif from 'src/assets/images/dashboard.gif';
 import dashboardStatic from 'src/assets/images/dashboard-static.png';
+import dashboardGifDark from 'src/assets/images/dashboard-transparent.gif';
+import dashboardStaticDark from 'src/assets/images/dashboard-static-transparent.png';
 
 export const menuTriggerStyles = (theme: SupersetTheme) => css`
   width: ${theme.gridUnit * 8}px;
@@ -142,6 +144,7 @@ export type PageHeaderWithActionsProps = {
   };
   isPresentationMode?: boolean;
   isLive?: boolean;
+  isDarkMode?: boolean;
 };
 
 export const PageHeaderWithActions = ({
@@ -158,6 +161,7 @@ export const PageHeaderWithActions = ({
   tooltipProps,
   isPresentationMode = false,
   isLive = false,
+  isDarkMode = false,
 } : PageHeaderWithActionsProps) => {
   const theme = useTheme();
   const location = useLocation();
@@ -235,7 +239,8 @@ export const PageHeaderWithActions = ({
                     height: 7px;
                     border-radius: 50%;
                     background-color: #22c55e;
-                    border: 1.5px solid ${theme.colors.grayscale.light5};
+                    border: 1.5px solid
+                      ${isDarkMode ? '#1a1a1a' : theme.colors.grayscale.light5};
                     z-index: 1;
                   `}
                 />
@@ -243,14 +248,23 @@ export const PageHeaderWithActions = ({
 
               {/* Dashboard GIF — animated when live, frozen + gray when not */}
               <img
-                src={isLive ? dashboardGif : dashboardStatic}
+                src={
+                  isDarkMode
+                    ? isLive
+                      ? dashboardGifDark
+                      : dashboardStaticDark
+                    : isLive
+                      ? dashboardGif
+                      : dashboardStatic
+                }
                 alt=""
                 aria-hidden="true"
+                className="dashboard-live-icon"
                 css={css`
                   height: 36px;
                   width: auto;
                   flex-shrink: 0;
-                  mix-blend-mode: multiply;
+                  mix-blend-mode: ${isDarkMode ? 'normal' : 'multiply'};
                   pointer-events: none;
                   user-select: none;
                   transition: filter 0.4s ease, opacity 0.4s ease;
