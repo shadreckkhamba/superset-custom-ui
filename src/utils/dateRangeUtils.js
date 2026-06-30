@@ -6,6 +6,7 @@ import { ENDPOINTS } from '../config/endpoints';
 // Cache for date ranges to avoid repeated API calls
 let dateRangesCache = null;
 let cacheTimestamp = null;
+let inflightDateRangesRequest = null;
 const CACHE_DURATION = 30 * 1000; // 30 seconds - shorter cache for auto-refresh
 
 export const KNOWN_DATE_RANGE_TABLES = [
@@ -35,26 +36,39 @@ export const fetchDateRanges = async (forceRefresh = false) => {
     return dateRangesCache;
   }
 
-  try {
-    const response = await fetch(ENDPOINTS.DATE_RANGES);
-    if (!response.ok) {
-      throw new Error(`HTTP error! status: ${response.status}`);
-    }
-
-    const data = await response.json();
-    if (data?.error && !hasDateRangeTableEntries(data)) {
-      throw new Error(data.error);
-    }
-
-    dateRangesCache = data;
-    cacheTimestamp = now;
-
-    return data;
-  } catch (error) {
-    console.error('Error fetching date ranges:', error);
-    return null;
+  if (!forceRefresh && inflightDateRangesRequest) {
+    return inflightDateRangesRequest;
   }
+
+  const request = (async () => {
+    try {
+      const response = await fetch(ENDPOINTS.DATE_RANGES);
+      if (!response.ok) {
+        throw new Error(`HTTP error! status: ${response.status}`);
+      }
+
+      const data = await response.json();
+      if (data?.error && !hasDateRangeTableEntries(data)) {
+        throw new Error(data.error);
+      }
+
+      dateRangesCache = data;
+      cacheTimestamp = Date.now();
+
+      return data;
+    } catch (error) {
+      console.error('Error fetching date ranges:', error);
+      return null;
+    } finally {
+      inflightDateRangesRequest = null;
+    }
+  })();
+
+  inflightDateRangesRequest = request;
+  return request;
 };
+
+export const getCachedDateRanges = () => dateRangesCache;
 
 /**
  * Clear the date ranges cache (useful for forcing refresh)
@@ -291,9 +305,22 @@ const resolveTableKeyForChart = (tables, chart) => {
   }
 
   const searchableText = normalize(candidates.join(' '));
+
+  for (const tableKey of tableKeys) {
+    const normalizedKey = normalize(tableKey);
+    const keyTokens = normalizedKey.split(' ').filter(token => token.length > 2);
+    if (
+      keyTokens.length > 0 &&
+      keyTokens.every(token => searchableText.includes(token))
+    ) {
+      return tableKey;
+    }
+  }
+
   if (
-    searchableText.includes('age categor') ||
-    /\bage\b/.test(searchableText)
+    searchableText.includes('age') ||
+    searchableText.includes('category') ||
+    searchableText.includes('categor')
   ) {
     return tableKeys.includes('patient_age_categories')
       ? 'patient_age_categories'
@@ -306,7 +333,8 @@ const resolveTableKeyForChart = (tables, chart) => {
   }
   if (
     searchableText.includes('location') ||
-    searchableText.includes('county')
+    searchableText.includes('county') ||
+    searchableText.includes('district')
   ) {
     return tableKeys.includes('patient_location_counts')
       ? 'patient_location_counts'
@@ -320,7 +348,8 @@ const resolveTableKeyForChart = (tables, chart) => {
   if (
     searchableText.includes('stay') ||
     searchableText.includes('visit') ||
-    searchableText.includes('average stay')
+    searchableText.includes('average stay') ||
+    (/\btime\b/.test(searchableText) && searchableText.includes('patient'))
   ) {
     return tableKeys.includes('patient_stay_times')
       ? 'patient_stay_times'
@@ -447,13 +476,19 @@ export const resolveChartDateRangeLabel = ({
   dateRanges,
   chart,
   queriesResponse,
+  useFallback = true,
 }) => {
   const apiDateRange = getDateRangeForChart(dateRanges, chart);
   if (apiDateRange) {
     return apiDateRange;
   }
 
-  return getDateRangeFromQueryResponse(queriesResponse);
+  const queryDateRange = getDateRangeFromQueryResponse(queriesResponse);
+  if (queryDateRange) {
+    return queryDateRange;
+  }
+
+  return useFallback ? getFallbackDateRange() : null;
 };
 
 /**

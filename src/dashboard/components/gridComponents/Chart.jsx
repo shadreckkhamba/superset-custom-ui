@@ -26,6 +26,7 @@ import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchDateRanges,
+  getCachedDateRanges,
   resolveChartDateRangeLabel,
 } from 'src/utils/dateRangeUtils';
 
@@ -195,7 +196,7 @@ const Chart = props => {
   const [descriptionHeight, setDescriptionHeight] = useState(0);
   const [height, setHeight] = useState(props.height);
   const [width, setWidth] = useState(props.width);
-  const [dateRanges, setDateRanges] = useState(null);
+  const [dateRanges, setDateRanges] = useState(() => getCachedDateRanges());
   const history = useHistory();
   const resize = useCallback(
     debounce(() => {
