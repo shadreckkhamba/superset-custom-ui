@@ -26,8 +26,7 @@ import { bindActionCreators } from 'redux';
 import { useDispatch, useSelector } from 'react-redux';
 import {
   fetchDateRanges,
-  getDateRangeForChart,
-  getFallbackDateRange,
+  resolveChartDateRangeLabel,
 } from 'src/utils/dateRangeUtils';
 
 import { exportChart, mountExploreUrl } from 'src/explore/exploreUtils';
@@ -509,24 +508,31 @@ const Chart = props => {
     queriesResponse?.map(({ cached_dttm }) => cached_dttm) || [];
 
  
-  const dateRangeLabel = useMemo(() => {
-    const apiDateRange = getDateRangeForChart(dateRanges, {
-      sliceName: slice.slice_name,
-      datasourceName: slice.datasource_name,
-      vizType: slice.viz_type,
+  const dateRangeLabel = useMemo(
+    () =>
+      resolveChartDateRangeLabel({
+        dateRanges,
+        chart: {
+          chartId: props.id,
+          sliceName: slice.slice_name,
+          datasourceName: slice.datasource_name,
+          vizType: slice.viz_type,
+          datasource,
+          formData: chart.form_data,
+        },
+        queriesResponse: chart.queriesResponse,
+      }),
+    [
+      chart.form_data,
+      chart.queriesResponse,
       datasource,
-      formData: chart.form_data,
-    });
-
-    return apiDateRange || getFallbackDateRange();
-  }, [
-    chart.form_data,
-    datasource,
-    dateRanges,
-    slice.datasource_name,
-    slice.slice_name,
-    slice.viz_type,
-  ]);
+      dateRanges,
+      props.id,
+      slice.datasource_name,
+      slice.slice_name,
+      slice.viz_type,
+    ],
+  );
 
   return (
     <SliceContainer

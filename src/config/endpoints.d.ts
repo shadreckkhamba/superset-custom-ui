@@ -22,7 +22,10 @@ export interface Endpoints {
   DATE_RANGES: string;
   LAST_UPDATE_STATUS: string;
   LAST_UPDATE_STATUS_SECONDARY: string;
+  CHART_DATE_RANGE_TABLE_MAP: Record<string | number, string>;
 }
+
+export declare const CHART_DATE_RANGE_TABLE_MAP: Record<string | number, string>;
 
 export declare const API_SERVERS: ApiServers;
 export declare const API_PORT: string;

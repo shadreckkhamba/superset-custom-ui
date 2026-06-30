@@ -22,6 +22,9 @@ export const BASE_URLS = {
   STATUS_SECONDARY: `http://${API_SERVERS.STATUS_SECONDARY}:${API_PORT}`
 };
 
+// Optional chart slice ID -> /date_ranges table key overrides.
+export const CHART_DATE_RANGE_TABLE_MAP = {};
+
 // API Endpoints
 export const ENDPOINTS = {
   DAILY_AVERAGE_STAY: `${BASE_URLS.PRIMARY}/wandikweza/daily_average_stay`,
@@ -30,5 +33,6 @@ export const ENDPOINTS = {
   PATIENT_RECORDS: `${BASE_URLS.PRIMARY}/wandikweza/patient_records`,
   DATE_RANGES: `${BASE_URLS.PRIMARY}/wandikweza/date_ranges`,
   LAST_UPDATE_STATUS: `${BASE_URLS.STATUS_PRIMARY}/wandikweza/last_update_status`,
-  LAST_UPDATE_STATUS_SECONDARY: `${BASE_URLS.STATUS_SECONDARY}/wandikweza/last_update_status`
+  LAST_UPDATE_STATUS_SECONDARY: `${BASE_URLS.STATUS_SECONDARY}/wandikweza/last_update_status`,
+  CHART_DATE_RANGE_TABLE_MAP,
 };
