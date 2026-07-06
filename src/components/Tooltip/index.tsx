@@ -19,7 +19,7 @@
 // eslint-disable-next-line no-restricted-imports
 import { supersetTheme } from '@superset-ui/core'; // TODO: DO not import theme directly
 import { Tooltip as AntdTooltip } from 'antd-v5';
-import { TooltipProps, TooltipPlacement } from 'antd-v5/lib/tooltip';
+import type { TooltipProps, TooltipPlacement } from 'antd-v5';
 
 export { TooltipProps, TooltipPlacement };
 

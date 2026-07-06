@@ -1,6 +1,8 @@
 import React, { useEffect, useState, useRef } from 'react';
 import { createPortal } from 'react-dom';
-import launcherHtml from '../../../launcher.html';
+
+declare const process: { env: { LAUNCHER_HTML: string } };
+const launcherHtml: string = process.env.LAUNCHER_HTML;
 
 const STANDALONE_PARAM = 'standalone';
 const SLIDESHOW_PARAM = 'slideshow';
