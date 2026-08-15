@@ -232,7 +232,10 @@ export default function DashboardSlideshow({
     (slideIndex: number) => {
       const slide = SLIDES[slideIndex];
       const darkModeParam = isDarkMode ? '&dark=1' : '';
-      const baseUrl = `/superset/dashboard/${dashboardId}/?standalone=1&slideshow=1${darkModeParam}`;
+      // Derive the app root prefix from the current URL so this works under
+      // path-prefixed deployments (e.g. /superset1/superset/dashboard/...)
+      const appRoot = window.location.pathname.replace(/^(\/[^/]+)\/.*$/, '$1');
+      const baseUrl = `${appRoot}/superset/dashboard/${dashboardId}/?standalone=1&slideshow=1${darkModeParam}`;
 
       // For Patient Stay Times view, add a parameter to trigger that view
       if (slide.view === 'stay') {
