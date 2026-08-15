@@ -6,8 +6,16 @@ const POLL_INTERVAL_MS = 3000;
 
 async function checkConnectivity(): Promise<boolean> {
   try {
-    const resp = await fetch('/health', { method: 'HEAD', cache: 'no-store' });
-    return resp.ok;
+    // Derive probe path from current location to support path-prefixed deployments
+    // e.g. /superset1/health instead of /health
+    const appRoot = window.location.pathname.replace(/^(\/[^/]+)\/.*$/, '$1');
+    const resp = await fetch(`${appRoot}/health`, {
+      method: 'GET',
+      cache: 'no-store',
+      credentials: 'same-origin',
+    });
+    // Consider reachable if we get any HTTP response (even 4xx means server is up)
+    return resp.ok || resp.status === 401 || resp.status === 403 || resp.status === 405;
   } catch {
     return false;
   }
@@ -56,16 +64,19 @@ const NetworkStatusOverlay: React.FC = () => {
     window.addEventListener('offline', handleOffline);
     window.addEventListener('online', handleOnline);
 
-    // Check immediately on mount
-    if (!navigator.onLine) {
-      goOffline();
-    } else {
-      checkConnectivity().then(alive => {
-        if (!alive) goOffline();
-      });
-    }
+    // Check immediately on mount — small delay so the page settles first
+    const initialCheck = setTimeout(() => {
+      if (!navigator.onLine) {
+        goOffline();
+      } else {
+        checkConnectivity().then(alive => {
+          if (!alive) goOffline();
+        });
+      }
+    }, 1500);
 
     return () => {
+      clearTimeout(initialCheck);
       window.removeEventListener('offline', handleOffline);
       window.removeEventListener('online', handleOnline);
       stopPoll();
