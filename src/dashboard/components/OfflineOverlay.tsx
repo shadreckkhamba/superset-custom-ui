@@ -18,8 +18,18 @@ function isPresentationMode(): boolean {
   return isStandalone || isSlideshow || isFullscreen;
 }
 // Use lightweight probes so we do not rely only on navigator.onLine.
+// Build probe paths relative to the current app root so this works
+// correctly when Superset is mounted under a path prefix (e.g. /superset1/).
+function getProbePaths(): string[] {
+  // Walk up from the current pathname to find the app root.
+  // e.g. /superset1/superset/dashboard/1/ → try /superset1/health first,
+  // then fall back to absolute paths as a last resort.
+  const appRoot = window.location.pathname.replace(/^(\/[^/]+)\/.*$/, '$1');
+  return [`${appRoot}/health`, '/health', '/favicon.ico'];
+}
+
 async function checkConnectivity(): Promise<boolean> {
-  const probePaths = ['/health', '/health/', '/favicon.ico'];
+  const probePaths = getProbePaths();
   for (const path of probePaths) {
     try {
       const response = await fetch(path, {
